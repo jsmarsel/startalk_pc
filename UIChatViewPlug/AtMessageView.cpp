@@ -10,6 +10,8 @@
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
+#include <set>
+#include <QPainterPath>
 #include "InputWgt.h"
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../Platform/Platform.h"
@@ -79,7 +81,7 @@ void AtItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
     else
         painter->fillRect(rect, QTalk::StyleDefine::instance().getNavNormalColor());
 
-	QString headPath = index.data(ITEM_DATA_ICON).toString();
+	auto headPath = index.data(ITEM_DATA_ICON).toString();
 	painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
 	QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
 	auto name = index.data(ITEM_DATE_NAME).toString();

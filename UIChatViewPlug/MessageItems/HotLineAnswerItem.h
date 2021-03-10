@@ -49,7 +49,7 @@ public:
         itemLay->addWidget(_iconBtn);
         itemLay->addWidget(ansLabel);
 
-        connect(this, &ReqButton::sgSendReq, [this, ansLabel, id, text](int, const QString&){
+        connect(this, &ReqButton::sgSendReq, [this, ansLabel, text](int, const QString&){
             _iconBtn->setChecked(true);
             ansLabel->setText(QString("<font color=#00CABE>%1</font>").arg(text));
         });

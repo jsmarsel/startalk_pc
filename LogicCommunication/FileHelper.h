@@ -6,7 +6,7 @@
 
 #include <vector>
 #include <mutex>
-#include "../include/ThreadPool.h"
+#include <functional>
 
 class Communication;
 
@@ -52,10 +52,10 @@ public:
     bool DownloadPubKey();
 
     // 判断文件或者文件夹是否存在
-    bool fileExist(const std::string &localPath);
+    static bool fileExist(const std::string &localPath);
 
     // 创建文件夹
-    void creatDir(const std::string &filePath);
+    static void creatDir(const std::string &filePath);
 
     void clearConfig();
 
@@ -69,7 +69,7 @@ public:
     bool writeQvtToFile(const std::string &qvt);
     std::string getQvtFromFile();
     //
-    bool writeFile(const std::string &filePath, const std::string *data);
+    static bool writeFile(const std::string &filePath, const std::string *data);
 
 protected:
 

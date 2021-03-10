@@ -25,7 +25,7 @@
 #include "../Platform/dbPlatForm.h"
 #include "../include/ModButton.h"
 #include "../Platform/NavigationManager.h"
-#include "UserCardMsgManager.h"
+#include "MsgManager.h"
 #include "../CustomUi/QtMessageBox.h"
 #include "../CustomUi/LiteMessageBox.h"
 
@@ -364,7 +364,7 @@ bool user_card::showUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> im
     _strLeaderId = "";
     _pUserMoodEdit->setReadOnly(true);
     bool ret = false;
-    QTalk::Entity::JID jid(imuserSup->XmppId.c_str());
+    QTalk::Entity::JID jid(imuserSup->XmppId);
     //
     _isSelf = jid.username() == PLAT.getSelfUserId();
 	emit setWgtStatusSignal();

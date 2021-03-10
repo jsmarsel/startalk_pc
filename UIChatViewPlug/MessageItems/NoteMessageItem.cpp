@@ -95,20 +95,20 @@ void NoteMessageItem::initContentLayout() {
         iconLabel->setAlignment(Qt::AlignmentFlag::AlignTop);
 
         auto *vBox = new QVBoxLayout;
-        titleLabel = new QLabel;
+        titleLabel = new QLabel(this);
         titleLabel->setObjectName("titleLab");
         titleLabel->setWordWrap(true);
         titleLabel->setFixedWidth(_contentSize.width() - 20);
         titleLabel->setStyleSheet("QLabel{font-size:14px;color:#212121;}");
         titleLabel->adjustSize();
 
-        tagLabel = new QLabel;
+        tagLabel = new QLabel(this);
         tagLabel->setObjectName("tagLab");
         tagLabel->setFixedWidth(_contentSize.width() - 20);
         tagLabel->setStyleSheet("QLabel{font-size:12px;color:#666666;}");
         tagLabel->adjustSize();
 
-        priceLabel = new QLabel;
+        priceLabel = new QLabel(this);
         priceLabel->setObjectName("priceLab");
         priceLabel->setStyleSheet("QLabel{font-size:14px;color:#f4343d;}");
         priceLabel->adjustSize();
@@ -126,7 +126,7 @@ void NoteMessageItem::initContentLayout() {
 
         connect(this, &NoteMessageItem::sgDownloadedIcon, this, &NoteMessageItem::setIcon, Qt::QueuedConnection);
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, true, true, 80, 40);
+        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, false, true, 80, 40);
         if (imgUrl.isEmpty()) {
             iconLabel->setPixmap(defaultPix);
         } else {

@@ -14,3 +14,21 @@ QFrame#TcpDisconnectWgt {
 QListView#SessionView {
     background:rgba(39, 43, 48, 1);
 }
+
+
+QPushButton#SessionBackBtn {
+    border-image: url(":/UINavigationPlug/image1/back_normal.svg");
+}
+
+QPushButton#SessionBackBtn:hover {
+    border-image: url(":/UINavigationPlug/image1/back_hover.svg");
+}
+
+QFrame#SessionBackFrm {
+    background: rgb(39, 43, 48);
+}
+
+QLabel#SessionLabel {
+    font-size: 15px;
+    color: "#DDD";
+}

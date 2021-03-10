@@ -129,6 +129,10 @@ public:
     void setNewVersion(int version);
     int getNewVersion();
 
+public:
+    void setEnableProxy(bool enable);
+    bool enableProxy();
+
 private:
 
     // 消息通知
@@ -184,6 +188,7 @@ private:
 
 public:
     bool with_ssl = true;
+    bool _enableProxy = false;
 
 private:
     QTalk::util::spin_mutex sm;

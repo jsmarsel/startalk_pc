@@ -221,7 +221,7 @@ void UIGroupManager::initUi() {
     mainLay->setMargin(6);
     mainLay->setSpacing(0);
     mainLay->addWidget(splitter, 1);
-    mainLay->addWidget(new Line, 0);
+    mainLay->addWidget(new Line(this), 0);
     mainLay->addLayout(btnlayout, 0);
     //
     auto *layout = new QVBoxLayout(_pCenternWgt);

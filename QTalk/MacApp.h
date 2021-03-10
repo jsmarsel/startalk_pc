@@ -19,6 +19,7 @@ public:
     static void AllowMinimizeForFramelessWindow(QWidget* window);
     static void wakeUpWnd(QWidget* window);
     static void showMinWnd(QWidget* window);
+    static void resetWindow(QWidget* window);
     static void checkValidToVisitMicroPhone();
 };
 

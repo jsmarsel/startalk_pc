@@ -13,7 +13,7 @@ extern ChatViewMainPanel* g_pMainPanel;
 
 using namespace QTalk;
 GroupChatSidebar::GroupChatSidebar(QWidget* parent)
-	:QFrame(parent), _pGroupTopic(nullptr), _pGroupMember(nullptr)
+	:QFrame(parent)
 {
 	initUi();
 }
@@ -21,11 +21,11 @@ GroupChatSidebar::GroupChatSidebar(QWidget* parent)
 
 GroupChatSidebar::~GroupChatSidebar()
 {
-	if (nullptr != _pGroupTopic)
-	{
-		delete _pGroupTopic;
-		_pGroupTopic = nullptr;
-	}
+//	if (nullptr != _pGroupTopic)
+//	{
+//		delete _pGroupTopic;
+//		_pGroupTopic = nullptr;
+//	}
 	if (nullptr != _pGroupMember)
 	{
 		delete _pGroupMember;
@@ -108,8 +108,8 @@ void GroupChatSidebar::initUi()
 {
 	setObjectName("GroupChatSidebar");
 	//
-	_pGroupTopic = new GroupTopic();
-	_pGroupMember = new GroupMember();
+	_pGroupTopic = new GroupTopic(_groupId, _groupName, _groupTopic, this);
+	_pGroupMember = new GroupMember(_groupId);
 	setFixedWidth(164);
 	_pGroupTopic->setFixedHeight(135);
 
@@ -117,7 +117,7 @@ void GroupChatSidebar::initUi()
 	layout->setMargin(0);
 	layout->setSpacing(0);
 	layout->addWidget(_pGroupTopic);
-    layout->addWidget(new Line(Qt::Horizontal));
+    layout->addWidget(new Line(Qt::Horizontal, this));
 	layout->addWidget(_pGroupMember);
 	setLayout(layout);
 
@@ -132,4 +132,10 @@ void GroupChatSidebar::clearData() {
 //    _pGroupTopic->setTopic("");
 //    _arMembers.clear();
 //    _pGroupMember->clearData();
+}
+
+//
+void GroupChatSidebar::onUpdateGroupInfo(const QString &groupId, const QString &groupName) {
+    this->_groupId = groupId;
+    this->_groupName = groupName;
 }

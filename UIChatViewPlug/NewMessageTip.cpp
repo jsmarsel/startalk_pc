@@ -8,26 +8,22 @@
 #include "../CustomUi/HeadPhotoLab.h"
 
 NewMessageTip::NewMessageTip(QWidget *parent)
-    : QFrame(parent), _parentWgt(parent), _newMessageCount(0)
+    : QFrame(parent), _parentWgt(parent)
 {
     this->setFixedHeight(40);
     this->setMinimumWidth(120);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     this->setObjectName("NewMessageTip");
     //
-    HeadPhotoLab* picLabel = new HeadPhotoLab;
+    auto* picLabel = new HeadPhotoLab;
     picLabel->setParent(this);
     picLabel->setHead(":/chatview/image1/go.png", 10, false, false, true);
     picLabel->setFixedWidth(20);
     _pLabel = new QLabel(QString(tr("%1 条新消息")).arg(_newMessageCount), this);
     _pLabel->setObjectName("NewMessageTipLabel");
-    QHBoxLayout* lay = new QHBoxLayout(this);
+    auto* lay = new QHBoxLayout(this);
     lay->addWidget(picLabel);
     lay->addWidget(_pLabel);
-}
-
-NewMessageTip::~NewMessageTip() {
-
 }
 
 /**

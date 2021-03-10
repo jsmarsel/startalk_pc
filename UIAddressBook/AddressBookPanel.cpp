@@ -17,7 +17,8 @@
 #include "../Platform/dbPlatForm.h"
 
 AddressBookPanel::AddressBookPanel(QWidget *parent)
-        : QWidget(parent), _mainSplitter(nullptr), _pEmptyLabel(nullptr), _pUserCard(nullptr), _pstStrcuture(nullptr) {
+    : QWidget(parent), _mainSplitter(nullptr), _pEmptyLabel(nullptr), _pUserCard(nullptr), _pstStrcuture(nullptr)
+{
     initUi();
     _pMsgListener = new AddressBookListener(this);
     //
@@ -27,13 +28,15 @@ AddressBookPanel::AddressBookPanel(QWidget *parent)
     getStructure();
 }
 
-AddressBookPanel::~AddressBookPanel() {
-    if(_pMsgListener)
+AddressBookPanel::~AddressBookPanel()
+{
+    if (_pMsgListener)
         delete _pMsgListener;
 }
 
 //
-void AddressBookPanel::initUi() {
+void AddressBookPanel::initUi()
+{
 
     setObjectName("AddressBookPanel");
     _mainSplitter = new QSplitter(this);
@@ -46,10 +49,10 @@ void AddressBookPanel::initUi() {
     _leftLay->setSpacing(0);
 
     _mapNavItems[EM_ITEM_TYPE_START] = new NavigationItem(EM_ITEM_TYPE_START, this);
-//    _mapNavItems[EM_ITEM_TYPE_FRIENDLIST] = new NavigationItem(EM_ITEM_TYPE_FRIENDLIST, this);
+    //    _mapNavItems[EM_ITEM_TYPE_FRIENDLIST] = new NavigationItem(EM_ITEM_TYPE_FRIENDLIST, this);
     _mapNavItems[EM_ITEM_TYPE_GROUPLIST] = new NavigationItem(EM_ITEM_TYPE_GROUPLIST, this);
     _mapNavItems[EM_ITEM_TYPE_STAFF] = new NavigationItem(EM_ITEM_TYPE_STAFF, this);
-//	_mapNavItems[EM_ITEM_TYPE_SUBSCRIPTION] = new NavigationItem(EM_ITEM_TYPE_SUBSCRIPTION, this);
+    //	_mapNavItems[EM_ITEM_TYPE_SUBSCRIPTION] = new NavigationItem(EM_ITEM_TYPE_SUBSCRIPTION, this);
     _mapNavItems[EM_ITEM_TYPE_BLACKLIST] = new NavigationItem(EM_ITEM_TYPE_BLACKLIST, this);
 
     _pStaffView = new QTreeView(this);
@@ -62,7 +65,7 @@ void AddressBookPanel::initUi() {
     _pStaffView->setFrameShape(QFrame::NoFrame);
 
     _mapItemWidgets[EM_ITEM_TYPE_START] = new ListItemView(this, leftFrame);
-//    _mapItemWidgets[EM_ITEM_TYPE_FRIENDLIST] = new ListItemView(this, leftFrame);
+    //    _mapItemWidgets[EM_ITEM_TYPE_FRIENDLIST] = new ListItemView(this, leftFrame);
     _mapItemWidgets[EM_ITEM_TYPE_GROUPLIST] = new ListItemView(this, leftFrame);
     _mapItemWidgets[EM_ITEM_TYPE_BLACKLIST] = new ListItemView(this, leftFrame);
     _mapItemWidgets[EM_ITEM_TYPE_STAFF] = _pStaffView;
@@ -100,12 +103,14 @@ void AddressBookPanel::initUi() {
  * @param index
  * @return
  */
-QString getStrName(QStringList sto, int index) {
+QString getStrName(QStringList sto, int index)
+{
     QString ret = "";
     if (index <= 0 || index >= sto.size())
         return ret;
 
-    for (int i = 1; i <= index; i++) {
+    for (int i = 1; i <= index; i++)
+    {
         ret += "/" + sto[i];
     }
     return ret;
@@ -114,13 +119,14 @@ QString getStrName(QStringList sto, int index) {
 /**
  * 初始化组织架构
  */
-void AddressBookPanel::initStaff() {
+void AddressBookPanel::initStaff()
+{
     //
     _pStaffStructure = new StaffStructure(this);
     _rightLay->addWidget(_pStaffStructure);
     _pStaffModel = new QStandardItemModel;
     connect(_pStaffStructure, &StaffStructure::creatGroupSignal, this, &AddressBookPanel::creatGroup);
-//    connect(this, &AddressBookPanel::updateStaffUiSinal, this, &AddressBookPanel::updateStaffUi);
+    //    connect(this, &AddressBookPanel::updateStaffUiSinal, this, &AddressBookPanel::updateStaffUi);
 }
 
 /**
@@ -130,7 +136,8 @@ void AddressBookPanel::initStaff() {
   * @author   cc
   * @date     2018/12/22
   */
-void AddressBookPanel::updateStaffUi() {
+void AddressBookPanel::updateStaffUi()
+{
     _pStaffView->setModel(_pStaffModel);
 }
 
@@ -145,7 +152,7 @@ void AddressBookPanel::onNavItemClicked(QUInt8 type)
 {
     static QUInt8 old_type = EM_ITEM_TYPE_EMPTY;
 
-    if(type == old_type)
+    if (type == old_type)
     {
         auto item = _mapNavItems[type];
         _mapNavItems[type]->setSelectState(!item->getItemWgt()->isVisible());
@@ -154,21 +161,23 @@ void AddressBookPanel::onNavItemClicked(QUInt8 type)
     {
         old_type = type;
 
-        for(const auto item : _mapNavItems) {
+        for (const auto item : _mapNavItems)
+        {
             bool isSelectItem = item->getItemType() == type;
             auto *lstView = qobject_cast<ListItemView *>(item->getItemWgt());
-            if (isSelectItem) {
+            if (isSelectItem)
+            {
                 if (lstView)
                 {
 #ifdef _STARTALK
                     switch (type)
-                {
+                    {
                     case EM_ITEM_TYPE_START:
                         _pEmptyLabel->setPixmap(QPixmap(":/addressbook/image1/star_default.png"));
                         break;
-//                    case EM_ITEM_TYPE_FRIENDLIST:
-//                        _pEmptyLabel->setPixmap(QPixmap(":/addressbook/image1/friend_default.png"));
-//                        break;
+                        //                    case EM_ITEM_TYPE_FRIENDLIST:
+                        //                        _pEmptyLabel->setPixmap(QPixmap(":/addressbook/image1/friend_default.png"));
+                        //                        break;
                     case EM_ITEM_TYPE_GROUPLIST:
                         _pEmptyLabel->setPixmap(QPixmap(":/addressbook/image1/group_default.png"));
                         break;
@@ -177,7 +186,7 @@ void AddressBookPanel::onNavItemClicked(QUInt8 type)
                         break;
                     default:
                         break;
-                }
+                    }
 #endif
                     lstView->resetHeight(this->height(), getFixedHeight());
                 }
@@ -193,18 +202,17 @@ void AddressBookPanel::onNavItemClicked(QUInt8 type)
 #ifndef _STARTALK
                 _pEmptyLabel->setPixmap(QPixmap(QString(":/addressbook/image1/Artboard_%1.png").arg(AppSetting::instance().getThemeMode())));
 #endif
-
-            } else {
+            }
+            else
+            {
                 if (lstView)
                     lstView->clearSelection();
-
             }
             item->setSelectState(isSelectItem);
         }
     }
     _rightLay->setCurrentWidget(_pEmptyLabel);
 }
-
 
 /**
   * @函数名
@@ -213,7 +221,8 @@ void AddressBookPanel::onNavItemClicked(QUInt8 type)
   * @author   cc
   * @date     2018/12/16
   */
-void AddressBookPanel::updateUserConfig(const std::vector<QTalk::Entity::ImConfig> &arConfigs) {
+void AddressBookPanel::updateUserConfig(const std::vector<QTalk::Entity::ImConfig> &arConfigs)
+{
     QVector<std::string> oldStarContact = _arStarContact;
     QVector<std::string> oldBlackList = _arBlackList;
 
@@ -222,19 +231,25 @@ void AddressBookPanel::updateUserConfig(const std::vector<QTalk::Entity::ImConfi
     _mapMaskNames.clear();
 
     auto it = arConfigs.begin();
-    for (; it != arConfigs.end(); it++) {
+    for (; it != arConfigs.end(); it++)
+    {
         std::string subKey = it->ConfigSubKey;
-        if (it->ConfigKey == "kStarContact") {
+        if (it->ConfigKey == "kStarContact")
+        {
             if (oldStarContact.contains(subKey))
                 oldStarContact.removeOne(subKey);
             //
             _arStarContact.push_back(subKey);
-        } else if (it->ConfigKey == "kBlackList") {
+        }
+        else if (it->ConfigKey == "kBlackList")
+        {
             if (oldBlackList.contains(subKey))
                 oldBlackList.removeOne(subKey);
             //
             _arBlackList.push_back(subKey);
-        } else if (it->ConfigKey == "kMarkupNames") {
+        }
+        else if (it->ConfigKey == "kMarkupNames")
+        {
             _mapMaskNames[subKey] = it->ConfigValue;
         }
     }
@@ -247,25 +262,31 @@ void AddressBookPanel::updateUserConfig(const std::vector<QTalk::Entity::ImConfi
 }
 
 void AddressBookPanel::updateUserConfig(const std::map<std::string, std::string> &deleteData,
-                                        const std::vector<QTalk::Entity::ImConfig>& arImConfig) {
+                                        const std::vector<QTalk::Entity::ImConfig> &arImConfig)
+{
 
     {
         QVector<std::string> delStarContact;
         QVector<std::string> delBlackList;
-        for(const auto& it : deleteData)
+        for (const auto &it : deleteData)
         {
-            if (it.second == "kStarContact") {
+            if (it.second == "kStarContact")
+            {
                 delStarContact.push_back(it.first);
-            } else if (it.second == "kBlackList") {
+            }
+            else if (it.second == "kBlackList")
+            {
                 delBlackList.push_back(it.first);
-            } else if (it.second == "kMarkupNames") {
+            }
+            else if (it.second == "kMarkupNames")
+            {
                 if (_mapMaskNames.contains(it.first))
                     _mapMaskNames.remove(it.first);
             }
         }
-        if(!delStarContact.empty())
+        if (!delStarContact.empty())
             removeItemByType(EM_ITEM_TYPE_START, delStarContact);
-        if(delBlackList.empty())
+        if (delBlackList.empty())
             removeItemByType(EM_ITEM_TYPE_BLACKLIST, delBlackList);
     }
 
@@ -274,23 +295,27 @@ void AddressBookPanel::updateUserConfig(const std::map<std::string, std::string>
 
         QVector<std::string> addStarContact;
         QVector<std::string> addBlackList;
-        for(const auto& it : arImConfig)
+        for (const auto &it : arImConfig)
         {
-            if (it.ConfigKey == "kStarContact") {
+            if (it.ConfigKey == "kStarContact")
+            {
                 addStarContact.push_back(it.ConfigSubKey);
-            } else if (it.ConfigKey == "kBlackList") {
+            }
+            else if (it.ConfigKey == "kBlackList")
+            {
                 addBlackList.push_back(it.ConfigSubKey);
-            } else if (it.ConfigKey == "kMarkupNames") {
+            }
+            else if (it.ConfigKey == "kMarkupNames")
+            {
                 _mapMaskNames[it.ConfigSubKey] = it.ConfigValue;
             }
         }
-        if(!addStarContact.empty())
+        if (!addStarContact.empty())
             addItemByType(EM_ITEM_TYPE_START, addStarContact);
-        if(addBlackList.empty())
+        if (addBlackList.empty())
             addItemByType(EM_ITEM_TYPE_BLACKLIST, addBlackList);
     }
 }
-
 
 /**
   * @函数名
@@ -299,14 +324,17 @@ void AddressBookPanel::updateUserConfig(const std::map<std::string, std::string>
   * @author   cc
   * @date     2018/12/16
   */
-void AddressBookPanel::dealNavItem(QVBoxLayout *layout) {
-    for(NavigationItem *item : _mapNavItems)
+void AddressBookPanel::dealNavItem(QVBoxLayout *layout)
+{
+    for (NavigationItem *item : _mapNavItems)
     {
-        if (nullptr == item) continue;
+        if (nullptr == item)
+            continue;
 
         layout->addWidget(item);
         QWidget *wgt = _mapItemWidgets.value(item->getItemType());
-        if (wgt) {
+        if (wgt)
+        {
             wgt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
             item->registerWgt(wgt);
             layout->addWidget(wgt);
@@ -318,31 +346,34 @@ void AddressBookPanel::dealNavItem(QVBoxLayout *layout) {
 }
 
 //
-void AddressBookPanel::addItemByType(QUInt8 type, const QVector<std::string> &users) {
+void AddressBookPanel::addItemByType(QUInt8 type, const QVector<std::string> &users)
+{
     auto func = [this, type, users]() {
         QMutexLocker locker(&_mutex);
-        ListItemView *listview = (ListItemView *) _mapItemWidgets.value(type);
+        ListItemView *listview = (ListItemView *)_mapItemWidgets.value(type);
 
-        if (nullptr != listview) {
-            for (const std::string& id : users) {
+        if (nullptr != listview)
+        {
+            for (const std::string &id : users)
+            {
                 std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = DB_PLAT.getUserInfo(id);
 
-                if(nullptr == userInfo)
+                if (nullptr == userInfo)
                 {
                     userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
                     userInfo->XmppId = id;
-                   AddressBookMsgManager::getUserInfo(userInfo);
+                    AddressBookMsgManager::getUserInfo(userInfo);
                 }
 
-                if (nullptr != userInfo) {
+                if (nullptr != userInfo)
+                {
 
 #ifdef _STARTALK
                     QString defaltHead = ":/QTalk/image1/StarTalk_defaultHead.png";
 #else
                     QString defaltHead = ":/QTalk/image1/headPortrait.png";
 #endif
-                    QString iconPath = userInfo->HeaderSrc.empty() ? defaltHead :
-                                       QString::fromStdString(QTalk::GetHeadPathByUrl(userInfo->HeaderSrc));
+                    QString iconPath = userInfo->HeaderSrc.empty() ? defaltHead : QString::fromStdString(QTalk::GetHeadPathByUrl(userInfo->HeaderSrc));
                     listview->addItem(QString::fromStdString(id), EM_TYPE_USER, iconPath,
                                       QString::fromStdString(QTalk::getUserName(userInfo)));
                 }
@@ -358,12 +389,15 @@ void AddressBookPanel::addItemByType(QUInt8 type, const QVector<std::string> &us
  * @param type
  * @param users
  */
-void AddressBookPanel::removeItemByType(QUInt8 type, const QVector<std::string> &users) {
+void AddressBookPanel::removeItemByType(QUInt8 type, const QVector<std::string> &users)
+{
     auto func = [this, type, users]() {
         QMutexLocker locker(&_mutex);
-        ListItemView *listview = (ListItemView *) _mapItemWidgets.value(type);
-        if (nullptr != listview) {
-            for (const std::string& id : users) {
+        ListItemView *listview = (ListItemView *)_mapItemWidgets.value(type);
+        if (nullptr != listview)
+        {
+            for (const std::string &id : users)
+            {
                 listview->removeItem(QString::fromStdString(id));
             }
         }
@@ -388,27 +422,26 @@ void AddressBookPanel::removeItemByType(QUInt8 type, const QVector<std::string> 
  *
  * @param groups
  */
-void AddressBookPanel::onRecvGroups(const std::vector<QTalk::Entity::ImGroupInfo> &groups) {
+void AddressBookPanel::onRecvGroups(const std::vector<QTalk::Entity::ImGroupInfo> &groups)
+{
     //_arGroups.fromStdVector(groups);
     QtConcurrent::run([this, groups]() {
-#ifdef _MACOS
-        pthread_setname_np("AddressBookPanel::onRecvGroups");
-#endif
         QMutexLocker locker(&_mutex);
 
-        ListItemView *blkListview = (ListItemView *) _mapItemWidgets.value(EM_ITEM_TYPE_GROUPLIST);
+        ListItemView *blkListview = (ListItemView *)_mapItemWidgets.value(EM_ITEM_TYPE_GROUPLIST);
 
-        if (nullptr == blkListview) return;
+        if (nullptr == blkListview)
+            return;
 
-        for (const QTalk::Entity::ImGroupInfo &group : groups) {
+        for (const QTalk::Entity::ImGroupInfo &group : groups)
+        {
             _arGroups.push_back(group);
 #ifdef _STARTALK
             QString defaultGroupHead = ":/QTalk/image1/StarTalk_defaultGroup.png";
 #else
             QString defaultGroupHead = ":/QTalk/image1/defaultGroupHead.png";
 #endif
-            QString iconPath = group.HeaderSrc.empty() ? defaultGroupHead :
-                               QString::fromStdString(QTalk::GetHeadPathByUrl(group.HeaderSrc));
+            QString iconPath = group.HeaderSrc.empty() ? defaultGroupHead : QString::fromStdString(QTalk::GetHeadPathByUrl(group.HeaderSrc));
             if (!QFile::exists(iconPath) || QFileInfo(iconPath).isDir())
             {
                 iconPath = defaultGroupHead;
@@ -423,7 +456,8 @@ void AddressBookPanel::onRecvGroups(const std::vector<QTalk::Entity::ImGroupInfo
  *
  * @return
  */
-int AddressBookPanel::getFixedHeight() {
+int AddressBookPanel::getFixedHeight()
+{
     return _mapNavItems.size() * 50 + 10;
 }
 
@@ -432,22 +466,26 @@ int AddressBookPanel::getFixedHeight() {
  * @param id
  * @param type
  */
-void AddressBookPanel::onListItemClicked(const QString &id, const QUInt8 &type) {
+void AddressBookPanel::onListItemClicked(const QString &id, const QUInt8 &type)
+{
     // type
-    switch (type) {
-        case EM_TYPE_USER: {
-            showUserCard(id);
-            break;
-        }
-        case EM_TYPE_GROUP:
-        {
-            StSessionInfo stSession(QTalk::Enum::GroupChat, id, "");
-            emit sgSwitchCurFun(0);
-            emit sgOpenNewSession(stSession);
-
-            break;
-        }
-        default:break;
+    switch (type)
+    {
+    case EM_TYPE_USER:
+    {
+        showUserCard(id);
+        break;
+    }
+    case EM_TYPE_GROUP:
+    {
+        // StSessionInfo stSession(QTalk::Enum::GroupChat, id, "");
+        // emit sgSwitchCurFun(0);
+        // emit sgOpenNewSession(stSession);
+        showGroupCard(id);
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -455,41 +493,47 @@ void AddressBookPanel::onListItemClicked(const QString &id, const QUInt8 &type) 
  *
  * @param id 用户xmppid
  */
-void AddressBookPanel::showUserCard(const QString &id) {
+void AddressBookPanel::showUserCard(const QString &id)
+{
 
     static bool flag = false;
-    if(flag) return;
-    else flag = true;
+    if (flag)
+        return;
+    else
+        flag = true;
+
+    if (nullptr == _pUserCard)
+    {
+        _pUserCard = new UserCard(this);
+        _rightLay->addWidget(_pUserCard);
+    }
+    _rightLay->setCurrentWidget(_pUserCard);
 
     //
-    auto ret = QtConcurrent::run([this, id](){
+    auto ret = QtConcurrent::run([this, id]() {
         _imuserSup = std::make_shared<QTalk::Entity::ImUserSupplement>();
         _userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
         _userInfo->XmppId = id.toStdString();
         _imuserSup->XmppId = id.toStdString();
-       AddressBookMsgManager::getUserCard(_imuserSup, _userInfo);
+        AddressBookMsgManager::getUserCard(_imuserSup, _userInfo);
     });
-//    ret.waitForFinished();
+    //    ret.waitForFinished();
     while (!ret.isFinished())
         QApplication::processEvents(QEventLoop::AllEvents, 100);
     //
     if (nullptr == _imuserSup)
         return;
-
-    if (nullptr == _pUserCard) {
-        _pUserCard = new UserCard(this);
-    }
-    _rightLay->addWidget(_pUserCard);
     _pUserCard->showUserCard(_imuserSup, _userInfo);
 
     int flags = _arStarContact.contains(_imuserSup->XmppId);
     flags |= _arBlackList.contains(_imuserSup->XmppId) << 1;
-//    flags |= _arFriends.contains(_imuserSup->XmppId) << 2;
+    //    flags |= _arFriends.contains(_imuserSup->XmppId) << 2;
     _pUserCard->setFlags(flags);
-    if (_mapMaskNames.contains(_imuserSup->XmppId)) {
+    if (_mapMaskNames.contains(_imuserSup->XmppId))
+    {
         _pUserCard->setMaskName(QString::fromStdString(_mapMaskNames[_imuserSup->XmppId]));
     }
-    _rightLay->setCurrentWidget(_pUserCard);
+
     flag = false;
 }
 
@@ -497,24 +541,52 @@ void AddressBookPanel::showUserCard(const QString &id) {
  * 显示群
  * @param id 群id
  */
-void AddressBookPanel::showGroupCard(const QString &id) {
+void AddressBookPanel::showGroupCard(const QString &id)
+{
+    static bool flag = false;
+    if (flag)
+        return;
+    else
+        flag = true;
 
+    if (_pGroupWnd.isNull())
+    {
+        _pGroupWnd = new GroupWnd(this);
+        _rightLay->addWidget(_pGroupWnd);
+    }
+    _rightLay->setCurrentWidget(_pGroupWnd);
+
+    auto ret = QtConcurrent::run([this, id]() {
+        //
+        _imGroupSup = std::make_shared<QTalk::Entity::ImGroupInfo>();
+        _imGroupSup->GroupId = id.toStdString();
+        AddressBookMsgManager::getGroupMembers(id.toStdString());
+        AddressBookMsgManager::getGroupCard(_imGroupSup);
+    });
+
+    //
+    while (!ret.isFinished())
+        QApplication::processEvents(QEventLoop::AllEvents, 100);
+
+    _pGroupWnd->setData(_imGroupSup);
+    flag = false;
 }
 
 /**
  *
  * @param userId
  */
-void AddressBookPanel::getPhoneNo(const std::string &userId) {
+void AddressBookPanel::getPhoneNo(const std::string &userId)
+{
     QtConcurrent::run([this, userId]() {
         QMutexLocker locker(&_mutex);
-            std::string phoneNo;
-       AddressBookMsgManager::getUserPhoneNo(userId, phoneNo);
+        std::string phoneNo;
+        AddressBookMsgManager::getUserPhoneNo(userId, phoneNo);
 
-        if (!phoneNo.empty()) {
+        if (!phoneNo.empty())
+        {
             emit gotPhoneNo(userId, phoneNo);
         }
-
     });
 }
 
@@ -522,17 +594,19 @@ void AddressBookPanel::getPhoneNo(const std::string &userId) {
  * 星标联系人
  * @param userId
  */
-void AddressBookPanel::starUser(const std::string &userId) {
+void AddressBookPanel::starUser(const std::string &userId)
+{
     bool isStar = _arStarContact.contains(userId);
     QString val = QString::number(isStar ? 0 : 1);
-   AddressBookMsgManager::setUserSetting(isStar, "kStarContact", userId, val.toStdString());
+    AddressBookMsgManager::setUserSetting(isStar, "kStarContact", userId, val.toStdString());
     _rightLay->setCurrentWidget(_pEmptyLabel);
 }
 
-void AddressBookPanel::addBlackList(const std::string &userId) {
+void AddressBookPanel::addBlackList(const std::string &userId)
+{
     bool isBlack = _arBlackList.contains(userId);
     QString val = QString::number(isBlack ? 0 : 1);
-   AddressBookMsgManager::setUserSetting(isBlack, "kBlackList", userId, val.toStdString());
+    AddressBookMsgManager::setUserSetting(isBlack, "kBlackList", userId, val.toStdString());
     _rightLay->setCurrentWidget(_pEmptyLabel);
 }
 
@@ -541,22 +615,24 @@ void AddressBookPanel::addBlackList(const std::string &userId) {
  * @param structure
  * @param count
  */
-void AddressBookPanel::creatGroup(const QString &structure, const QString &groupName) {
+void AddressBookPanel::creatGroup(const QString &structure, const QString &groupName)
+{
     // 获取群成员
     std::vector<std::string> arMembers;
-   AddressBookMsgManager::getStructureMembers(structure.toStdString(), arMembers);
-    if (!arMembers.empty()) {
+    AddressBookMsgManager::getStructureMembers(structure.toStdString(), arMembers);
+    if (!arMembers.empty())
+    {
         // 发送建群请求
-        QString groupId = QString("%1@conference.%2").arg(QTalk::utils::getMessageId().c_str()).
-                arg(PLAT.getSelfDomain().c_str());
+        QString groupId = QString("%1@conference.%2").arg(QTalk::utils::getMessageId().c_str()).arg(PLAT.getSelfDomain().c_str());
         groupId = groupId.replace("-", "");
         mapGroupMembers[groupId.toStdString()] = arMembers;
         //
         QString realName = groupName;
-        if (realName.isEmpty()) {
+        if (realName.isEmpty())
+        {
             realName = structure.mid(1);
         }
-       AddressBookMsgManager::creatGroup(groupId.toStdString(), realName.toStdString());
+        AddressBookMsgManager::creatGroup(groupId.toStdString(), realName.toStdString());
     }
 }
 
@@ -572,10 +648,12 @@ void AddressBookPanel::creatGroup(const QString &structure, const QString &group
 //    _pStaffModel = (QStandardItemModel *) model;
 //}
 
-void AddressBookPanel::onCreatGroupRet(const std::string &groupId) {
+void AddressBookPanel::onCreatGroupRet(const std::string &groupId)
+{
     auto it = mapGroupMembers.find(groupId);
-    if (it != mapGroupMembers.end()) {
-       AddressBookMsgManager::addGroupMember(*it, groupId);
+    if (it != mapGroupMembers.end())
+    {
+        AddressBookMsgManager::addGroupMember(*it, groupId);
         mapGroupMembers.erase(it);
     }
 }
@@ -583,28 +661,35 @@ void AddressBookPanel::onCreatGroupRet(const std::string &groupId) {
 /**
  *
  */
-void AddressBookPanel::jumpToUserStructre(const QString &useId) {
+void AddressBookPanel::jumpToUserStructre(const QString &useId)
+{
     //_mapItemWidgets[EM_ITEM_TYPE_STAFF];
-    if (_mapNavItems.contains(EM_ITEM_TYPE_STAFF) && _mapNavItems[EM_ITEM_TYPE_STAFF]) {
+    if (_mapNavItems.contains(EM_ITEM_TYPE_STAFF) && _mapNavItems[EM_ITEM_TYPE_STAFF])
+    {
         onNavItemClicked(EM_ITEM_TYPE_STAFF);
         _mapNavItems[EM_ITEM_TYPE_STAFF]->setSelectState(true);
     }
     //
-    if (_mapItemWidgets.contains(EM_ITEM_TYPE_STAFF)) {
+    if (_mapItemWidgets.contains(EM_ITEM_TYPE_STAFF))
+    {
         QWidget *wgt = _mapItemWidgets[EM_ITEM_TYPE_STAFF];
-        if (nullptr != wgt && wgt == _pStaffView && _pStaffModel) {
+        if (nullptr != wgt && wgt == _pStaffView && _pStaffModel)
+        {
             _pShowItem = nullptr;
             _pStaffView->collapseAll();
             //
             int rowCount = _pStaffModel->rowCount();
-            for (int row = 0; row < rowCount; ++row) {
+            for (int row = 0; row < rowCount; ++row)
+            {
                 QStandardItem *tmpItem = _pStaffModel->item(row);
                 getShowItem(tmpItem, useId);
-                if (nullptr != _pShowItem) {
+                if (nullptr != _pShowItem)
+                {
                     break;
                 }
             }
-            if (nullptr != _pShowItem) {
+            if (nullptr != _pShowItem)
+            {
                 parentShow(_pShowItem);
                 _pStaffView->scrollTo(_pShowItem->index(), QAbstractItemView::PositionAtTop);
                 onStaffItemClicked(_pShowItem->index());
@@ -619,22 +704,30 @@ void AddressBookPanel::jumpToUserStructre(const QString &useId) {
  * @param parentItem
  * @param userId
  */
-void AddressBookPanel::getShowItem(QStandardItem *parentItem, const QString &userId) {
-    if (nullptr != _pShowItem) {
+void AddressBookPanel::getShowItem(QStandardItem *parentItem, const QString &userId)
+{
+    if (nullptr != _pShowItem)
+    {
         return;
     }
 
     int rowCount = parentItem->rowCount();
-    for (int row = 0; row < rowCount; row++) {
+    for (int row = 0; row < rowCount; row++)
+    {
         QStandardItem *tmpItem = parentItem->child(row, 0);
-        if (nullptr == tmpItem) continue;
+        if (nullptr == tmpItem)
+            continue;
         //
-        if (tmpItem->rowCount() > 0) {
+        if (tmpItem->rowCount() > 0)
+        {
             getShowItem(tmpItem, userId);
-        } else {
+        }
+        else
+        {
             QString xmppId = tmpItem->data(EM_STAFF_DATATYPE_XMPPID).toString();
 
-            if (xmppId == userId) {
+            if (xmppId == userId)
+            {
                 _pShowItem = tmpItem;
                 break;
             }
@@ -642,29 +735,36 @@ void AddressBookPanel::getShowItem(QStandardItem *parentItem, const QString &use
     }
 }
 
-void AddressBookPanel::parentShow(QStandardItem *item) {
+void AddressBookPanel::parentShow(QStandardItem *item)
+{
     QStandardItem *tmpItem(item);
     QList<QStandardItem *> aritems;
-    while (tmpItem->parent() != nullptr) {
+    while (tmpItem->parent() != nullptr)
+    {
         tmpItem = tmpItem->parent();
         aritems.push_front(tmpItem);
     }
-        for(QStandardItem *i : aritems) {
-            _pStaffView->expand(i->index());
-        }
+    for (QStandardItem *i : aritems)
+    {
+        _pStaffView->expand(i->index());
+    }
 }
 
-void AddressBookPanel::onStaffItemClicked(const QModelIndex &index) {
+void AddressBookPanel::onStaffItemClicked(const QModelIndex &index)
+{
     QString xmppid = index.data(EM_STAFF_DATATYPE_XMPPID).toString();
     bool hasChild = index.data(EM_STAFF_DATATYPE_HASCHILD).toBool();
-    if (hasChild) {
+    if (hasChild)
+    {
         QString structureName = index.data(EM_STAFF_DATATYPE_STRUCTURE).toString();
         QString text = index.data(EM_STAFF_DATATYPE_TEXT).toString();
         int count = 0;
         AddressBookMsgManager::getStructureCount(QString("%1/%2").arg(structureName, text).toStdString(), count);
         _pStaffStructure->setData(structureName, text, count);
         _rightLay->setCurrentWidget(_pStaffStructure);
-    } else {
+    }
+    else
+    {
         showUserCard(xmppid);
     }
 }
@@ -674,27 +774,33 @@ void AddressBookPanel::onStaffItemClicked(const QModelIndex &index) {
  */
 void AddressBookPanel::onJumpToStructre(const QString &strureName)
 {
-    if (_mapNavItems.contains(EM_ITEM_TYPE_STAFF) && _mapNavItems[EM_ITEM_TYPE_STAFF]) {
+    if (_mapNavItems.contains(EM_ITEM_TYPE_STAFF) && _mapNavItems[EM_ITEM_TYPE_STAFF])
+    {
         onNavItemClicked(EM_ITEM_TYPE_STAFF);
         _mapNavItems[EM_ITEM_TYPE_STAFF]->setSelectState(true);
     }
     //
-    if (_mapItemWidgets.contains(EM_ITEM_TYPE_STAFF)) {
+    if (_mapItemWidgets.contains(EM_ITEM_TYPE_STAFF))
+    {
         QWidget *wgt = _mapItemWidgets[EM_ITEM_TYPE_STAFF];
-        if (nullptr != wgt && wgt == _pStaffView && _pStaffModel) {
+        if (nullptr != wgt && wgt == _pStaffView && _pStaffModel)
+        {
             _pShowItem = nullptr;
             _pStaffView->collapseAll();
             //
             int rowCount = _pStaffModel->rowCount();
-            for (int row = 0; row < rowCount; ++row) {
+            for (int row = 0; row < rowCount; ++row)
+            {
                 QStandardItem *tmpItem = _pStaffModel->item(row);
 
                 getShowItemByStructre(tmpItem, strureName);
-                if (nullptr != _pShowItem) {
+                if (nullptr != _pShowItem)
+                {
                     break;
                 }
             }
-            if (nullptr != _pShowItem) {
+            if (nullptr != _pShowItem)
+            {
                 parentShow(_pShowItem);
                 _pStaffView->scrollTo(_pShowItem->index(), QAbstractItemView::PositionAtTop);
                 onStaffItemClicked(_pShowItem->index());
@@ -704,19 +810,18 @@ void AddressBookPanel::onJumpToStructre(const QString &strureName)
     }
 }
 
-void AddressBookPanel::getShowItemByStructre(QStandardItem* parentItem, const QString& structre)
+void AddressBookPanel::getShowItemByStructre(QStandardItem *parentItem, const QString &structre)
 {
-    if (nullptr != _pShowItem) {
+    if (nullptr != _pShowItem)
+    {
         return;
     }
 
     QString structureName = parentItem->data(EM_STAFF_DATATYPE_STRUCTURE).toString();
     QString text = parentItem->data(EM_STAFF_DATATYPE_TEXT).toString();
-    QString tmpStructure = structureName.isEmpty() ?
-                           QString("/%1").arg(text) :
-                           QString("%1/%2").arg(structureName, text);
+    QString tmpStructure = structureName.isEmpty() ? QString("/%1").arg(text) : QString("%1/%2").arg(structureName, text);
 
-    if(tmpStructure == structre)
+    if (tmpStructure == structre)
     {
         _pShowItem = parentItem;
         return;
@@ -724,9 +829,11 @@ void AddressBookPanel::getShowItemByStructre(QStandardItem* parentItem, const QS
 
     //
     int rowCount = parentItem->rowCount();
-    for (int row = 0; row < rowCount; row++) {
+    for (int row = 0; row < rowCount; row++)
+    {
         QStandardItem *tmpItem = parentItem->child(row, 0);
-        if (nullptr == tmpItem) continue;
+        if (nullptr == tmpItem)
+            continue;
         //
         bool hasChild = tmpItem->data(EM_STAFF_DATATYPE_HASCHILD).toBool();
 
@@ -739,25 +846,26 @@ void AddressBookPanel::getShowItemByStructre(QStandardItem* parentItem, const QS
 
 void AddressBookPanel::onDestroyGroupRet(const std::string &groupId)
 {
-    ListItemView *blkListview = (ListItemView *) _mapItemWidgets.value(EM_ITEM_TYPE_GROUPLIST);
-    if (nullptr == blkListview) return;
+    ListItemView *blkListview = (ListItemView *)_mapItemWidgets.value(EM_ITEM_TYPE_GROUPLIST);
+    if (nullptr == blkListview)
+        return;
     blkListview->removeItem(QString::fromStdString(groupId));
 }
 
-void AddressBookPanel::getStructure() {
+void AddressBookPanel::getStructure()
+{
 
     auto func = [this]() {
         {
             {
                 std::lock_guard<QTalk::util::spin_mutex> lock(sm);
                 std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>> structure;
-               AddressBookMsgManager::getStructure(structure);
+                AddressBookMsgManager::getStructure(structure);
 
                 _pstStrcuture = new StStrcuture;
 
-                std::for_each(structure.begin(), structure.end(), [this](const std::shared_ptr<QTalk::Entity::ImUserInfo>& info) {
-
-                    if(info->isVisible)
+                std::for_each(structure.begin(), structure.end(), [this](const std::shared_ptr<QTalk::Entity::ImUserInfo> &info) {
+                    if (info->isVisible)
                     {
                         StStrcuture *tmp = _pstStrcuture;
                         QStringList sto = QString::fromStdString(info->DescInfo).split("/");
@@ -766,14 +874,16 @@ void AddressBookPanel::getStructure() {
                         {
                             const QString &o = sto.at(i);
 
-                            if (o.isEmpty()) continue;
+                            if (o.isEmpty())
+                                continue;
 
                             if (nullptr == tmp->mapChild[o])
                                 tmp->mapChild[o] = new StStrcuture;
 
                             tmp = tmp->mapChild[o];
                             tmp->curStrcutureName = getStrName(sto, i);
-                            if (i == sto.size() - 1) {
+                            if (i == sto.size() - 1)
+                            {
                                 tmp->oUsers.push_back(info);
                             }
                         }
@@ -787,18 +897,21 @@ void AddressBookPanel::getStructure() {
     QtConcurrent::run(func);
 }
 
-void AddressBookPanel::updateUi() {
+void AddressBookPanel::updateUi()
+{
 
-    if (nullptr != _pstStrcuture) {
+    if (nullptr != _pstStrcuture)
+    {
 
-        if(_pstStrcuture->mapChild.empty())
+        if (_pstStrcuture->mapChild.empty())
         {
             _pStaffView->setVisible(false);
             _mapNavItems[EM_ITEM_TYPE_STAFF]->setVisible(false);
         }
         //
         auto it = _pstStrcuture->mapChild.begin();
-        while (it != _pstStrcuture->mapChild.end()) {
+        while (it != _pstStrcuture->mapChild.end())
+        {
 
             auto *item = new QStandardItem();
             item->setData(it->first, EM_STAFF_DATATYPE_TEXT);
@@ -815,25 +928,28 @@ void AddressBookPanel::updateUi() {
             it++;
         }
 
-//        _pTreeWgt->setColumnWidth(EM_COLUMNTYPE_COMTENT, 230);
-//        _pTreeWgt->setColumnWidth(EM_COLUMNTYPE_CHECKBOX, 30);
+        //        _pTreeWgt->setColumnWidth(EM_COLUMNTYPE_COMTENT, 230);
+        //        _pTreeWgt->setColumnWidth(EM_COLUMNTYPE_CHECKBOX, 30);
     }
-//    emit setTreeDataFinised();
+    //    emit setTreeDataFinised();
 }
 
 //
-void AddressBookPanel::creatChildItem(const StStrcuture *os, QStandardItem *parentItem) {
+void AddressBookPanel::creatChildItem(const StStrcuture *os, QStandardItem *parentItem)
+{
 
-//    static int index = 0;
-//    if(++index == 10)
-//    {
-//        QApplication::processEvents(QEventLoop::AllEvents, 100);
-//        index = 0;
-//    }
+    //    static int index = 0;
+    //    if(++index == 10)
+    //    {
+    //        QApplication::processEvents(QEventLoop::AllEvents, 100);
+    //        index = 0;
+    //    }
 
-    if (os) {
+    if (os)
+    {
         auto it = os->mapChild.begin();
-        while (it != os->mapChild.end()) {
+        while (it != os->mapChild.end())
+        {
 
             auto *item = new QStandardItem();
             item->setData(it->first, EM_STAFF_DATATYPE_TEXT);
@@ -851,11 +967,13 @@ void AddressBookPanel::creatChildItem(const StStrcuture *os, QStandardItem *pare
         }
 
         auto itu = os->oUsers.begin();
-        while (itu != os->oUsers.end()) {
+        while (itu != os->oUsers.end())
+        {
 
             QStandardItem *item = new QStandardItem(QString((*itu)->Name.c_str()));
             QString headrSrc = QString(QTalk::GetHeadPathByUrl((*itu)->HeaderSrc).c_str());
-            if (QFileInfo(headrSrc).isDir() || !QFile::exists(headrSrc)) {
+            if (QFileInfo(headrSrc).isDir() || !QFile::exists(headrSrc))
+            {
 #ifdef _STARTALK
                 headrSrc = ":/QTalk/image1/StarTalk_defaultHead.png";
 #else
@@ -879,94 +997,108 @@ void AddressBookPanel::creatChildItem(const StStrcuture *os, QStandardItem *pare
     }
 }
 
-
 void AddressBookPanel::gotIncrementUser(const std::vector<QTalk::Entity::ImUserInfo> &arUserInfo,
-                                      const std::vector<std::string> &arDeletes)
+                                        const std::vector<std::string> &arDeletes)
 {
     // todo 先全部刷 不考虑增量
-//    // add
-//    for(const auto& it : arUserInfo)
-//    {
-//        std::string xmppId = it.XmppId;
-//
-//        QStringList sto = QString::fromStdString(it.DescInfo).split("/");
-//
-//        if(nullptr == _pstStrcuture) break;
-//
-//        StStrcuture *tmp = _pstStrcuture;
-//        for (int i = 0; i < sto.size(); i++)
-//        {
-//            const QString &o = sto.at(i);
-//
-//            if (o.isEmpty()) continue;
-//
-//            if (nullptr == tmp->mapChild[o])
-//            {
-//                tmp->mapChild[o] = new StStrcuture;
-//                tmp->mapChild[o]->curStrcutureName = getStrName(sto, i);
-//                //
-//                auto *item = new QStandardItem();
-//                item->setData(o, EM_STAFF_DATATYPE_TEXT);
-//                item->setData(":/GroupManager/image1/structure.png", EM_STAFF_DATATYPE_ICONPATH);
-//                item->setData(true, EM_STAFF_DATATYPE_HASCHILD);
-//                item->setData(getStrName(sto, i), EM_STAFF_DATATYPE_STRUCTURE);
-//                //
-//                if(tmp->item)
-//                    tmp->item->appendRow(item);
-//                else
-//                    _pStaffModel->appendRow(item);
-//
-//                tmp->mapChild[o]->item = item;
-//            }
-//
-//            tmp = tmp->mapChild[o];
-//
-//            if (i == sto.size() - 1) {
-//                auto info = std::make_shared<QTalk::Entity::ImUserInfo>(it);
-//                tmp->oUsers.push_back(info);
-//                //
-//                QStandardItem *item = new QStandardItem(QString(info->Name.c_str()));
-//                QString headrSrc = QString(QTalk::GetHeadPathByUrl(info->HeaderSrc).c_str());
-//                if (QFileInfo(headrSrc).isDir() || !QFile::exists(headrSrc)) {
-//#ifdef _STARTALK
-//                    headrSrc = ":/QTalk/image1/StarTalk_defaultHead.png";
-//#else
-//                    headrSrc = ":/QTalk/image1/headPortrait.png";
-//#endif
-//                }
-//                item->setData(QString::fromStdString(info->Name), EM_STAFF_DATATYPE_TEXT);
-//                item->setData(headrSrc, EM_STAFF_DATATYPE_ICONPATH);
-//                item->setData(false, EM_STAFF_DATATYPE_HASCHILD);
-//                item->setData(QString(info->XmppId.c_str()), EM_STAFF_DATATYPE_XMPPID);
-//                item->setData(QString(info->SearchIndex.c_str()), EM_DATATYPE_SEARCHKEY);
-//                auto *checkItem = new QStandardItem();
-//                checkItem->setData(false, EM_DATATYPE_CHECKSTATE);
-//
-//                if(tmp->item)
-//                    tmp->item->appendRow(QList<QStandardItem *>() << item << checkItem);
-//                else
-//                    _pStaffModel->appendRow(QList<QStandardItem *>() << item << checkItem);
-//
-//                _staffItems[info->XmppId] = item;
-//            }
-//        }
-//    }
-//    // delete
-//    for(const auto& id : arDeletes)
-//    {
-//        //
-//        if(_staffItems.find(id) != _staffItems.end())
-//        {
-//            auto* item = _staffItems[id];
-//            _pStaffModel->removeRow(item->row(), item->parent()->index());
-//            //
-//            _staffItems.erase(id);
-//        }
-//    }
+    //    // add
+    //    for(const auto& it : arUserInfo)
+    //    {
+    //        std::string xmppId = it.XmppId;
+    //
+    //        QStringList sto = QString::fromStdString(it.DescInfo).split("/");
+    //
+    //        if(nullptr == _pstStrcuture) break;
+    //
+    //        StStrcuture *tmp = _pstStrcuture;
+    //        for (int i = 0; i < sto.size(); i++)
+    //        {
+    //            const QString &o = sto.at(i);
+    //
+    //            if (o.isEmpty()) continue;
+    //
+    //            if (nullptr == tmp->mapChild[o])
+    //            {
+    //                tmp->mapChild[o] = new StStrcuture;
+    //                tmp->mapChild[o]->curStrcutureName = getStrName(sto, i);
+    //                //
+    //                auto *item = new QStandardItem();
+    //                item->setData(o, EM_STAFF_DATATYPE_TEXT);
+    //                item->setData(":/GroupManager/image1/structure.png", EM_STAFF_DATATYPE_ICONPATH);
+    //                item->setData(true, EM_STAFF_DATATYPE_HASCHILD);
+    //                item->setData(getStrName(sto, i), EM_STAFF_DATATYPE_STRUCTURE);
+    //                //
+    //                if(tmp->item)
+    //                    tmp->item->appendRow(item);
+    //                else
+    //                    _pStaffModel->appendRow(item);
+    //
+    //                tmp->mapChild[o]->item = item;
+    //            }
+    //
+    //            tmp = tmp->mapChild[o];
+    //
+    //            if (i == sto.size() - 1) {
+    //                auto info = std::make_shared<QTalk::Entity::ImUserInfo>(it);
+    //                tmp->oUsers.push_back(info);
+    //                //
+    //                QStandardItem *item = new QStandardItem(QString(info->Name.c_str()));
+    //                QString headrSrc = QString(QTalk::GetHeadPathByUrl(info->HeaderSrc).c_str());
+    //                if (QFileInfo(headrSrc).isDir() || !QFile::exists(headrSrc)) {
+    //#ifdef _STARTALK
+    //                    headrSrc = ":/QTalk/image1/StarTalk_defaultHead.png";
+    //#else
+    //                    headrSrc = ":/QTalk/image1/headPortrait.png";
+    //#endif
+    //                }
+    //                item->setData(QString::fromStdString(info->Name), EM_STAFF_DATATYPE_TEXT);
+    //                item->setData(headrSrc, EM_STAFF_DATATYPE_ICONPATH);
+    //                item->setData(false, EM_STAFF_DATATYPE_HASCHILD);
+    //                item->setData(QString(info->XmppId.c_str()), EM_STAFF_DATATYPE_XMPPID);
+    //                item->setData(QString(info->SearchIndex.c_str()), EM_DATATYPE_SEARCHKEY);
+    //                auto *checkItem = new QStandardItem();
+    //                checkItem->setData(false, EM_DATATYPE_CHECKSTATE);
+    //
+    //                if(tmp->item)
+    //                    tmp->item->appendRow(QList<QStandardItem *>() << item << checkItem);
+    //                else
+    //                    _pStaffModel->appendRow(QList<QStandardItem *>() << item << checkItem);
+    //
+    //                _staffItems[info->XmppId] = item;
+    //            }
+    //        }
+    //    }
+    //    // delete
+    //    for(const auto& id : arDeletes)
+    //    {
+    //        //
+    //        if(_staffItems.find(id) != _staffItems.end())
+    //        {
+    //            auto* item = _staffItems[id];
+    //            _pStaffModel->removeRow(item->row(), item->parent()->index());
+    //            //
+    //            _staffItems.erase(id);
+    //        }
+    //    }
     // 清楚数据
     delete _pstStrcuture;
     _pstStrcuture = nullptr;
     _pStaffModel->clear();
     // 重新刷新
     getStructure();
+}
+
+void AddressBookPanel::onRecvGroupMember(const std::string &groupId,
+                                         const std::map<std::string, QTalk::StUserCard> &userCards,
+                                         const std::map<std::string, QUInt8> &userRole)
+{
+    if (_pGroupWnd && _imGroupSup && _imGroupSup->GroupId == groupId)
+    {
+        emit _pGroupWnd->sgUpdateGroupMember(userCards, userRole);
+    }
+}
+
+void AddressBookPanel::showEmptyLabel()
+{
+    _rightLay->setCurrentWidget(_pEmptyLabel);
 }

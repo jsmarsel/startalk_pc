@@ -88,6 +88,7 @@ void HeadPhotoLab::paintEvent(QPaintEvent *e)
     if(!pixmap.isNull())
     {
         QPainter painter(this);
+        painter.save();
         painter.setRenderHints(QPainter::Antialiasing, true);
         painter.setRenderHints(QPainter::SmoothPixmapTransform, true);
         QRect headRect(0, 0, _radius * 2, _radius * 2);
@@ -110,6 +111,13 @@ void HeadPhotoLab::paintEvent(QPaintEvent *e)
 
         if(!_showRect)
             painter.fillPath(path, QTalk::StyleDefine::instance().getHeadPhotoMaskColor());
+
+        painter.restore();
+        if(_showDot) {
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QBrush(Qt::red));
+            painter.drawEllipse( 0, _radius * 2 - 7, 7, 7);
+        }
     }
     //
     QLabel::paintEvent(e);
@@ -163,4 +171,9 @@ void HeadPhotoLab::stopMovie() {
         delete _mov;
         _mov = nullptr;
     }
+}
+
+void HeadPhotoLab::setTip(bool tip) {
+    _showDot = tip;
+    update();
 }

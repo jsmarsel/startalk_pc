@@ -9,24 +9,38 @@
 #include <QLabel>
 #include <QTextEdit>
 #include <QPushButton>
+#include <QStackedLayout>
 
-class GroupTopic : public QFrame
-{
-	Q_OBJECT
+class GroupTopic : public QFrame {
+Q_OBJECT
 public:
-	explicit GroupTopic(QWidget* parent = nullptr);
-	~GroupTopic() override;
+    explicit GroupTopic(QString &groupId,
+                        QString &groupName,
+                        QString &groupTopic,
+                        QWidget *parent = nullptr);
+
+    ~GroupTopic() override;
 
 public:
-	void setTopic(const QString& topic);
+    void setTopic(const QString &topic);
 
 protected:
-	void initUi();
+    void initUi();
     bool eventFilter(QObject *, QEvent *) override;
 
 private:
-	QTextEdit*   _pTopicEdit;
-	QPushButton* _pBtnShowMore;
+    void onEditBtnClicked();
+
+private:
+    QTextEdit *_pTopicEdit{};
+    QLabel *_pEmptyLabel{};
+    QStackedLayout *_pStackLay{};
+    QPushButton *_pBtnShowMore{};
+
+private:
+    QString &_groupId;
+    QString &_groupName;
+    QString &_groupTopic;
 };
 
 #endif//_GROUPTOPIC_H_

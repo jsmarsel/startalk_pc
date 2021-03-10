@@ -1,8 +1,6 @@
 ﻿#include "UINavigationPlug.h"
 
-
-UINavigationPlug::UINavigationPlug() :
-    _mainPanel(nullptr)
+UINavigationPlug::UINavigationPlug() : _mainPanel(nullptr)
 {
 }
 
@@ -20,7 +18,7 @@ void UINavigationPlug::init()
 {
     if (!_mainPanel)
     {
-        _mainPanel = new NavigationMainPanel;
+        _mainPanel = new SessionFrm;
     }
 }
 

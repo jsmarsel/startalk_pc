@@ -32,6 +32,7 @@
 #include "../Platform/AppSetting.h"
 #include "../CustomUi/QtMessageBox.h"
 #include "MacApp.h"
+#include "../QtUtil/Utils/utils.h"
 
 #ifdef _WINDOWS
 #include <windows.h>
@@ -52,17 +53,15 @@
 extern bool _sys_run;
 MainWindow::MainWindow(QWidget *parent) :
 #ifdef _MACOS
-    UShadowDialog(parent, true, false)
+                                          UShadowDialog(parent, true, false)
 #else
-    UShadowDialog(parent, true, true)
+                                          UShadowDialog(parent, true, false)
 #endif
 {
     //
     new QTalkMsgListener(this);
 #if defined(_STARTALK)
     setWindowTitle("StarTalk");
-#elif defined(_QCHAT)
-    setWindowTitle("QChat");
 #else
     setWindowTitle("QTalk");
 #endif
@@ -75,30 +74,36 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &MainWindow::sgCheckUpdate, this, &MainWindow::onCheckUpdater, Qt::QueuedConnection);
     //
     QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
-    for(const QHostAddress &address : info.addresses())
+    for (const QHostAddress &address : info.addresses())
     {
-        if(address.protocol() == QAbstractSocket::IPv4Protocol)
+        if (address.protocol() == QAbstractSocket::IPv4Protocol)
         {
             auto addr = address.toString();
-            if(addr != "127.0.0.1")
+            if (addr != "127.0.0.1")
                 _ipv4Address += QString("%1; ").arg(addr);
         }
     }
     //
-#ifdef _MACOS
+#ifdef Q_OS_MAC
     _pWindowMenuBar = new QMenuBar(nullptr);
     //
     QMenu *toolMenu = _pWindowMenuBar->addMenu(tr("工具"));
-    auto* addNew = new QAction(tr("程序多开"), toolMenu);
+    auto *addNew = new QAction(tr("程序多开"), toolMenu);
     _pFeedBackLog = new QAction(tr("快速反馈日志"), toolMenu);
     toolMenu->addAction(addNew);
     toolMenu->addAction(_pFeedBackLog);
     //
     connect(addNew, &QAction::triggered, this, &MainWindow::sgRunNewInstance);
+
+    auto *dockMenu = new QMenu(this);
+    dockMenu->setAsDockMenu();
+    auto *addNewDock = new QAction(tr("程序多开"), dockMenu);
+    dockMenu->addAction(addNewDock);
+    connect(addNewDock, &QAction::triggered, this, &MainWindow::sgRunNewInstance);
 #endif
-//   auto screens = QApplication::screens();
-//   for(auto* sc : screens)
-//       qInfo() << sc->name() << sc->availableGeometry() ;
+    //   auto screens = QApplication::screens();
+    //   for(auto* sc : screens)
+    //       qInfo() << sc->name() << sc->availableGeometry() ;
 
 #if defined(Q_OS_WIN)
     // connect(qApp, &QApplication::screenAdded, [this](QScreen* screen){
@@ -112,70 +117,78 @@ MainWindow::MainWindow(QWidget *parent) :
     _prcessInfo->start();
 }
 
-
 MainWindow::~MainWindow()
 {
     _prcessInfo->terminate();
     delete _prcessInfo;
 
-    if(_pLocalServer)
+    if (_pLocalServer)
         delete _pLocalServer;
-
 }
-
 
 bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
 {
 #ifdef _WINDOWS
     static const int boundaryWidth = 5;
-	MSG* msg = (MSG*)message;
-	double pixelRatio = this->devicePixelRatioF();
-	pixelRatio = qMax(pixelRatio, 1.0);
-	int tempBorderWidth = boundaryWidth;
-	switch (msg->message)
-	{
-	case WM_NCHITTEST:
-		qreal xPos = GET_X_LPARAM(msg->lParam) / pixelRatio - this->frameGeometry().x();
-		qreal yPos = GET_Y_LPARAM(msg->lParam) / pixelRatio - this->frameGeometry().y();
+    MSG *msg = (MSG *)message;
+    double pixelRatio = this->devicePixelRatioF();
+    pixelRatio = qMax(pixelRatio, 1.0);
+    int tempBorderWidth = boundaryWidth;
+    switch (msg->message)
+    {
+    case WM_NCHITTEST:
+        qreal xPos = GET_X_LPARAM(msg->lParam) / pixelRatio - this->frameGeometry().x();
+        qreal yPos = GET_Y_LPARAM(msg->lParam) / pixelRatio - this->frameGeometry().y();
 
-		if (xPos < tempBorderWidth && yPos < tempBorderWidth)
-			*result = HTTOPLEFT;
-		else if (xPos >= width() - tempBorderWidth && yPos < tempBorderWidth)
-			*result = HTTOPRIGHT;
-		else if (xPos < tempBorderWidth&&yPos >= height() - tempBorderWidth)
-			*result = HTBOTTOMLEFT;
-		else if (xPos >= width() - tempBorderWidth && yPos >= height() - tempBorderWidth)
-			*result = HTBOTTOMRIGHT;
-		else if (xPos < tempBorderWidth)
-			*result = HTLEFT;
-		else if (xPos >= width() - tempBorderWidth)
-			*result = HTRIGHT;
-		else if (yPos < tempBorderWidth)
-			*result = HTTOP;
-		else if (yPos >= height() - tempBorderWidth)
-			*result = HTBOTTOM;
-		else
-			return false;
-		return true;
-	}
+        if (xPos < tempBorderWidth && yPos < tempBorderWidth)
+            *result = HTTOPLEFT;
+        else if (xPos >= width() - tempBorderWidth && yPos < tempBorderWidth)
+            *result = HTTOPRIGHT;
+        else if (xPos < tempBorderWidth && yPos >= height() - tempBorderWidth)
+            *result = HTBOTTOMLEFT;
+        else if (xPos >= width() - tempBorderWidth && yPos >= height() - tempBorderWidth)
+            *result = HTBOTTOMRIGHT;
+        else if (xPos < tempBorderWidth)
+            *result = HTLEFT;
+        else if (xPos >= width() - tempBorderWidth)
+            *result = HTRIGHT;
+        else if (yPos < tempBorderWidth)
+            *result = HTTOP;
+        else if (yPos >= height() - tempBorderWidth)
+            *result = HTBOTTOM;
+        else
+            return false;
+        return true;
+    }
 #endif // _WINDOWS
-	return false;
+    return false;
 }
 
 void MainWindow::closeEvent(QCloseEvent *e)
 {
-	if (_sys_run)
-	{
-		this->setVisible(false);
-		e->ignore();
-	}
+    if (_sys_run)
+    {
+        this->setVisible(false);
+        e->ignore();
+    }
 }
 
 void MainWindow::init()
 {
     initPanels();
+    initQml();
     //
     GlobalManager::instance()->setStyleSheetAll();
+}
+
+//
+void MainWindow::initQml()
+{
+    _pView = new QmlView;
+    _pView->init();
+    //    QUrl source ("qrc:/qml/main.qml");
+    //    view->setSource(source);
+    //    view->show();
 }
 
 /**
@@ -188,7 +201,7 @@ void MainWindow::initPanels()
 {
     initTitleBar();
     initChatView();
-	initAddressBook();
+    initAddressBook();
     initGroupManager();
     initCardManager();
     initPictureBrowser();
@@ -205,10 +218,10 @@ void MainWindow::initLayouts()
     glay->setSpacing(0);
     _pCenternWgt->setLayout(glay);
     glay->addWidget(_mainFrm);
-//    _mainBottomFrm = new QFrame(this);
-//    _mainBottomFrm->setFixedHeight(6);
-//    _mainBottomFrm->setObjectName("MainWindowMainBottomFrm");
-//    glay->addWidget(_mainBottomFrm);
+    //    _mainBottomFrm = new QFrame(this);
+    //    _mainBottomFrm->setFixedHeight(6);
+    //    _mainBottomFrm->setObjectName("MainWindowMainBottomFrm");
+    //    glay->addWidget(_mainBottomFrm);
 
     if (!_mainLayout)
     {
@@ -231,7 +244,7 @@ void MainWindow::initLayouts()
     bodyLay->setMargin(0);
     bodyLay->setSpacing(0);
 
-	// 聊天窗口区域
+    // 聊天窗口区域
     _bottomSplt = new QSplitter;
     _bottomSplt->setHandleWidth(1);
     bodyLay->addWidget(_bottomSplt);
@@ -244,22 +257,22 @@ void MainWindow::initLayouts()
     {
         _bottomSplt->addWidget(_chatViewPanel);
     }
-    _bottomSplt->setStretchFactor(1,1);
+    _bottomSplt->setStretchFactor(1, 1);
     _bottomSplt->setCollapsible(0, false);
     _bottomSplt->setCollapsible(1, false);
 
-	// 通讯录相关
-	if (_pAddressBook)
-	{
-		_pAddressBook->setVisible(false);
+    // 通讯录相关
+    if (_pAddressBook)
+    {
+        _pAddressBook->setVisible(false);
         bodyLay->addWidget(_pAddressBook);
-	}
-	// OA相关
-	if (_pOAManager)
-	{
-		_pOAManager->setVisible(false);
+    }
+    // OA相关
+    if (_pOAManager)
+    {
+        _pOAManager->setVisible(false);
         bodyLay->addWidget(_pOAManager);
-	}
+    }
 }
 
 /**
@@ -269,7 +282,7 @@ void MainWindow::initLayouts()
   */
 void MainWindow::initTitleBar()
 {
-    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UITitlebarPlug");
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UITitlebarPlug");
     if (plugin)
     {
         _titleBarPlugin = qobject_cast<IUITitlebarPlug *>(plugin);
@@ -283,10 +296,9 @@ void MainWindow::initTitleBar()
     assert(_titleBar);
 }
 
-
 void MainWindow::initCardManager()
 {
-    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UICardManager");
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UICardManager");
     if (plugin)
     {
         _pCardManagerPlug = qobject_cast<IUICardManagerPlug *>(plugin);
@@ -300,7 +312,6 @@ void MainWindow::initCardManager()
     assert(_pCardManager);
 }
 
-
 /**
   * @功能描述 加载导航插件
   * @参数
@@ -308,7 +319,7 @@ void MainWindow::initCardManager()
   */
 void MainWindow::initNavigation()
 {
-    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UINavigationPlug");
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UINavigationPlug");
     if (plugin)
     {
         _navigationPlugin = qobject_cast<IUINavigationPlug *>(plugin);
@@ -329,7 +340,7 @@ void MainWindow::initNavigation()
   */
 void MainWindow::initChatView()
 {
-    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIChatViewPlug");
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UIChatViewPlug");
     if (plugin)
     {
         _chatViewPlugin = qobject_cast<IUIChatViewPlug *>(plugin);
@@ -353,7 +364,7 @@ void MainWindow::connectPlugs()
     connect(this, SIGNAL(sgSystemQuit()), this, SLOT(systemQuit()));
 
     qRegisterMetaType<QVector<int>>("QVector<int>");
-//    connect(_chatViewPanel, SIGNAL(recvMessageSignal()), _pSysTrayIcon, SLOT(onRecvMessage()));
+    //    connect(_chatViewPanel, SIGNAL(recvMessageSignal()), _pSysTrayIcon, SLOT(onRecvMessage()));
     connect(_titleBar, SIGNAL(sgCurFunChanged(int)),
             this, SLOT(onCurFunChanged(int)));
     connect(_pAddressBook, SIGNAL(sgSwitchCurFun(int)),
@@ -369,81 +380,81 @@ void MainWindow::connectPlugs()
     connect(this, SIGNAL(appDeactivated()), _navigationPanel, SLOT(onAppDeactivated()));
     connect(this, SIGNAL(appDeactivated()), _pSysTrayIcon, SLOT(onAppDeactivated()));
 
-    connect(_navigationPanel, SIGNAL(sgSessionInfo(const StSessionInfo&)),
-            _chatViewPanel, SLOT(onChatUserChanged(const StSessionInfo&)), Qt::QueuedConnection);
-    connect(_titleBar, SIGNAL(showSelfUserCard(const QString&)),
-            _pCardManager, SLOT(shwoUserCard(const QString&)));
-    connect(_chatViewPanel, SIGNAL(sgShowUserCard(const QString&)),
-            _pCardManager, SLOT(shwoUserCard(const QString&)));
-    connect(_chatViewPanel, SIGNAL(showUserCardSignal(const QString&)),
-            _pCardManager, SLOT(shwoUserCard(const QString&)));
-    connect(_navigationPanel, SIGNAL(showUserCardSignal(const QString&)),
-            _pCardManager, SLOT(shwoUserCard(const QString&)));
-    connect(_navigationPanel, SIGNAL(showGroupCardSignal(const QString&)),
-            _pCardManager, SLOT(showGroupCard(const QString&)));
-	connect(_chatViewPanel, SIGNAL(showGroupCardSignal(const QString&)),
-		_pCardManager, SLOT(showGroupCard(const QString&)));
+    connect(_navigationPanel, SIGNAL(sgSessionInfo(const StSessionInfo &)),
+            _chatViewPanel, SLOT(onChatUserChanged(const StSessionInfo &)), Qt::DirectConnection);
+    connect(_titleBar, SIGNAL(showSelfUserCard(const QString &)),
+            _pCardManager, SLOT(shwoUserCard(const QString &)));
+    connect(_chatViewPanel, SIGNAL(sgShowUserCard(const QString &)),
+            _pCardManager, SLOT(shwoUserCard(const QString &)));
+    connect(_chatViewPanel, SIGNAL(showUserCardSignal(const QString &)),
+            _pCardManager, SLOT(shwoUserCard(const QString &)));
+    connect(_navigationPanel, SIGNAL(showUserCardSignal(const QString &)),
+            _pCardManager, SLOT(shwoUserCard(const QString &)));
+    connect(_navigationPanel, SIGNAL(showGroupCardSignal(const QString &)),
+            _pCardManager, SLOT(showGroupCard(const QString &)));
+    connect(_chatViewPanel, SIGNAL(showGroupCardSignal(const QString &)),
+            _pCardManager, SLOT(showGroupCard(const QString &)));
 
-	qRegisterMetaType<QTalk::Entity::UID>("QTalk::Entity::UID");
-    connect(_navigationPanel, SIGNAL(removeSession(const QTalk::Entity::UID&)),
-            _chatViewPanel, SLOT(onRemoveSession(const QTalk::Entity::UID&)));
-    connect(_titleBar, SIGNAL(sgOpenNewSession(const StSessionInfo&)),
-            _navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
-    connect(this, SIGNAL(sgJumtoSession(const StSessionInfo&)),
-            _navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
-	connect(_pCardManager, SIGNAL(sgOpenNewSession(const StSessionInfo&)),
-		_navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
-	connect(_chatViewPanel, SIGNAL(sgOpenNewSession(const StSessionInfo&)),
-		_navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
-    connect(_pAddressBook, SIGNAL(sgOpenNewSession(const StSessionInfo&)),
-            _navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
+    qRegisterMetaType<QTalk::Entity::UID>("QTalk::Entity::UID");
+    connect(_navigationPanel, SIGNAL(removeSession(const QString &)),
+            _chatViewPanel, SLOT(onRemoveSession(const QString &)));
+    connect(_titleBar, SIGNAL(sgOpenNewSession(const StSessionInfo &)),
+            _navigationPanel, SLOT(onNewSession(const StSessionInfo &)));
+    connect(this, SIGNAL(sgJumtoSession(const StSessionInfo &)),
+            _navigationPanel, SLOT(onNewSession(const StSessionInfo &)));
+    connect(_pCardManager, SIGNAL(sgOpenNewSession(const StSessionInfo &)),
+            _navigationPanel, SLOT(onNewSession(const StSessionInfo &)));
+    connect(_chatViewPanel, SIGNAL(sgOpenNewSession(const StSessionInfo &)),
+            _navigationPanel, SLOT(onNewSession(const StSessionInfo &)));
+    connect(_pAddressBook, SIGNAL(sgOpenNewSession(const StSessionInfo &)),
+            _navigationPanel, SLOT(onNewSession(const StSessionInfo &)));
     connect(_pAddressBook, SIGNAL(sgSwitchCurFun(int)),
             _titleBar, SLOT(onSwitchFunc(int)));
     connect(_pCardManager, SIGNAL(sgSwitchCurFun(int)),
             _titleBar, SLOT(onSwitchFunc(int)));
-    connect(_chatViewPanel, SIGNAL(sgJumpToStructre(const QString&)),
-            _pAddressBook, SLOT(jumpToUserStructre(const QString&)));
+    connect(_chatViewPanel, SIGNAL(sgJumpToStructre(const QString &)),
+            _pAddressBook, SLOT(jumpToUserStructre(const QString &)));
     connect(_chatViewPanel, SIGNAL(sgSwitchCurFun(int)),
             _titleBar, SLOT(onSwitchFunc(int)));
-    connect(_chatViewPanel, SIGNAL(creatGroup(const QString&)),
-            _pGroupManager, SLOT(onCreatGroup(const QString&)));
-    connect(_titleBar, SIGNAL(creatGroup(const QString&)),
-            _pGroupManager, SLOT(onCreatGroup(const QString&)));
-    connect(_chatViewPanel, SIGNAL(addGroupMember(const QString&)),
-            _pGroupManager, SLOT(onAddGroupMember(const QString&)));
-    connect(_chatViewPanel, SIGNAL(showChatPicture(const QString&, const QString&, int)),
-            _pPictureBrowser, SLOT(onShowChatPicture(const QString&, const QString&, int)));
-    connect(_chatViewPanel, SIGNAL(sgShowPicture(const QString&, const QString&)),
-            _pPictureBrowser, SLOT(showPicture(const QString&, const QString&)));
-//    connect(_pGroupManager, SIGNAL(setTreeDataFinised()), _pAddressBook, SLOT(updateStaffUi()));
+    connect(_chatViewPanel, SIGNAL(creatGroup(const QString &)),
+            _pGroupManager, SLOT(onCreatGroup(const QString &)));
+    connect(_titleBar, SIGNAL(creatGroup(const QString &)),
+            _pGroupManager, SLOT(onCreatGroup(const QString &)));
+    connect(_chatViewPanel, SIGNAL(addGroupMember(const QString &)),
+            _pGroupManager, SLOT(onAddGroupMember(const QString &)));
+    connect(_chatViewPanel, SIGNAL(showChatPicture(const QString &, const QString &, int)),
+            _pPictureBrowser, SLOT(onShowChatPicture(const QString &, const QString &, int)));
+    connect(_chatViewPanel, SIGNAL(sgShowPicture(const QString &, const QString &)),
+            _pPictureBrowser, SLOT(showPicture(const QString &, const QString &)));
+    //    connect(_pGroupManager, SIGNAL(setTreeDataFinised()), _pAddressBook, SLOT(updateStaffUi()));
     connect(_navigationPanel, SIGNAL(updateTotalUnreadCount(int)), _titleBar, SLOT(updateUnreadCount(int)));
-	connect(_titleBar, SIGNAL(feedbackLog(const QString&)), _chatViewPanel, SLOT(packAndSendLog(const QString&)));
-	connect(this, SIGNAL(systemShortCut()), _chatViewPanel, SLOT(systemShortCut()));
-	connect(_titleBar, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
-	connect(this, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
+    connect(_titleBar, SIGNAL(feedbackLog(const QString &)), _chatViewPanel, SLOT(packAndSendLog(const QString &)));
+    connect(this, SIGNAL(systemShortCut()), _chatViewPanel, SLOT(systemShortCut()));
+    connect(_titleBar, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
+    connect(this, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
 
-	connect(_chatViewPanel, SIGNAL(sgShortCutSwitchSession(int)),
-	        _navigationPanel, SLOT(onShortCutSwitchSession(int)));
+    connect(_chatViewPanel, SIGNAL(sgShortCutSwitchSession(int)),
+            _navigationPanel, SLOT(onShortCutSwitchSession(int)));
 
-	connect(_navigationPanel, SIGNAL(sgShowUnreadMessage(int, const QTalk::Entity::UID&, const QString&, qint64, int)),
-	        _pSysTrayIcon, SIGNAL(sgShowUnreadMessage(int, const QTalk::Entity::UID&, const QString&, qint64, int)));
-	//
-	connect(_pCardManager, SIGNAL(sgJumpToStructre(const QString&)), _pAddressBook, SLOT(onJumpToStructre(const QString&)));
-    connect(_pCardManager, SIGNAL(sgShowHeadWnd(const QString&, bool)),
-            _titleBar, SLOT(onShowHeadWnd(const QString&, bool)));
-	//connect(_chatViewPanel, SIGNAL(sgForwardMessage(const QString&)), _pGroupManager, SLOT(onForfardMessage(const QString&)));
-	connect(_titleBar, SIGNAL(sgSetAutoLogin(bool)), this, SLOT(setAutoLogin(bool)));
-	connect(_titleBar, SIGNAL(sgUpdateHotKey()), this, SLOT(onUpdateHotKey()));
+    connect(_navigationPanel, SIGNAL(sgShowUnreadMessage(int, const QTalk::Entity::UID &, const QString &, qint64, int)),
+            _pSysTrayIcon, SIGNAL(sgShowUnreadMessage(int, const QTalk::Entity::UID &, const QString &, qint64, int)));
+    //
+    connect(_pCardManager, SIGNAL(sgJumpToStructre(const QString &)), _pAddressBook, SLOT(onJumpToStructre(const QString &)));
+    connect(_pCardManager, SIGNAL(sgShowHeadWnd(const QString &, bool)),
+            _titleBar, SLOT(onShowHeadWnd(const QString &, bool)));
+    //connect(_chatViewPanel, SIGNAL(sgForwardMessage(const QString&)), _pGroupManager, SLOT(onForfardMessage(const QString&)));
+    connect(_titleBar, SIGNAL(sgSetAutoLogin(bool)), this, SLOT(setAutoLogin(bool)));
+    connect(_titleBar, SIGNAL(sgUpdateHotKey()), this, SLOT(onUpdateHotKey()));
 
-	connect(_titleBar, SIGNAL(sgSaveSysConfig()), GlobalManager::instance(), SLOT(saveSysConfig()));
-	connect(_titleBar, SIGNAL(sgSaveSysConfig()), this, SLOT(onSaveSysConfig()));
-	connect(_titleBar, SIGNAL(msgSoundChanged()), _chatViewPanel, SLOT(onMsgSoundChanged()));
+    connect(_titleBar, SIGNAL(sgSaveSysConfig()), GlobalManager::instance(), SLOT(saveSysConfig()));
+    connect(_titleBar, SIGNAL(sgSaveSysConfig()), this, SLOT(onSaveSysConfig()));
+    connect(_titleBar, SIGNAL(msgSoundChanged()), _chatViewPanel, SLOT(onMsgSoundChanged()));
 
-	//
-	connect(_titleBar, SIGNAL(sgShowMessageRecordWnd(const QString&, const QString&)),
-	        _chatViewPanel, SLOT(onShowSearchResult(const QString&, const QString&)));
-	connect(_titleBar, SIGNAL(sgShowFileRecordWnd(const QString&)),
-	        _chatViewPanel, SLOT(onShowSearchFileWnd(const QString&)));
+    //
+    connect(_titleBar, SIGNAL(sgShowMessageRecordWnd(const QString &, const QString &)),
+            _chatViewPanel, SLOT(onShowSearchResult(const QString &, const QString &)));
+    connect(_titleBar, SIGNAL(sgShowFileRecordWnd(const QString &)),
+            _chatViewPanel, SLOT(onShowSearchFileWnd(const QString &)));
 
     connect(_chatViewPanel, SIGNAL(sgWakeUpWindow()), this, SLOT(wakeUpWindow()));
     connect(this, SIGNAL(sgAppActive()), _chatViewPanel, SLOT(onAppActive()));
@@ -455,23 +466,27 @@ void MainWindow::connectPlugs()
     connect(GlobalManager::instance(), SIGNAL(sgMousePressGlobalPos(QPoint)), _titleBar,
             SLOT(onMousePressGolbalPos(QPoint)));
     // show draft
-    connect(_chatViewPanel, SIGNAL(sgShowDraft(const QTalk::Entity::UID&, const QString&)),
-            _navigationPanel, SIGNAL(sgShowDraft(const QTalk::Entity::UID&, const QString&)));
+    connect(_chatViewPanel, SIGNAL(sgShowDraft(const QTalk::Entity::UID &, const QString &)),
+            _navigationPanel, SLOT(onShowDraft(const QTalk::Entity::UID &, const QString &)));
     // sgShowNotify
     qRegisterMetaType<QTalk::StNotificationParam>("QTalk::StNotificationParam");
-    connect(_chatViewPanel, SIGNAL(sgShowNotify(const QTalk::StNotificationParam&)),
-            _pSysTrayIcon, SLOT(onShowNotify(const QTalk::StNotificationParam&)));
+    connect(_chatViewPanel, SIGNAL(sgShowNotify(const QTalk::StNotificationParam &)),
+            _pSysTrayIcon, SLOT(onShowNotify(const QTalk::StNotificationParam &)));
+    //
+    connect(this, SIGNAL(sgShowUpdateClientLabel(bool)), _titleBar, SLOT(onShowUpdateLabel(bool)));
+    connect(_pView, SIGNAL(sgShowUpdateClientLabel(bool)), _titleBar, SLOT(onShowUpdateLabel(bool)));
+    connect(_titleBar, SIGNAL(sgDoUpdateClient()), this, SLOT(onShowCheckUpdateWnd()));
     // 自动回复
     connect(_titleBar, SIGNAL(sgAutoReply(bool)), _chatViewPanel, SLOT(setAutoReplyFlag(bool)));
 
     // 操作日志
-    connect(_titleBar, SIGNAL(sgOperator(const QString&)), this, SLOT(addOperatorLog(const QString&)));
-    connect(_chatViewPanel, SIGNAL(sgOperator(const QString&)), this, SLOT(addOperatorLog(const QString&)));
-    connect(_navigationPanel, SIGNAL(sgOperator(const QString&)), this, SLOT(addOperatorLog(const QString&)));
-    connect(_pCardManager, SIGNAL(sgOperator(const QString&)), this, SLOT(addOperatorLog(const QString&)));
-    connect(_pAddressBook, SIGNAL(sgOpeartor(const QString&)), this, SLOT(addOperatorLog(const QString&)));
-    connect(_pOfflineTimer, &QTimer::timeout, [this](){
-//        if(_pMessageManager)
+    connect(_titleBar, SIGNAL(sgOperator(const QString &)), this, SLOT(addOperatorLog(const QString &)));
+    connect(_chatViewPanel, SIGNAL(sgOperator(const QString &)), this, SLOT(addOperatorLog(const QString &)));
+    connect(_navigationPanel, SIGNAL(sgOperator(const QString &)), this, SLOT(addOperatorLog(const QString &)));
+    connect(_pCardManager, SIGNAL(sgOperator(const QString &)), this, SLOT(addOperatorLog(const QString &)));
+    connect(_pAddressBook, SIGNAL(sgOpeartor(const QString &)), this, SLOT(addOperatorLog(const QString &)));
+    connect(_pOfflineTimer, &QTimer::timeout, [this]() {
+        //        if(_pMessageManager)
         {
             _isOffline = true;
             _pOfflineTimer->stop();
@@ -479,27 +494,7 @@ void MainWindow::connectPlugs()
             QTalkMsgManager::sendOnlineState(_login_t, _logout_t, _ipv4Address.toStdString());
         }
     });
-    connect(_pLogTimer, &QTimer::timeout, [this](){
-//        if(_pMessageManager)
-        {
-#if !defined(_STARTALK) && !defined(_QCHAT)
-            if(_loginDate != QDate::currentDate())
-            {
-                //
-                _loginDate = QDate::currentDate();
-                QtConcurrent::run(&QTalkMsgManager::reportLogin);
-            }
-#endif
-
-            if(_operators.empty())
-                return;
-
-            std::vector<QTalk::StActLog> operators(_operators);
-            QTalkMsgManager::sendOperatorStatistics(_ipv4Address.toStdString(), operators);
-            QMutexLocker locker(&_logMutex);
-            _operators.clear();
-        }
-    });
+    connect(_pLogTimer, &QTimer::timeout, this, &MainWindow::onHourTimer);
     //
 #ifdef TSCREEN
     connect(_pOAManager, SIGNAL(sgShowThrowingScreenWnd()), this, SLOT(startTScreen()));
@@ -507,16 +502,44 @@ void MainWindow::connectPlugs()
 #endif
 }
 
+//
+void MainWindow::onHourTimer()
+{
+#if !defined(_STARTALK) && !defined(_QCHAT)
+    if (_loginDate != QDate::currentDate())
+    {
+        //
+        _loginDate = QDate::currentDate();
+        QtConcurrent::run(&QTalkMsgManager::reportLogin);
+    }
+
+#endif
+    // check update
+    if (AppSetting::instance().getNewVersion() <= PLAT.getClientNumVerison())
+    {
+        checkUpdater();
+    }
+
+    // report
+    if (_operators.empty())
+        return;
+    std::vector<QTalk::StActLog> operators(_operators);
+    QtConcurrent::run(&QTalkMsgManager::sendOperatorStatistics, _ipv4Address.toStdString(), operators);
+    _operators.clear();
+}
+
 #include <QLocalSocket>
-void MainWindow::startTScreen() {
+void MainWindow::startTScreen()
+{
 #ifdef _LINUX
     return;
 #endif
     //
-    static const char * QUNAR_THROW_SCREEN = "QUNAR_THROW_SCREEN";
+    static const char *QUNAR_THROW_SCREEN = "QUNAR_THROW_SCREEN";
     QLocalSocket localSocket;
     localSocket.connectToServer(QUNAR_THROW_SCREEN);
-    if (localSocket.waitForConnected(2000)) {
+    if (localSocket.waitForConnected(2000))
+    {
         localSocket.disconnectFromServer();
         localSocket.close();
         return;
@@ -524,16 +547,15 @@ void MainWindow::startTScreen() {
     //
     QStringList arguments;
 #if defined(_WINDOWS)
-    const QString& cmd = QString("%1/%2").arg(QApplication::applicationDirPath(), "TScreen/TScreen.exe");
+    const QString &cmd = QString("%1/%2").arg(QApplication::applicationDirPath(), "TScreen/TScreen.exe");
     arguments << QString("LOGIN_USER_NAME=").append(PLAT.getSelfUserId().data());
     QProcess::startDetached(cmd, arguments);
 #elif defined(_MACOS)
-    const QString& cmd = QString("%1/%2").arg(QApplication::applicationDirPath(), "TScreen");
+    const QString &cmd = QString("%1/%2").arg(QApplication::applicationDirPath(), "TScreen");
     chmod(cmd.toStdString().data(), S_IRWXU);
     arguments << QString("LOGIN_USER_NAME=").append(PLAT.getSelfName().data());
     QProcess::startDetached(cmd, arguments);
 #endif
-
 }
 
 /**
@@ -542,7 +564,7 @@ void MainWindow::startTScreen() {
  */
 void MainWindow::setAutoLogin(bool autoFlag)
 {
-   _pLoginPlug->setAutoLoginFlag(autoFlag);
+    _pLoginPlug->setAutoLoginFlag(autoFlag);
 }
 
 /**
@@ -554,7 +576,7 @@ void MainWindow::setAutoLogin(bool autoFlag)
   */
 void MainWindow::initSystemTray()
 {
-	_pSysTrayIcon = new SystemTray(this);
+    _pSysTrayIcon = new SystemTray(this);
 #ifdef _MACOS
     connect(_pFeedBackLog, &QAction::triggered, _pSysTrayIcon, &SystemTray::onSendLog);
 #endif
@@ -569,23 +591,23 @@ void MainWindow::initSystemTray()
   */
 void MainWindow::initGroupManager()
 {
-	QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIGroupManager");
-	if (plugin)
-	{
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UIGroupManager");
+    if (plugin)
+    {
         _pGroupManagerPlug = qobject_cast<IUIGroupManagerPlug *>(plugin);
         if (_pGroupManagerPlug)
-		{
+        {
             _pGroupManagerPlug->init();
             _pGroupManager = _pGroupManagerPlug->widget();
-		}
-	}
-	assert(_pGroupManagerPlug);
-	assert(_pGroupManager);
+        }
+    }
+    assert(_pGroupManagerPlug);
+    assert(_pGroupManager);
 }
 
-void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
+void MainWindow::InitLogin(bool _enable, const QString &loginMsg)
 {
-    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UILoginPlug");
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UILoginPlug");
     if (plugin)
     {
         _pLoginPlug = qobject_cast<IUILoginPlug *>(plugin);
@@ -594,7 +616,7 @@ void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
             _pLoginPlug->init();
             _pLoginPlug->enableAutoLogin(_enable);
             _pLoginPlug->initConf();
-            if(!loginMsg.isEmpty())
+            if (!loginMsg.isEmpty())
                 _pLoginPlug->setLoginMessage(loginMsg);
             _logindlg = (QDialog *)_pLoginPlug->widget();
         }
@@ -617,15 +639,15 @@ void MainWindow::LoginResult(bool result)
     }
 }
 
-void MainWindow::OnLoginSuccess(const std::string& strSessionId)
+void MainWindow::OnLoginSuccess(const std::string &strSessionId)
 {
     emit LoginSuccess(true);
 }
 
 void MainWindow::openMainWindow()
 {
-	if (_initUi)
-	{
+    if (_initUi)
+    {
         _isOffline = false;
         _login_t = QDateTime::currentMSecsSinceEpoch();
         _pOfflineTimer = new QTimer(this);
@@ -635,34 +657,35 @@ void MainWindow::openMainWindow()
         _pLogTimer->start();
         //
         _pLocalServer = new LocalServer;
-        _pLocalServer->runServer(QApplication::applicationName());
-	    //
-		_initUi = false;
-		init();
-		initLayouts();
-		connectPlugs();
-		_chatViewPanel->setFocus();
-		//
-		_navigationPlugin->updateReadCount();
+        auto key = QString("%1==%2").arg(QApplication::applicationName().toLower(), PLAT.getSelfUserId().data());
+        _pLocalServer->runServer(key);
+        //
+        _initUi = false;
+        init();
+        initLayouts();
+        connectPlugs();
+        _chatViewPanel->setFocus();
+        //
+        _navigationPlugin->updateReadCount();
         // setwindow states
-		QString configPath = QString("%1/mainWnd").arg(PLAT.getConfigPath().data());
+        QString configPath = QString("%1/mainWnd").arg(PLAT.getConfigPath().data());
         //
         _pConfigLoader = new QTalk::ConfigLoader(configPath.toLocal8Bit());
-        if(_pConfigLoader->reload())
+        if (_pConfigLoader->reload())
         {
             int wndstate = _pConfigLoader->getInteger(WIN_STATE);
             int wndWidth = _pConfigLoader->getInteger(WIN_WIDTH);
             int wndHeight = _pConfigLoader->getInteger(WIN_HEIGHT);
             int wndX = _pConfigLoader->getInteger(WIN_X);
             int wndY = _pConfigLoader->getInteger(WIN_Y);
-            if(wndWidth <= 0 || wndHeight <= 0)
+            if (wndWidth <= 0 || wndHeight <= 0)
             {
                 QDesktopWidget *deskTop = QApplication::desktop();
                 int curMonitor = deskTop->screenNumber(_logindlg);
                 QRect deskRect = deskTop->screenGeometry(curMonitor);
                 wndWidth = deskRect.height();
                 wndHeight = (int)(deskRect.height() * 0.75);
-                wndX = (deskRect.width() - wndWidth) / 2  + deskRect.x();
+                wndX = (deskRect.width() - wndWidth) / 2 + deskRect.x();
                 wndY = (deskRect.height() - wndHeight) / 2 + deskRect.y();
                 //
                 _pConfigLoader->setInteger(WIN_WIDTH, wndWidth);
@@ -675,46 +698,48 @@ void MainWindow::openMainWindow()
             setGeometry(wndX, wndY, wndWidth, wndHeight);
             switch (wndstate)
             {
-                case WND_MAXSIZE:
-                    //showMaximized();
-                    //break;
-                case WND_NORMAL:
-                default:
-                {
-                    showNormal();
-                    // 判断是否超出屏幕范围
-                    adjustWndRect();
-                    break;
-                }
+            case WND_MAXSIZE:
+                //showMaximized();
+                //break;
+            case WND_NORMAL:
+            default:
+            {
+                showNormal();
+                // 判断是否超出屏幕范围
+                adjustWndRect();
+                break;
+            }
             }
         }
         UICom::getInstance()->setAcltiveMainWnd(this);
         // 注册快捷键
         _pScreentShot = new QHotkey(this);
         _pWakeWnd = new QHotkey(this);
-        onUpdateHotKey();
-		connect(_pScreentShot, &QHotkey::activated, this, &MainWindow::onScreentShot);
-		connect(_pWakeWnd, &QHotkey::activated, this, &MainWindow::wakeUpWindow);
-		connect(_pLocalServer, &LocalServer::sgWakeupWindow, this, &MainWindow::wakeUpWindow);
-        //
-		if (_logindlg)
+        if (AppSetting::instance().getHotCutEnable())
         {
-			_logindlg->setVisible(false);
+            onUpdateHotKey();
+        }
+        connect(_pScreentShot, &QHotkey::activated, this, &MainWindow::onScreentShot);
+        connect(_pWakeWnd, &QHotkey::activated, this, &MainWindow::wakeUpWindow);
+        connect(_pLocalServer, &LocalServer::sgWakeupWindow, this, &MainWindow::wakeUpWindow);
+        //
+        if (_logindlg)
+        {
+            _logindlg->setVisible(false);
             _pLoginPlug->saveHeadPath();
-		}
+        }
 
-        std::function<int(STLazyQueue<bool > *)> func
-            = [this](STLazyQueue<bool > *queue)->int
+        std::function<int(STLazyQueue<bool> *)> func = [this](STLazyQueue<bool> *queue) -> int {
+            int count = 0;
+            while (!queue->empty())
             {
-		        int count = 0;
-                while (!queue->empty()) {
-                    queue->pop();
-                    count++;
-                }
-                emit systemShortCut();
-                return count;
-		    };
-        _pScreentShotQueue = new STLazyQueue<bool >(300, func);
+                queue->pop();
+                count++;
+            }
+            emit systemShortCut();
+            return count;
+        };
+        _pScreentShotQueue = new STLazyQueue<bool>(300, func);
 
         //
         _noOperatorThread = new NoOperationThread;
@@ -727,30 +752,30 @@ void MainWindow::openMainWindow()
         //
 #ifdef _MACOS
         QMenu *wndMenu = _pWindowMenuBar->addMenu(tr("窗口"));
-        auto* minSize = new QAction(tr("最小化"), wndMenu);
-        auto* maxSize = new QAction(tr("缩放"), wndMenu);
-        auto* showWnd = new QAction(tr("显示面板"), wndMenu);
+        auto *minSize = new QAction(tr("最小化"), wndMenu);
+        auto *maxSize = new QAction(tr("缩放"), wndMenu);
+        auto *showWnd = new QAction(tr("显示面板"), wndMenu);
         wndMenu->addAction(minSize);
         wndMenu->addAction(maxSize);
         wndMenu->addSeparator();
         wndMenu->addAction(showWnd);
 
         QMenu *systemMenu = _pWindowMenuBar->addMenu(tr("系统"));
-        auto* setting = new QAction(tr("系统设置"), wndMenu);
-        auto* about = new QAction(tr("关于"), wndMenu);
+        auto *setting = new QAction(tr("系统设置"), wndMenu);
+        auto *about = new QAction(tr("关于"), wndMenu);
         systemMenu->addAction(setting);
         systemMenu->addAction(about);
 
-        connect(minSize, &QAction::triggered, [this](){
+        connect(minSize, &QAction::triggered, [this]() {
             MacApp::showMinWnd(this);
         });
-        connect(maxSize, &QAction::triggered, [this](){
-            if(this->isMaximized())
+        connect(maxSize, &QAction::triggered, [this]() {
+            if (this->isMaximized())
                 this->showNormal();
             else
                 this->showMaximized();
         });
-        connect(showWnd, &QAction::triggered, [this](){
+        connect(showWnd, &QAction::triggered, [this]() {
             this->wakeUpWindow();
         });
 
@@ -765,7 +790,7 @@ void MainWindow::openMainWindow()
         //
         dealDumpFile();
         checkUpdater();
-	}
+    }
 }
 
 /**
@@ -780,16 +805,17 @@ void MainWindow::onCurFunChanged(int index)
     //
     switch (index)
     {
-        case 0:
-            bodyLay->setCurrentWidget(_bottomSplt);
-            break;
-        case 1:
-            bodyLay->setCurrentWidget(_pAddressBook);
-            break;
-        case 2:
-            bodyLay->setCurrentWidget(_pOAManager);
-            break;
-        default:break;
+    case 0:
+        bodyLay->setCurrentWidget(_bottomSplt);
+        break;
+    case 1:
+        bodyLay->setCurrentWidget(_pAddressBook);
+        break;
+    case 2:
+        bodyLay->setCurrentWidget(_pOAManager);
+        break;
+    default:
+        break;
     }
 }
 
@@ -797,27 +823,29 @@ void MainWindow::onCurFunChanged(int index)
 void MainWindow::onAppActive()
 {
     emit sgResetOperator();
+#ifdef Q_OS_MAC
+    MacApp::resetWindow(this);
+#endif
 
-    if(_initUi)
+    if (_initUi)
     {
-        
     }
     else
     {
-        if(_isOffline)
+        if (_isOffline)
         {
             _isOffline = false;
             _login_t = QDateTime::currentMSecsSinceEpoch();
         }
         else
         {
-            if(_pOfflineTimer)
+            if (_pOfflineTimer)
                 _pOfflineTimer->stop();
         }
 
         _pSysTrayIcon->onWndActived();
 #ifdef _MACOS
-        if(!this->isVisible())
+        if (!this->isVisible())
             MacApp::wakeUpWnd(this);
 #endif
         emit sgAppActive();
@@ -828,7 +856,7 @@ void MainWindow::onAppActive()
 
 void MainWindow::initPictureBrowser()
 {
-    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIPictureBrowser");
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UIPictureBrowser");
     if (plugin)
     {
         _pPictureBrowserPlug = qobject_cast<IUIPictureBroswerPlug *>(plugin);
@@ -851,18 +879,18 @@ void MainWindow::initPictureBrowser()
   */
 void MainWindow::initAddressBook()
 {
-	QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIAddressBook");
-	if (plugin)
-	{
-		_pAddressBookPlug = qobject_cast<IUIAddressBookPlug*>(plugin);
-		if (_pAddressBookPlug)
-		{
-			_pAddressBookPlug->init();
-			_pAddressBook = _pAddressBookPlug->widget();
-		}
-	}
-	assert(_pAddressBookPlug);
-	assert(_pAddressBook);
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UIAddressBook");
+    if (plugin)
+    {
+        _pAddressBookPlug = qobject_cast<IUIAddressBookPlug *>(plugin);
+        if (_pAddressBookPlug)
+        {
+            _pAddressBookPlug->init();
+            _pAddressBook = _pAddressBookPlug->widget();
+        }
+    }
+    assert(_pAddressBookPlug);
+    assert(_pAddressBook);
 }
 
 /**
@@ -874,18 +902,18 @@ void MainWindow::initAddressBook()
   */
 void MainWindow::initOAManager()
 {
-	QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIOAManager");
-	if (plugin)
-	{
-		_pOAManagerPlug = qobject_cast<IUIOAManagerPlug*>(plugin);
-		if (_pOAManagerPlug)
-		{
-			_pOAManagerPlug->init();
-			_pOAManager = _pOAManagerPlug->widget();
-		}
-	}
-	assert(_pOAManagerPlug);
-	assert(_pOAManager);
+    QObject *plugin = GlobalManager::instance()->getPluginInstanceQt("UIOAManager");
+    if (plugin)
+    {
+        _pOAManagerPlug = qobject_cast<IUIOAManagerPlug *>(plugin);
+        if (_pOAManagerPlug)
+        {
+            _pOAManagerPlug->init();
+            _pOAManager = _pOAManagerPlug->widget();
+        }
+    }
+    assert(_pOAManagerPlug);
+    assert(_pOAManager);
 }
 
 /**
@@ -897,7 +925,7 @@ void MainWindow::initOAManager()
   */
 void MainWindow::onAppDeactivate()
 {
-    if(!_isOffline && _pOfflineTimer)
+    if (!_isOffline && _pOfflineTimer)
     {
         _pOfflineTimer->start();
     }
@@ -908,13 +936,13 @@ void MainWindow::onAppDeactivate()
 void MainWindow::saveWndState()
 {
     int wndstate = WND_NORMAL;
-    if(windowState() == Qt::WindowMaximized)
+    if (windowState() == Qt::WindowMaximized)
     {
         wndstate = WND_MAXSIZE;
     }
     QRect geo = this->normalGeometry();
 
-    if(_pConfigLoader)
+    if (_pConfigLoader)
     {
         _pConfigLoader->setInteger(WIN_STATE, wndstate);
         _pConfigLoader->setInteger(WIN_WIDTH, geo.width());
@@ -936,8 +964,8 @@ void MainWindow::systemQuit()
 
     _logout_t = QDateTime::currentMSecsSinceEpoch();
 
-	saveWndState();
-	QApplication::exit(0);
+    saveWndState();
+    QApplication::exit(0);
 }
 
 /**
@@ -949,26 +977,21 @@ void MainWindow::sendHeartBeat()
 }
 
 // 多屏处理
-void MainWindow::adjustWndRect() {
+void MainWindow::adjustWndRect()
+{
 
     QRect thisGeo = this->geometry();
     QDesktopWidget *deskTop = QApplication::desktop();
     int curMonitor = deskTop->screenNumber(this);
     QRect deskRect = deskTop->screenGeometry(curMonitor);
-    if(!deskRect.contains(thisGeo, true))
+    if (!deskRect.contains(thisGeo, true))
     {
 
-        if(thisGeo.width() > deskRect.width())
-        {
-            thisGeo.setWidth(deskRect.width() - 100);
-        }
-        if(thisGeo.height() > deskRect.height())
-        {
-            thisGeo.setHeight(deskRect.height() - 100);
-        }
-        thisGeo.setX(deskRect.x());
-        thisGeo.setY(deskRect.y());
-        setGeometry(thisGeo);
+        auto wndWidth = deskRect.height();
+        auto wndHeight = (int)(deskRect.height() * 0.75);
+        auto wndX = (deskRect.width() - wndWidth) / 2 + deskRect.x();
+        auto wndY = (deskRect.height() - wndHeight) / 2 + deskRect.y();
+        setGeometry(wndX, wndY, wndWidth, wndHeight);
     }
 }
 
@@ -977,56 +1000,57 @@ void MainWindow::adjustWndRect() {
  */
 void MainWindow::onUpdateHotKey()
 {
-	std::string screentHot = AppSetting::instance().getScreenshotHotKey();
-	std::string wakeWnd = AppSetting::instance().getWakeWndHotKey();
-	bool isok = _pScreentShot->setShortcut(QKeySequence::fromString(screentHot.data(), QKeySequence::NativeText), true);
-	isok = _pWakeWnd->setShortcut(QKeySequence::fromString(wakeWnd.data(), QKeySequence::NativeText), true);
+    std::string screentHot = AppSetting::instance().getScreenshotHotKey();
+    std::string wakeWnd = AppSetting::instance().getWakeWndHotKey();
+    bool isok = _pScreentShot->setShortcut(QKeySequence::fromString(screentHot.data(), QKeySequence::NativeText), true);
+    isok = _pWakeWnd->setShortcut(QKeySequence::fromString(wakeWnd.data(), QKeySequence::NativeText), true);
 }
 
 void MainWindow::onScreentShot()
 {
-	_pScreentShotQueue->push(true);
+    _pScreentShotQueue->push(true);
 }
 
-void MainWindow::hideEvent(QHideEvent *e) {
-    if(Qt::ApplicationActive == QApplication::applicationState())
+void MainWindow::hideEvent(QHideEvent *e)
+{
+    if (Qt::ApplicationActive == QApplication::applicationState())
         onAppDeactivate();
     QWidget::hideEvent(e);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *e)
 {
-	if (e->key() == Qt::Key_Escape || e->key() == Qt::Key_Space)
-	{
-		e->accept();
-	}
+    if (e->key() == Qt::Key_Escape || e->key() == Qt::Key_Space)
+    {
+        e->accept();
+    }
 
 #ifdef _MACOS
-	if (e->modifiers() == Qt::ControlModifier)
-	{
-	    if(e->key() == Qt::Key_W)
-		    this->setVisible(false);
-	    else if(e->key() == Qt::Key_M)
+    if (e->modifiers() == Qt::ControlModifier)
+    {
+        if (e->key() == Qt::Key_W)
+            this->setVisible(false);
+        else if (e->key() == Qt::Key_M)
             this->showMinimized();
-	    else if(e->key() == Qt::Key_Q)
+        else if (e->key() == Qt::Key_Q)
         {
-//            int ret =
-//            if(ret == QtMessageBox::EM_BUTTON_YES)
-//            {
-//                exit(0);
-//            }
-//            e->accept();
-//            return;
+            //            int ret =
+            //            if(ret == QtMessageBox::EM_BUTTON_YES)
+            //            {
+            //                exit(0);
+            //            }
+            //            e->accept();
+            //            return;
         }
-
-	}
+    }
 #endif
-	UShadowDialog::keyPressEvent(e);
+    UShadowDialog::keyPressEvent(e);
 }
 
-QWidget * MainWindow::getActiveWnd() {
-    QWidget* wakeUpWgt = nullptr;
-    if(_initUi)
+QWidget *MainWindow::getActiveWnd()
+{
+    QWidget *wakeUpWgt = nullptr;
+    if (_initUi)
         wakeUpWgt = _logindlg;
     else
         wakeUpWgt = this;
@@ -1034,22 +1058,19 @@ QWidget * MainWindow::getActiveWnd() {
     return wakeUpWgt;
 }
 
-#include <QPointer>
 void MainWindow::wakeUpWindow()
 {
-    QWidget* wakeUpWgt = getActiveWnd();
+    QWidget *wakeUpWgt = getActiveWnd();
 
     if (!wakeUpWgt)
     {
         qWarning() << "no active windows";
         return;
     }
-        
 
-    if(wakeUpWgt->isMinimized())
+    if (wakeUpWgt->isMinimized())
         wakeUpWgt->setWindowState((wakeUpWgt->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
-
-	wakeUpWgt->setVisible(true);
+    wakeUpWgt->setVisible(true);
     QApplication::setActiveWindow(wakeUpWgt);
     wakeUpWgt->raise();
 
@@ -1062,7 +1083,6 @@ void MainWindow::wakeUpWindow()
     ::SetForegroundWindow((HWND)winId());
     ::AttachThreadInput(dwCurID, dwForeID, FALSE);
 #endif // Q_OS_WIN
-
 }
 
 /**
@@ -1074,7 +1094,6 @@ void MainWindow::addOperatorLog(const QString &desc)
     QTalk::StActLog log;
     log.desc = desc.toStdString();
     log.operatorTime = QDateTime::currentMSecsSinceEpoch();
-    QMutexLocker locker(&_logMutex);
     _operators.push_back(log);
 }
 
@@ -1103,7 +1122,7 @@ void MainWindow::addOperatorLog(const QString &desc)
  */
 void MainWindow::onSaveSysConfig()
 {
-    if(_noOperatorThread)
+    if (_noOperatorThread)
         _noOperatorThread->setLeaveMinute();
 
     //
@@ -1121,105 +1140,92 @@ void MainWindow::onUserSendMessage()
     QTalkMsgManager::chanegUserStatus("online");
 }
 
-void MainWindow::checkUpdater() {
+void MainWindow::checkUpdater()
+{
+    //#ifndef QT_DEBUG
     auto version = GlobalManager::instance()->_updater_version;
     QtConcurrent::run(&QTalkMsgManager::checkUpdater, version);
-
+    //#endif
 }
 
 //
-void MainWindow::onCheckUpdater(bool hasUpdate,  bool force) {
-
-    if(!PLAT.isMainThread())
+#include <QDesktopServices>
+void MainWindow::onCheckUpdater(bool hasUpdate, const QString &link, bool force)
+{
+    if (hasUpdate)
     {
-        emit sgCheckUpdate(hasUpdate, force);
-        return;
-    }
-
 #ifdef Q_OS_LINUX
-    if(hasUpdate) {
-        QtMessageBox::information(this, tr("升级提醒"),
-                    tr("主程序有更新，麻烦您及时到官网下载最新版本"));
-        return;
-    }
-#else
-    std::ostringstream src;
-    src << PLAT.getAppdataRoamingPath()
-        << "/updater/SetUp."
-#if defined(Q_OS_WIN)
-        << "exe";
-#elif defined(Q_OS_MAC)
-        << "dmg";
-#else
-        ;
-#endif
 
-    QString updaterPath = QString(src.str().data());
-    QFileInfo exec_info(updaterPath);
-
-    if(hasUpdate) {
-        if(exec_info.exists() && exec_info.isFile())
+        if (!PLAT.isMainThread())
         {
-            int btn = QtMessageBox::EM_BUTTON_YES;
-            if(!force) (btn |= QtMessageBox::EM_BUTTON_CANCEL_UPDATE);
-
-            int _ret = QtMessageBox::question(this, tr("警告"),
-                    tr("主程序有更新，安装包已经准备完毕，是否立即打开更新？"), btn);
-            if(_ret == QtMessageBox::EM_BUTTON_YES)
-            {
-                QtConcurrent::run([this, updaterPath](){
-#if defined(_WINDOWS)
-                    QProcess::startDetached(updaterPath, QStringList());
-#elif defined(_MACOS)
-                    QStringList params;
-                    params << updaterPath;
-                    QProcess::execute("open", params);
-#else
-
-#endif
-                    emit systemQuitSignal();
-                });
-            }
+            emit sgCheckUpdate(hasUpdate, link, force);
+            return;
         }
-    }
-    else if (exec_info.exists()) {
-        QFile::remove(updaterPath);
-    }
+
+        if (hasUpdate)
+        {
+            QtMessageBox::information(this, tr("升级提醒"),
+                                      tr("主程序有更新，麻烦您及时到官网下载最新版本"));
+            return;
+        }
+#else
+        emit sgShowUpdateClientLabel(true);
+
+        if (force)
+        {
+            _pView->showWnd();
+        }
 #endif
+    }
 }
 
-
-#ifdef _MACOS
-void MainWindow::onShowMinWnd() {
+#ifdef Q_OS_MAC
+void MainWindow::onShowMinWnd()
+{
     MacApp::showMinWnd(this);
 }
 
-
 #endif
 
-void MainWindow::changeEvent(QEvent *event) {
-	if (event->type() == QEvent::LanguageChange)
-	{
+void MainWindow::changeEvent(QEvent *event)
+{
 
-	}
-	UShadowDialog::changeEvent(event);
+    switch (event->type())
+    {
+    case QEvent::WindowStateChange:
+    {
+        auto sts = this->windowState();
+        if (sts == Qt::WindowNoState)
+        {
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    UShadowDialog::changeEvent(event);
 }
 
-void MainWindow::onGetHistoryError() {
+void MainWindow::onGetHistoryError()
+{
     emit sgRestartWithMessage(tr("获取历史记录失败, 请重新登录!"));
 }
 
 //
-void MainWindow::reLoginWithErr(const std::string &err) {
+void MainWindow::reLoginWithErr(const std::string &err)
+{
     emit sgRestartWithMessage(err.data());
 }
 
-void MainWindow::systemQuitByEvt() {
+void MainWindow::systemQuitByEvt()
+{
     emit sgSystemQuit();
 }
 
 //
-void MainWindow::restartWithMessage(const QString &msg) {
+void MainWindow::restartWithMessage(const QString &msg)
+{
 
     QString program = QApplication::applicationFilePath();
     QStringList arguments;
@@ -1229,13 +1235,14 @@ void MainWindow::restartWithMessage(const QString &msg) {
     QApplication::exit(0);
 }
 
-void delDmpFun(const QString& path, const std::string& ip)
+void delDmpFun(const QString &path, const std::string &ip)
 {
     QDir dir(path);
     QFileInfoList infoList = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-    for (const auto& tmpInfo : infoList)
+    for (const auto &tmpInfo : infoList)
     {
-        if(tmpInfo.isSymLink()) continue;
+        if (tmpInfo.isSymLink())
+            continue;
 
         if (tmpInfo.isFile())
         {
@@ -1248,21 +1255,21 @@ void delDmpFun(const QString& path, const std::string& ip)
 
             if (tmpInfo.suffix().toLower() == "dmp")
             {
-                if(tmpInfo.size() > 0 && tmpInfo.size() <= 50 * 1024 * 1024 && now - birth < 1000 * 60 * 60 * 24 * 7)
+                if (tmpInfo.size() > 0 && tmpInfo.size() <= 50 * 1024 * 1024 && now - birth < 1000 * 60 * 60 * 24 * 7)
                 {
                     std::string dumpFilePath = std::string(tmpInfo.absoluteFilePath().toLocal8Bit());
                     QTalkMsgManager::reportDump(ip, dir.dirName().toStdString(), dumpFilePath, birth);
                 }
                 QFile::remove(tmpInfo.absoluteFilePath());
             }
-            else if(now - birth > 1000 * 60 * 60 * 24)
+            else if (now - birth > 1000 * 60 * 60 * 24)
                 QFile::remove(tmpInfo.absoluteFilePath());
         }
-        else if(tmpInfo.isDir())
+        else if (tmpInfo.isDir())
         {
             auto infoPath = tmpInfo.absoluteFilePath();
             delDmpFun(infoPath, ip);
-            if(QDir(infoPath).isEmpty())
+            if (QDir(infoPath).isEmpty())
                 dir.rmpath(infoPath);
         }
     }
@@ -1293,24 +1300,29 @@ void delDmpFun(const QString& path, const std::string& ip)
 //    return size;
 //}
 
-void clearCache(const QString& folderPath)
+void clearCache(const QString &folderPath)
 {
     QDir dir(folderPath);
     QFileInfoList infoList = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-    for (const auto& tmpInfo : infoList) {
-        if (tmpInfo.isSymLink()) continue;
+    for (const auto &tmpInfo : infoList)
+    {
+        if (tmpInfo.isSymLink())
+            continue;
         auto now = QDateTime::currentMSecsSinceEpoch();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
         auto birth = tmpInfo.birthTime().toMSecsSinceEpoch();
 #else
         auto birth = tmpInfo.lastModified().toMSecsSinceEpoch();
 #endif
-        if(now - birth < 1000 * 60 * 60 * 24 * 2)
+        if (now - birth < 1000 * 60 * 60 * 24 * 2)
             continue;
 
-        if (tmpInfo.isFile()) {
+        if (tmpInfo.isFile())
+        {
             QFile::remove(tmpInfo.absoluteFilePath());
-        } else if (tmpInfo.isDir()) {
+        }
+        else if (tmpInfo.isDir())
+        {
             auto infoPath = tmpInfo.absoluteFilePath();
             clearCache(infoPath);
         }
@@ -1320,8 +1332,8 @@ void clearCache(const QString& folderPath)
 //
 void MainWindow::dealDumpFile()
 {
-    QTimer::singleShot(30 * 1000, [this](){
-        QtConcurrent::run([this](){
+    QTimer::singleShot(30 * 1000, [this]() {
+        QtConcurrent::run([this]() {
             // deal dump
             QDateTime curDateTime = QDateTime::currentDateTime();
             auto appdata = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
@@ -1336,15 +1348,13 @@ void MainWindow::dealDumpFile()
             clearCache((userDir + "/image/source").data());
             clearCache((appdata + "/HotPic").data());
             // delete old app
-#ifndef _STARTALK
             QString oldApp = QString("%1/apps").arg(appdata.data());
-            if(QFile::exists(oldApp))
+            if (QFile::exists(oldApp))
             {
                 QDir dir;
                 dir.setPath(oldApp);
                 qInfo() << "delete old appps" << dir.removeRecursively();
             }
-#endif
         });
     });
 }
@@ -1355,25 +1365,31 @@ void MainWindow::onScreenRemoved(QScreen *screen)
     Q_UNUSED(screen)
     {
         QTimer::singleShot(500, [this]() {
-            
             auto screenGeometry = QApplication::primaryScreen()->availableGeometry();
             //if(!screenGeometry.contains(this->geometry()))
             {
                 auto geometry = this->geometry();
-                geometry.setWidth(qMin(screenGeometry.width() -100, geometry.width()) );
-                geometry.setHeight(qMin(screenGeometry.height() -100,  geometry.height()));
+                geometry.setWidth(qMin(screenGeometry.width() - 100, geometry.width()));
+                geometry.setHeight(qMin(screenGeometry.height() - 100, geometry.height()));
                 geometry.setX((screenGeometry.width() - geometry.width()) / 2);
                 geometry.setY((screenGeometry.height() - geometry.height()) / 2);
 
                 qInfo() << geometry;
-
-//                this->setGeometry(geometry);
             }
         });
     }
 }
 
 #include <QMetaObject>
-bool MainWindow::event(QEvent *e) {
+bool MainWindow::event(QEvent *e)
+{
     return QWidget::event(e);
+}
+
+void MainWindow::onShowCheckUpdateWnd()
+{
+    if (_pView)
+    {
+        _pView->showWnd();
+    }
 }

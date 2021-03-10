@@ -99,6 +99,16 @@ public:
         return keys;
     }
 
+	std::vector<R> values()
+	{
+		std::unique_lock<std::mutex> lock(_mutex);
+		std::vector<R> vals;
+		for(const auto& it : _mapItems) {
+			vals.push_back(it.second);
+		}
+		return vals;
+	}
+
     void remove(const T& t)
     {
         _mutex.lock();
@@ -114,15 +124,15 @@ public:
             _mutex.unlock();
     }
 
-    typename std::list<std::pair<T, R> >::iterator begin()
-    {
-        return _mapItems.begin();
-    }
-
-    typename std::list<std::pair<T, R> >::iterator end()
-    {
-        return _mapItems.end();
-    }
+//    typename std::list<std::pair<T, R> >::iterator begin()
+//    {
+//        return _mapItems.begin();
+//    }
+//
+//    typename std::list<std::pair<T, R> >::iterator end()
+//    {
+//        return _mapItems.end();
+//    }
 
 private:
     std::list<std::pair<T, R> >  _mapItems; //

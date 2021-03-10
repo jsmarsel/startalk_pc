@@ -56,16 +56,6 @@ ToolWgt::~ToolWgt()
 void ToolWgt::initUi()
 {
 	this->setObjectName("ToolWgt");
-
-    _pSessionTransferWnd = new SessionTransferWnd(this);
-    _pSendProductWnd = new SendProductWnd(this);
-    _pQuickReplyWnd = new QuickReplyWnd(this);
-
-#ifdef _QCHAT
-    qchatMoreFun = new QchatMoreFun(_pChatItem->getPeerId(), _pChatItem->_chatType);
-#endif
-
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qunar.com", QApplication::applicationName());
 	//
 	_pBtnEmoticon = new QPushButton( this);
 	_pBtnScreenshot = new QPushButton( this);
@@ -127,25 +117,6 @@ void ToolWgt::initUi()
     _pBtnShock->setToolTip(tr("窗口抖动"));
     _pBtnShock->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
-    _pBtnCloseService = new QPushButton(this);
-    _pBtnCloseService->setFocusPolicy(Qt::NoFocus);
-    _pBtnCloseService->setObjectName("CloseServer");
-    _pBtnCloseService->setToolTip(tr("挂断"));
-    _pBtnCloseService->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
-
-    _pBtnTransfer = new QPushButton(this);
-    _pBtnTransfer->setFocusPolicy(Qt::NoFocus);
-    _pBtnTransfer->setObjectName("Transfer");
-    _pBtnTransfer->setToolTip(tr("会话转移"));
-    _pBtnTransfer->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
-
-    _pBtnQuickReply = new QPushButton(this);
-    _pBtnQuickReply->setFocusPolicy(Qt::NoFocus);
-    _pBtnQuickReply->setObjectName("QuickReply");
-    _pBtnQuickReply->setToolTip(tr("快捷回复"));
-    _pBtnQuickReply->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
-
-
     //
     auto * screenShotLayout = new QHBoxLayout;
 	screenShotLayout->setMargin(0);
@@ -162,11 +133,8 @@ void ToolWgt::initUi()
     layout->addWidget(_pBtnCode);
     layout->addWidget(_pBtnHistory);
     layout->addWidget(_pBtnShock);
-    layout->addWidget(_pBtnQuickReply);
-
+	_pBtnVideo->setVisible(false);
     auto* rightLayout = new QHBoxLayout;
-    rightLayout->addWidget(_pBtnCloseService,1,Qt::AlignmentFlag::AlignRight);
-    rightLayout->addWidget(_pBtnTransfer,Qt::AlignmentFlag::AlignRight);
     layout->addLayout(rightLayout,1);
 
 	layout->addItem(new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Fixed));
@@ -180,28 +148,6 @@ void ToolWgt::initUi()
     auto* scanQRCode = new QAction(tr("扫一扫"), this);
 
     _pMultiMenu->addAction(scanQRCode);
-
-    QMenu* menu = nullptr;
-
-//    if(_pChatItem->_chatType != QTalk::Enum::GroupChat && _pChatItem->_chatType != QTalk::Enum::System )
-    {
-        menu = new QMenu(this);
-        pVideoAct = new QAction(tr("视频通话"), menu);
-        pAudioAct = new QAction(tr("音频通话"), menu);
-        menu->addAction(pVideoAct);
-        menu->addAction(pAudioAct);
-
-        connect(pVideoAct, &QAction::triggered, [this](bool){
-            std::string peerId = QTalk::Entity::JID(_pChatItem->getPeerId().usrId()).basename();
-            g_pMainPanel->start2Talk_old(peerId, true, true);
-        });
-
-        connect(pAudioAct, &QAction::triggered, [this](bool){
-            std::string peerId = QTalk::Entity::JID(_pChatItem->getPeerId().usrId()).basename();
-            g_pMainPanel->start2Talk_old(peerId, false, true);
-        });
-    }
-
 
     connect(scanQRCode, &QAction::triggered, [](bool){
         emit g_pMainPanel->showQRcode();
@@ -223,33 +169,6 @@ void ToolWgt::initUi()
         AppSetting::instance().setScreentShotHideWndFlag(isChecked);
     });
 
-    connect(_pBtnVideo, &QPushButton::clicked, [this, menu]()
-    {
-
-#ifdef _WINDOWS
-#ifdef PLATFORM_WIN32
-        QtMessageBox::information(g_pMainPanel, tr("提醒"), tr("暂不支持此功能!"));
-        return;
-#endif
-#endif
-
-        if(_pChatItem)
-        {
-            if(_pChatItem->_chatType == QTalk::Enum::TwoPersonChat)
-            {
-                if(menu)
-                    menu->exec(QCursor::pos());
-            }
-            else if(_pChatItem->_chatType == QTalk::Enum::GroupChat)
-            {
-                g_pMainPanel->sendAudioVideoMessage(_pChatItem->_uid, _pChatItem->_chatType);
-                QString groupId = _pChatItem->_uid.qUsrId();
-                auto info = DB_PLAT.getGroupInfo(groupId.toStdString());
-                g_pMainPanel->startGroupTalk(groupId, QString::fromStdString(QTalk::getGroupName(info)));
-            }
-        }
-
-    });
     connect(_pBtnCode, &QPushButton::clicked, [this](){
         if(g_pMainPanel)
         {
@@ -277,36 +196,6 @@ void ToolWgt::initUi()
         }
 
     });
-
-    connect(_pBtnCloseService, &QPushButton::clicked, [this](){
-        int ret = QtMessageBox::warning(this, tr("提示"), tr("您确认结束本次服务吗?"),
-                                        QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
-        if(ret == QtMessageBox::EM_BUTTON_YES)
-        {
-            QtConcurrent::run([this](){
-                if(g_pMainPanel && _pChatItem){
-                    QTalk::Entity::UID uid = _pChatItem->_uid;
-                    ChatMsgManager::serverCloseSession(uid.realId(),
-                            uid.usrId());
-                }
-            });
-        }
-    });
-
-    connect(_pBtnTransfer,&QPushButton::clicked,[this](){
-        if(g_pMainPanel && _pChatItem && !_pSessionTransferWnd->isHaveShow){
-            QtConcurrent::run(&ChatMsgManager::getSeatList, _pChatItem->_uid);
-        }
-        _pSessionTransferWnd->showModel();
-    });
-
-    connect(_pSendProductWnd,&SendProductWnd::sendJsonSig,this,&ToolWgt::sendJsonPrud);
-
-    connect(_pBtnQuickReply,&QPushButton::clicked,[this](){
-        _pQuickReplyWnd->showModel();
-    });
-    connect(_pQuickReplyWnd,&QuickReplyWnd::sendQuickReply,this,&ToolWgt::sendQuickReply);
-    connect(_pSessionTransferWnd,&SessionTransferWnd::sessiontransfer,this, &ToolWgt::sessionTransfer);
 }
 
 /**
@@ -368,67 +257,15 @@ void ToolWgt::onpBtnEmoticon()
 {
     emit g_pMainPanel->sgOperator(tr("表情"));
 
-	QPoint pos = QCursor::pos();
+	QPoint pos = this->geometry().topLeft();
+    pos = mapToGlobal(pos);
     EmoticonMainWgt::instance()->setConversionId(_pChatItem->conversionId());
-    EmoticonMainWgt::instance()->setVisible(false);
+//    EmoticonMainWgt::instance()->setVisible(false);
     EmoticonMainWgt::instance()->setVisible(true);
-    EmoticonMainWgt::instance()->move(pos.x() - 60, pos.y() - 300);
+    EmoticonMainWgt::instance()->move(pos.x() - 20, pos.y() - 280);
     EmoticonMainWgt::instance()->setFocus();
 }
 
-void ToolWgt::openLinkWithCkey(const QUrl& url)
-{
-    MapCookie cookies;
-    cookies["q_ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
-    WebService::loadUrl(url, false, cookies);
-}
-
-void ToolWgt::sendJsonPrud(const QString &products) {
-    if(g_pMainPanel && _pChatItem){
-        QTalk::Entity::UID uid = _pChatItem->_uid;
-        QTalk::Entity::JID jid(uid.realId());
-        QTalk::Entity::JID userId(uid.usrId());
-        std::string type = _pChatItem->_chatType == QTalk::Enum::ConsultServer ? "consult" : "note";
-        ChatMsgManager::sendProduct(jid.username(),userId.username(),products.toStdString(),type);
-    }
-}
-
-void ToolWgt::sendQuickReply(const std::string &text) {
-    if(g_pMainPanel && _pChatItem){
-        g_pMainPanel->sendTextMessage(_pChatItem->_uid, _pChatItem->_chatType, text);
-    }
-}
-
-void ToolWgt::showSeats(const std::vector<QTalk::Entity::ImTransfer>& transfers) {
-    if(_pSessionTransferWnd){
-        _pSessionTransferWnd->showSeats(transfers);
-    }
-}
-
-void ToolWgt::sessionTransfer(const std::string &newJid, const std::string &reason) {
-    if(g_pMainPanel && _pChatItem){
-        QTalk::Entity::UID uid = _pChatItem->_uid;
-        QtConcurrent::run(&ChatMsgManager::sessionTransfer, uid, newJid, reason);
-    }
-}
-
-void ToolWgt::sendWechat() {
-    // invalid function for github
-}
-
-
-void ToolWgt::switchSession(const QUInt8 &) {
-    _pBtnQuickReply->setVisible(false);
-
-#if !defined (_STARTALK) && !defined(_QCHAT)
-    _pBtnVideo->setVisible(false);
-#endif
-
-    _pBtnCloseService->setVisible(_pChatItem->_chatType == QTalk::Enum::ConsultServer);
+void ToolWgt::switchSession(const int &) {
     _pBtnShock->setVisible(_pChatItem->_chatType == QTalk::Enum::TwoPersonChat);
-    _pBtnTransfer->setVisible(_pChatItem->_chatType == QTalk::Enum::ConsultServer);
-
-    bool showVideo = _pChatItem->_chatType != QTalk::Enum::GroupChat && _pChatItem->_chatType != QTalk::Enum::System;
-    pVideoAct->setVisible(showVideo);
-    pAudioAct->setVisible(showVideo);
 }

@@ -34,7 +34,8 @@ set(SOURCE_FILES
         MessageManager.h
         NetEmoticon.cpp
         NetEmoticon.h
-        emoticon.qrc EmoticonView.cpp EmoticonView.h)
+        emoticon.qrc
+        EmoticonView.cpp EmoticonView.h)
 
 if(APPLE)
     ADD_DEFINITIONS(-D_MACOS)

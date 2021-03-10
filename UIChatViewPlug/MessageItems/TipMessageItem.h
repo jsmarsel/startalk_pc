@@ -8,8 +8,7 @@
 
 #include "MessageItemBase.h"
 #include <QLabel>
-#include "../QtUtil/lib/cjson/cJSON.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 
 class QLabel;
 class TipMessageItem : public QFrame

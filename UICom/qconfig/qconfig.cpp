@@ -44,7 +44,7 @@ namespace QTalk {
                 return;
 
             // attr
-            for (QPair<QString, QString> attr : config->attributes) {
+            for (const QPair<QString, QString>& attr : config->attributes) {
                 ele.setAttribute(attr.first, attr.second);
             }
             //

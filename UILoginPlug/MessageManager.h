@@ -25,7 +25,7 @@ public:
 //
 class LoginPanel;
 class UILoginMsgListener : public EventHandler<LoginSuccessMessage>, public EventHandler<SynOfflineSuccees>
-		,public EventHandler<AuthFailed>, public EventHandler<DataBaseOpenMessage>
+		,public EventHandler<AuthFailed>
 		,public EventHandler<GotStructureMessage>, public EventHandler<GotUserGroup>
 		,public EventHandler<LoginErrMessage>, public EventHandler<ChangeHeadRetMessage>
 		,public EventHandler<LoginProcessMessage>
@@ -38,7 +38,6 @@ public:
 	void onEvent(LoginSuccessMessage& e) override;
     void onEvent(SynOfflineSuccees& e) override;
     void onEvent(AuthFailed& e) override;
-	void onEvent(DataBaseOpenMessage& e) override;
 	void onEvent(GotStructureMessage& e) override;
 	void onEvent(GotUserGroup& e) override;
     void onEvent(LoginErrMessage& e) override;

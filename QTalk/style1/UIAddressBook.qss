@@ -220,3 +220,96 @@ QFrame#mainFrm {
     border-top-left-radius:6px;
     border-top-right-radius:6px;
 }
+
+QFrame#GroupWnd {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+QLineEdit#NameLabel, QLabel#NameLabel {
+    font-size:20px;
+    font-weight:500;
+    color:rgba(51,51,51,1);
+    line-height:16px;
+}
+
+QPushButton#SendMail
+{
+    border-image:url(:/CardManager/image1/SendMail_normal_1.png);
+}
+
+QPushButton#SendMail:pressed
+{
+    border-image:url(:/CardManager/image1/SendMail_hover_1.png);
+}
+
+QPushButton#QuitGroup
+{
+    border-image:url(:/CardManager/image1/QuitGroup_normal_1.png);
+}
+QPushButton#QuitGroup:pressed
+{
+    border-image:url(:/CardManager/image1/QuitGroup_hover_1.png);
+}
+
+QPushButton#btn_destroy_group {
+    border-image:url(:/CardManager/image1/btn_destroy.png);
+}
+
+QPushButton:hover#btn_destroy_group {
+    border-image:url(:/CardManager/image1/btn_destroy_hover.png);
+}
+
+QPushButton#SendMessage
+{
+    background:#00C3BC;
+    color:#FFFFFF;
+    border: 2px solid #00C3BC;
+    border-radius:5px;
+}
+
+QPushButton:hover#SendMessage
+{
+    height:32px;
+    background:#00A6A0;
+    color:#FFFFFF;
+    border: 5px solid #00A6A0;
+    border-radius:5px;
+}
+
+QFrame#TopFrame {
+    background:rgba(248,248,248,1);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+QFrame#BodyFrm {
+    background:rgba(255,255,255,1);
+}
+
+QFrame#BottomFrame {
+    background:rgba(255,255,255,1);
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+QHeaderView {
+    border-width:0px;
+    border-style: outset;
+    background:rgba(255,255,255,1);
+}
+
+QHeaderView::section {
+	height: 30px;
+    font-size:14px;
+    font-weight:400;
+    color:rgba(153,153,153,1);
+    line-height:14px;
+    background:rgba(255,255,255,1);
+    border-width:0px;
+    border-style: outset;
+}
+
+QHeaderView::section:selected {
+    font-weight:400;
+}

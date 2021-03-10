@@ -20,24 +20,29 @@ public:
 Q_SIGNALS:
 	void deleteMember(const std::string& );
 	void updateGroupTopic(const QString&);
+    void sgUpdateGroupInfo(const QString& groupId, const QString& groupName);
 
 public:
 	void updateGroupMember(const GroupMemberMessage& e);
 	void updateGroupMember(const std::string& memberJid, const std::string& nick, int affiliation);
 	void clearData();
+	void onUpdateGroupInfo(const QString& groupId, const QString& groupName);
 
 private:
 	void initUi();
 
 public:
-	GroupMember* _pGroupMember;
+	GroupMember* _pGroupMember{};
+    GroupTopic*  _pGroupTopic{};
 
 private:
-	GroupTopic*  _pGroupTopic;
 	std::vector<std::string> _arMembers;
 
 private:
 	QMutex _mutex;
+	QString _groupId;
+	QString _groupName;
+	QString _groupTopic;
 };
 
 #endif//

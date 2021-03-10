@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QRegExp>
 #include <QDebug>
+#include <QPainterPath>
 
 UserHeadWgt::UserHeadWgt(QString name, const QString &headSrc,
         bool onlyShowText,

@@ -88,7 +88,7 @@ void MessageALlDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                 painter->drawRoundedRect(fileContentRect, 2, 2);
                 //
                 int dpi = QTalk::qimage::dpi();
-                QPixmap pixmap = QTalk::qimage::loadImage(fileIcon, true, true, 40 * dpi);
+                QPixmap pixmap = QTalk::qimage::loadImage(fileIcon, false, true, 40 * dpi);
                 int w = pixmap.width() / dpi;
                 int h = pixmap.height() / dpi;
                 painter->drawPixmap((40 - w) / 2 + conRect.x() + 10,
@@ -118,14 +118,6 @@ QSize MessageALlDelegate::sizeHint(const QStyleOptionViewItem &option, const QMo
 }
 
 /**/
-FileMessageDelegate::FileMessageDelegate(QWidget* parent)
-        :QStyledItemDelegate(parent)
-{
-
-}
-
-FileMessageDelegate::~FileMessageDelegate() = default;
-
 
 void FileMessageDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
 
@@ -169,7 +161,7 @@ void FileMessageDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
                     painter->fillRect(conRect, QColor(242,242,242));
                 //
                 int dpi = QTalk::qimage::dpi();
-                QPixmap pixmap = QTalk::qimage::loadImage(fileIcon, true, true, 40 * dpi);
+                QPixmap pixmap = QTalk::qimage::loadImage(fileIcon, false, true, 40 * dpi);
                 int w = pixmap.width() / dpi;
                 int h = pixmap.height() / dpi;
                 painter->drawPixmap((40 - w) / 2 + conRect.x() + 10,

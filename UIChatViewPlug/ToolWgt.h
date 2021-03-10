@@ -2,10 +2,6 @@
 #define _TOOLWGT_H_
 
 #include <QFrame>
-#include "SessionTransferWnd.h"
-#include "SendProductWnd.h"
-#include "QuickReplyWnd.h"
-#include "QchatMoreFun.h"
 #include "../entity/im_transfer.h"
 #include <QPointer>
 
@@ -20,8 +16,6 @@ class ToolWgt : public QFrame
 {
 	Q_OBJECT
 
-
-
 public:
 	ToolWgt(InputWgt* pInputWgt, ChatViewItem* chatItem);
 	~ToolWgt() override;
@@ -31,16 +25,12 @@ private:
     void onFileBtnClicked();
     void onBtnScreenshot();
 	void onpBtnEmoticon();
-	void openLinkWithCkey(const QUrl& url);
 	void sendJsonPrud(const QString &products);
 	void sendQuickReply(const std::string& text);
 	void sessionTransfer(const std::string& newJid,const std::string& reason);
-	void onBtnHotClicked();
 
 public:
-	void showSeats(const std::vector<QTalk::Entity::ImTransfer>& transfers);
-	void sendWechat();
-    void switchSession(const QUInt8 &i);
+    void switchSession(const int &i);
 
 Q_SIGNALS:
     void showSearchWnd();
@@ -58,21 +48,10 @@ private:
 	QPushButton* _pBtnHistory{};
 //	QPushButton* _pBtnShare{};
 	QPushButton* _pBtnMultifunction{};
-	QPushButton* _pBtnCloseService{};
-	QPushButton* _pBtnTransfer{};
-	QPushButton* _pBtnQuickReply{};
 	QMenu*       _pMenu{};
 	QAction*     _pScreenShotHideWnd{};
 
-	SendProductWnd* _pSendProductWnd{};
-	QuickReplyWnd* _pQuickReplyWnd{};
-	SessionTransferWnd* _pSessionTransferWnd{};
-	QchatMoreFun* qchatMoreFun{};
-
 	QMenu* _pMultiMenu{};
-
-	QAction* pVideoAct{};
-    QAction* pAudioAct{};
 };
 
 #endif//_TOOLWGT_H_

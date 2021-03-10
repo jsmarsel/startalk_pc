@@ -3,26 +3,29 @@
 #include <QVBoxLayout>
 #include <QEvent>
 #include <QScrollBar>
+#include <QDebug>
+#include "QToolButton"
+#include "GroupTopicEditor.h"
 
-GroupTopic::GroupTopic(QWidget* parent)
-	: QFrame(parent)
-	, _pTopicEdit(nullptr)
-	, _pBtnShowMore(nullptr)
-{
-	setObjectName("GroupTopic");
-	setFrameShape(QFrame::NoFrame);
-	initUi();
-	setTopic("");
+
+GroupTopic::GroupTopic(QString &groupId,
+                       QString &groupName,
+                       QString &groupTopic,
+                       QWidget *parent)
+        : QFrame(parent), _groupId(groupId),
+          _groupName(groupName), _groupTopic(groupTopic) {
+    setObjectName("GroupTopic");
+    setFrameShape(QFrame::NoFrame);
+    initUi();
+//	setTopic("");
 }
 
 
-GroupTopic::~GroupTopic()
-{
-	if (nullptr != _pBtnShowMore)
-	{
-		delete _pBtnShowMore;
-		_pBtnShowMore = nullptr;
-	}
+GroupTopic::~GroupTopic() {
+    if (nullptr != _pBtnShowMore) {
+        delete _pBtnShowMore;
+        _pBtnShowMore = nullptr;
+    }
 }
 
 /**
@@ -32,19 +35,14 @@ GroupTopic::~GroupTopic()
   * @author   cc
   * @date     2018/10/09
   */
-void GroupTopic::setTopic(const QString& topic)
-{
-	if (topic.isEmpty())
-	{
-		_pTopicEdit->setText(tr("\n\n  "
-                                      "            暂无公告"));
-		_pTopicEdit->setAlignment(Qt::AlignCenter);
-	}
-	else
-	{
-		_pTopicEdit->setText(topic);
-		_pTopicEdit->setAlignment(Qt::AlignLeft);
-	}
+void GroupTopic::setTopic(const QString &topic) {
+    _groupTopic = topic;
+    if (topic.isEmpty()) {
+        _pStackLay->setCurrentWidget(_pEmptyLabel);
+    } else {
+        _pStackLay->setCurrentWidget(_pTopicEdit);
+        _pTopicEdit->setText(topic);
+    }
 }
 
 /**
@@ -54,37 +52,55 @@ void GroupTopic::setTopic(const QString& topic)
   * @author   cc
   * @date     2018/10/09
   */
-void GroupTopic::initUi()
-{
-	QLabel *pLabelTitle = new QLabel(tr("群公告"));
-	_pTopicEdit = new QTextEdit(this); //
+void GroupTopic::initUi() {
+    auto *pLabelTitle = new QLabel(tr("群公告"), this);
+
+    auto *editBtn = new QToolButton(this);
+    editBtn->setObjectName("GroupTopicEditBtn");
+    editBtn->setFixedSize(16, 16);
+
+    _pStackLay = new QStackedLayout();
+    _pStackLay->setMargin(2);
+    _pEmptyLabel = new QLabel(tr("暂无公告"), this);
+    _pEmptyLabel->setAlignment(Qt::AlignCenter);
+    _pStackLay->addWidget(_pEmptyLabel);
+    _pTopicEdit = new QTextEdit(this); //
+    _pTopicEdit->viewport()->installEventFilter(this);
+    _pStackLay->addWidget(_pTopicEdit);
     _pTopicEdit->installEventFilter(this);
     _pTopicEdit->setAcceptRichText(false);
     _pTopicEdit->verticalScrollBar()->setVisible(false);
-	_pBtnShowMore = new QPushButton;
+    _pBtnShowMore = new QPushButton;
 
-	_pTopicEdit->setReadOnly(true);
-	_pTopicEdit->setFrameShape(QFrame::NoFrame);
+    _pTopicEdit->setReadOnly(true);
+    _pTopicEdit->setFrameShape(QFrame::NoFrame);
 
-	pLabelTitle->setObjectName("GroupTopicTitle");
-	_pTopicEdit->setObjectName("TopicEdit");
-	_pBtnShowMore->setObjectName("BtnShowMore");
+    pLabelTitle->setObjectName("GroupTopicTitle");
+    _pTopicEdit->setObjectName("TopicEdit");
+    _pEmptyLabel->setObjectName("TopicEmptyLabel");
+    _pBtnShowMore->setObjectName("BtnShowMore");
 
-	pLabelTitle->setContentsMargins(13, 15, 0, 0);
-	_pTopicEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _pStackLay->setCurrentWidget(_pEmptyLabel);
+//	pLabelTitle->setContentsMargins(13, 15, 0, 0);
+//	_pTopicEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	_pEmptyLabel->installEventFilter(this);
 
-	auto* topLayout = new QHBoxLayout;
-	topLayout->setMargin(0);
-	topLayout->addWidget(pLabelTitle);
-	topLayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Fixed));
-	//topLayout->addWidget(_pBtnShowMore);
+    auto *topLayout = new QHBoxLayout;
+    topLayout->setContentsMargins(13, 10, 15, 0);
+    topLayout->addWidget(pLabelTitle);
+    topLayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding, QSizePolicy::Fixed));
+    topLayout->addWidget(editBtn);
+    topLayout->setAlignment(pLabelTitle, Qt::AlignVCenter);
+    topLayout->setAlignment(editBtn, Qt::AlignVCenter);
+    //topLayout->addWidget(_pBtnShowMore);
 
-	auto* layout = new QVBoxLayout;
-	layout->setMargin(0);
-	layout->addLayout(topLayout);
-	layout->addWidget(_pTopicEdit);
+    auto *layout = new QVBoxLayout(this);
+    layout->setMargin(0);
+    layout->addLayout(topLayout);
+    layout->addLayout(_pStackLay);
 
-	setLayout(layout);
+    connect(editBtn, &QToolButton::clicked, this, &GroupTopic::onEditBtnClicked);
+//	connect(_pTopicEdit, &QTextEdit::cursorPositionChanged, this, &GroupTopic::onEditBtnClicked);
 }
 
 /**
@@ -93,19 +109,27 @@ void GroupTopic::initUi()
  * @param e
  * @return
  */
-bool GroupTopic::eventFilter(QObject *o, QEvent *e)
-{
-    if(o == _pTopicEdit)
-    {
-        if(e->type() == QEvent::Enter)
-        {
+bool GroupTopic::eventFilter(QObject *o, QEvent *e) {
+    if (o == _pTopicEdit) {
+        if (e->type() == QEvent::Enter) {
             _pTopicEdit->verticalScrollBar()->setVisible(true);
-        }
-        else if(e->type() == QEvent::Leave)
-        {
+        } else if (e->type() == QEvent::Leave) {
             _pTopicEdit->verticalScrollBar()->setVisible(false);
         }
+    } else if( o == _pTopicEdit->viewport() || o == _pEmptyLabel) {
+        if (e->type() == QEvent::MouseButtonPress) {
+            onEditBtnClicked();
+        } else if (e->type() == QEvent::Enter) {
+		    setCursor(Qt::PointingHandCursor);
+	    } else if (e->type() == QEvent::Leave) {
+		    setCursor(Qt::ArrowCursor);
+	    }
     }
 
     return QFrame::eventFilter(o, e);
+}
+
+void GroupTopic::onEditBtnClicked() {
+    GroupTopicEditor editor(_groupId, _groupName, _groupTopic, this);
+    editor.exec();
 }

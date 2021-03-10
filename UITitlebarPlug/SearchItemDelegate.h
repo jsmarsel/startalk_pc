@@ -43,9 +43,7 @@ enum {
 class SearchItemDelegate : public QStyledItemDelegate
 {
 	Q_OBJECT
-public:
-    explicit SearchItemDelegate(QAbstractItemView* parent);
-	~SearchItemDelegate() override;
+	using QStyledItemDelegate::QStyledItemDelegate;
 
 public:
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;

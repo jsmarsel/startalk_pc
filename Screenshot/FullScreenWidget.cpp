@@ -8,7 +8,6 @@
 #include <QProcess>
 #include <QClipboard>
 #include "SnipScreenTool.h"
-#include "../QtUtil/lib/MacHelper.h"
 
 #define T_
 

@@ -9,11 +9,11 @@ class Communication;
 class OnLineManager
 {
 public:
-    explicit OnLineManager(Communication* pComm);
-    bool OnGetOnLineUser(const std::set<std::string> &users, bool = false);
+    explicit OnLineManager(Communication *pComm);
+    bool getOnLineUser(const std::set<std::string> &users, bool = false);
 
 private:
-    Communication* _pComm;
+    Communication *_pComm;
 };
 
 #endif // ONLINEMANAGER_H

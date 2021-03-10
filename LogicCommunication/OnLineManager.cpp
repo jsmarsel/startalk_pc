@@ -3,16 +3,15 @@
 #include <sstream>
 #include "../Platform/NavigationManager.h"
 #include "../Platform/Platform.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include "Communication.h"
 #include "../QtUtil/Utils/Log.h"
 //#include "../QtUtil/Enum/im_enum.h"
 
 using namespace QTalk;
 
-OnLineManager::OnLineManager(Communication *pComm) :
-        _pComm(pComm) {
-
+OnLineManager::OnLineManager(Communication *pComm) : _pComm(pComm)
+{
 }
 
 /**
@@ -21,7 +20,8 @@ OnLineManager::OnLineManager(Communication *pComm) :
   * @参数
   * @date 2018.10.12
   */
-bool OnLineManager::OnGetOnLineUser(const std::set<std::string> &users, bool sendRet) {
+bool OnLineManager::getOnLineUser(const std::set<std::string> &users, bool sendRet)
+{
 
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
@@ -34,68 +34,69 @@ bool OnLineManager::OnGetOnLineUser(const std::set<std::string> &users, bool sen
 
     std::string postData;
     {
-        cJSON *gObj = cJSON_CreateObject();
-
-        cJSON *userAry = cJSON_CreateArray();
-        for (const std::string &user : users) {
-            cJSON *userObj = cJSON_CreateString(user.c_str());
-            cJSON_AddItemToArray(userAry, userObj);
+        nJson gObj;
+        nJson userAry;
+        for (const std::string &user : users)
+        {
+            userAry.push_back(user);
         }
-        cJSON_AddItemToObject(gObj, "users", userAry);
-
-        postData = QTalk::JSON::cJSON_to_string(gObj);
-
-        cJSON_Delete(gObj);
-
+        gObj["users"] = userAry;
+        postData = gObj.dump();
     }
 
     std::map<std::string, std::string> userStatus;
 
     bool retSts = false;
     auto callback = [users, &retSts, &userStatus](int code, const std::string &responseData) {
+        if (code == 200)
+        {
+            nJson data = Json::parse(responseData);
 
-        if (code == 200) {
-            cJSON *data = cJSON_Parse(responseData.c_str());
-
-            if (data == nullptr) {
-                error_log("json paring error"); return;
+            if (data == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(data, "ret")->valueint;
-            if (ret) {
-                cJSON *dataObj = cJSON_GetObjectItem(data, "data");
-                if (dataObj) {
-                    cJSON *userStatusAry = cJSON_GetObjectItem(dataObj, "ul");
-                    int size = cJSON_GetArraySize(userStatusAry);
+            bool ret = Json::get<bool>(data, "ret");
+            if (ret)
+            {
+                nJson dataObj = Json::get<nJson>(data, "data");
+                if (nullptr != dataObj)
+                {
+                    nJson userStatusAry = Json::get<nJson>(dataObj, "ul");
 
-                    for (int i = 0; i < size; i++) {
-                        cJSON *item = cJSON_GetArrayItem(userStatusAry, i);
-
-                        std::string struser = cJSON_GetObjectItem(item, "u")->valuestring;
-                        std::string strstatus = cJSON_GetObjectItem(item, "o")->valuestring;
+                    for (auto &item : userStatusAry)
+                    {
+                        std::string struser = Json::get<std::string>(item, "u");
+                        std::string strstatus = Json::get<std::string>(item, "o");
                         userStatus[struser] = strstatus;
                     }
                 }
-                cJSON_Delete(data);
-                debug_log("got user states, count:{0}", userStatus.size());
                 retSts = true;
                 return;
             }
-            cJSON_Delete(data);
-        } else {
+        }
+        else
+        {
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(url.str(), RequestMethod::POST);
         req.body = postData;
         req.header["Content-Type"] = "application/json;";
         req.timeout = 10L;
         _pComm->addHttpRequest(req, callback, false);
-        if (retSts) {
-
-            if (sendRet && !userStatus.empty())
-                CommMsgManager::sendGotUsersStatus(userStatus);
+        if (retSts)
+        {
+            // sigle search
+            if (sendRet && userStatus.size() == 1)
+            {
+                CommMsgManager::sendGotUsersStatus(userStatus.cbegin()->first,
+                                                   userStatus.cbegin()->second);
+            }
 
             PLAT.loadOnlineData(userStatus);
         }

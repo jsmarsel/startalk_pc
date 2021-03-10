@@ -27,8 +27,7 @@ enum {
 **/
 class UserItemDelegate : public QStyledItemDelegate
 {
-public:
-    explicit UserItemDelegate(QWidget* parent);
+    using QStyledItemDelegate::QStyledItemDelegate;
 
 protected:
     QSize sizeHint(const QStyleOptionViewItem &option,

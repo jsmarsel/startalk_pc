@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/updateClient.qml</file>
+        <file>qml/Button.qml</file>
+    </qresource>
+</RCC>

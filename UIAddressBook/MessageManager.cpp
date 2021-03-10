@@ -8,7 +8,8 @@
  * @param imUserSup
  */
 void AddressBookMsgManager::getUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> &imUserSup,
-                                        std::shared_ptr<QTalk::Entity::ImUserInfo>& userInfo) {
+                                        std::shared_ptr<QTalk::Entity::ImUserInfo> &userInfo)
+{
     UserCardSupple e(imUserSup, userInfo);
     EventBus::FireEvent(e);
 }
@@ -18,7 +19,8 @@ void AddressBookMsgManager::getUserCard(std::shared_ptr<QTalk::Entity::ImUserSup
  * @param userId 用户id
  * @param phoneNo 返回值
  */
-void AddressBookMsgManager::getUserPhoneNo(const std::string &userId, std::string &phoneNo) {
+void AddressBookMsgManager::getUserPhoneNo(const std::string &userId, std::string &phoneNo)
+{
     UserPhoneNo e;
     e.userId = userId;
     EventBus::FireEvent(e);
@@ -33,7 +35,8 @@ void AddressBookMsgManager::getUserPhoneNo(const std::string &userId, std::strin
  * @param val
  */
 void AddressBookMsgManager::setUserSetting(bool isSetting, const std::string &key, const std::string &subKey,
-                                           const std::string &val) {
+                                           const std::string &val)
+{
 
     debug_log("setting userconfig -> issetting:{0}, key:{1}, subKey:{2}, val:{3}", isSetting, key, subKey, val);
 
@@ -49,7 +52,8 @@ void AddressBookMsgManager::setUserSetting(bool isSetting, const std::string &ke
  * 获取本地组织架构
  * @param structure
  */
-void AddressBookMsgManager::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>> &structure) {
+void AddressBookMsgManager::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>> &structure)
+{
     StructureMessage e(structure);
     e.structure = structure;
     EventBus::FireEvent(e);
@@ -60,7 +64,8 @@ void AddressBookMsgManager::getStructure(std::vector<std::shared_ptr<QTalk::Enti
  * @param structName
  * @param count
  */
-void AddressBookMsgManager::getStructureCount(const std::string &structName, int &count) {
+void AddressBookMsgManager::getStructureCount(const std::string &structName, int &count)
+{
     GetStructureCount e(count);
     e.structName = structName;
     EventBus::FireEvent(e);
@@ -69,7 +74,8 @@ void AddressBookMsgManager::getStructureCount(const std::string &structName, int
 /**
  * 获取组织架构群成员
  */
-void AddressBookMsgManager::getStructureMembers(const std::string &structName, std::vector<std::string> &members) {
+void AddressBookMsgManager::getStructureMembers(const std::string &structName, std::vector<std::string> &members)
+{
     GetStructureMember e(members);
     e.structName = structName;
     EventBus::FireEvent(e);
@@ -78,46 +84,80 @@ void AddressBookMsgManager::getStructureMembers(const std::string &structName, s
 /**
  * eventbus 创建群请求
  */
-void AddressBookMsgManager::creatGroup(const std::string &groupId, const std::string &groupName) {
+void AddressBookMsgManager::creatGroup(const std::string &groupId, const std::string &groupName)
+{
     CreatGroup e(groupId);
     e.groupName = groupName;
+    EventBus::FireEvent(e);
+}
+
+void AddressBookMsgManager::getGroupCard(std::shared_ptr<QTalk::Entity::ImGroupInfo> &ginfo)
+{
+    GetGroupInfoMessage e(ginfo);
+    EventBus::FireEvent(e);
+}
+
+void AddressBookMsgManager::getGroupMembers(const std::string &grouoId)
+{
+    GetGroupMessage e;
+    e.groupId = grouoId;
+    EventBus::FireEvent(e);
+}
+
+void AddressBookMsgManager::quitGroup(const std::string &groupId)
+{
+    QuitGroupMsg e;
+    e.groupId = groupId;
     EventBus::FireEvent(e);
 }
 
 /**
  * 拉人进群
  */
-void AddressBookMsgManager::addGroupMember(const std::vector<std::string> &members, const std::string &groupId) {
+void AddressBookMsgManager::addGroupMember(const std::vector<std::string> &members, const std::string &groupId)
+{
     AddGroupMember e(members, groupId);
     EventBus::FireEvent(e);
 }
 
-void AddressBookMsgManager::getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInfo>& info)
+void AddressBookMsgManager::getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInfo> &info)
 {
     UserCardInfo e(info);
     EventBus::FireEvent(e);
 }
 
+void AddressBookMsgManager::destroyGroup(const std::string &groupId)
+{
+    DestroyGroupMsg e;
+    e.groupId = groupId;
+    EventBus::FireEvent(e);
+}
+
 /***************************/
 AddressBookListener::AddressBookListener(AddressBookPanel *mainPanel)
-        : _mainPanel(mainPanel) {
-	EventBus::AddHandler<UpdateUserConfigMsg>(*this);
-//	EventBus::AddHandler<AllFriends>(*this);
-	EventBus::AddHandler<AllGroupList>(*this);
-	EventBus::AddHandler<CreatGroupRet>(*this);
-	EventBus::AddHandler<DestroyGroupRet>(*this);
-	EventBus::AddHandler<IncrementConfig>(*this);
-	EventBus::AddHandler<IncrementUser>(*this);
+    : _mainPanel(mainPanel)
+{
+    EventBus::AddHandler<UpdateUserConfigMsg>(*this);
+    //	EventBus::AddHandler<AllFriends>(*this);
+    EventBus::AddHandler<AllGroupList>(*this);
+    EventBus::AddHandler<CreatGroupRet>(*this);
+    EventBus::AddHandler<DestroyGroupRet>(*this);
+    EventBus::AddHandler<IncrementConfig>(*this);
+    EventBus::AddHandler<IncrementUser>(*this);
+    EventBus::AddHandler<GroupMemberMessage>(*this);
 }
 
-AddressBookListener::~AddressBookListener() {
-
+AddressBookListener::~AddressBookListener()
+{
 }
 
-void AddressBookListener::onEvent(UpdateUserConfigMsg &e) {
-    if (e.getCanceled()) return;
+void AddressBookListener::onEvent(UpdateUserConfigMsg &e)
+{
+    if (e.getCanceled())
+        return;
 
-    if (_mainPanel) {
+    if (_mainPanel)
+    {
         _mainPanel->updateUserConfig(e.arConfigs);
     }
 }
@@ -130,45 +170,68 @@ void AddressBookListener::onEvent(UpdateUserConfigMsg &e) {
 //    }
 //}
 
-void AddressBookListener::onEvent(AllGroupList &e) {
-    if (e.getCanceled()) return;
+void AddressBookListener::onEvent(AllGroupList &e)
+{
+    if (e.getCanceled())
+        return;
 
-    if (_mainPanel) {
+    if (_mainPanel)
+    {
         _mainPanel->onRecvGroups(e.groups);
     }
 }
 
-void AddressBookListener::onEvent(CreatGroupRet &e) {
-    if (e.getCanceled()) return;
+void AddressBookListener::onEvent(CreatGroupRet &e)
+{
+    if (e.getCanceled())
+        return;
 
-    if (_mainPanel) {
+    if (_mainPanel)
+    {
         _mainPanel->onCreatGroupRet(e.groupId);
     }
 }
 
 void AddressBookListener::onEvent(DestroyGroupRet &e)
 {
-    if (e.getCanceled()) return;
+    if (e.getCanceled())
+        return;
 
-    if (_mainPanel) {
+    if (_mainPanel)
+    {
         _mainPanel->onDestroyGroupRet(e.groupId);
     }
 }
 
 void AddressBookListener::onEvent(IncrementConfig &e)
 {
-    if (e.getCanceled()) return;
+    if (e.getCanceled())
+        return;
 
-    if (_mainPanel) {
+    if (_mainPanel)
+    {
         _mainPanel->updateUserConfig(e.deleteData, e.arImConfig);
     }
 }
 
 void AddressBookListener::onEvent(IncrementUser &e)
 {
-    if (e.getCanceled()) return;
+    if (e.getCanceled())
+        return;
 
-    if (_mainPanel) {
+    if (_mainPanel)
+    {
         _mainPanel->gotIncrementUser(e.arUserInfo, e.arDeletes);
+    }
+}
+
+void AddressBookListener::onEvent(GroupMemberMessage &e)
+{
+    if (e.getCanceled())
+        return;
+
+    if (_mainPanel)
+    {
+        _mainPanel->onRecvGroupMember(e.groupId, e.members, e.userRole);
     }
 }

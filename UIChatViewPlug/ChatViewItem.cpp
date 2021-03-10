@@ -30,6 +30,8 @@
 #include "../Platform/dbPlatForm.h"
 #include "MessageAnalysis.h"
 #include "search/LocalSearchMainWgt.h"
+#include "../Platform/Platform.h"
+#include "../QtUtil/Utils/utils.h"
 
 #define DEM_ATALL_STR "@all"
 
@@ -38,54 +40,62 @@ using namespace QTalk;
 extern ChatViewMainPanel *g_pMainPanel;
 ChatViewItem::ChatViewItem()
     : QFrame(),
-    _leftLay(nullptr),
-    _sendBtnLay(nullptr),
-    _sendBtn(nullptr) {
-
+      _leftLay(nullptr),
+      _sendBtnLay(nullptr),
+      _sendBtn(nullptr)
+{
     //
     initUi();
     //
     qRegisterMetaType<Entity::ImMessageInfo>("Entity::ImMessageInfo");
     qRegisterMetaType<std::string>("std::string");
     connect(this, &ChatViewItem::sgRemoveGroupMember, _pInputWgt, &InputWgt::removeGroupMember);
+
     if(_pGroupSidebar)
         connect(this, &ChatViewItem::sgRemoveGroupMember, _pGroupSidebar->_pGroupMember, &GroupMember::deleteMember);
+
     connect(this, &ChatViewItem::sgUpdateUserStatus, _pStatusWgt, &StatusWgt::updateUserSts);
     connect(_pShareMessageFrm, &ShareMessageFrm::sgSetShareMessageState, this, &ChatViewItem::setShareMessageState);
-
-
     connect(_pToolWgt, &ToolWgt::showSearchWnd, this, &ChatViewItem::onShowSearchWnd);
-
     qRegisterMetaType<std::vector<Entity::ImTransfer>>("std::vector<Entity::ImTransfer>");
-    connect(this,&ChatViewItem::sgShowSeats,_pToolWgt,&ToolWgt::showSeats);
     connect(this, &ChatViewItem::sgDeleteLater, this, &ChatViewItem::deleteLater, Qt::QueuedConnection);
-
     //
     connect(this, &ChatViewItem::sgShowMessage, _pChatMainWgt, &ChatMainWgt::onShowMessage, Qt::QueuedConnection);
     connect(this, &ChatViewItem::sgLoadingMovie, this, &ChatViewItem::onShowLoading, Qt::QueuedConnection);
 }
 
-ChatViewItem::~ChatViewItem() {
-    if (nullptr != _pStatusWgt) {
+ChatViewItem::~ChatViewItem()
+{
+    if (nullptr != _pStatusWgt)
+    {
         delete _pStatusWgt;
         _pStatusWgt = nullptr;
     }
-    if (nullptr != _pChatMainWgt) {
+
+    if (nullptr != _pChatMainWgt)
+    {
         delete _pChatMainWgt;
         _pChatMainWgt = nullptr;
     }
-    if (nullptr != _pGroupSidebar) {
+
+    if (nullptr != _pGroupSidebar)
+    {
         delete _pGroupSidebar;
         _pGroupSidebar = nullptr;
     }
-    if (nullptr != _pToolWgt) {
+
+    if (nullptr != _pToolWgt)
+    {
         delete _pToolWgt;
         _pToolWgt = nullptr;
     }
-    if (nullptr != _pInputWgt) {
+
+    if (nullptr != _pInputWgt)
+    {
         delete _pInputWgt;
         _pInputWgt = nullptr;
     }
+
     if(nullptr != _pSearchMainWgt)
     {
         delete _pSearchMainWgt;
@@ -99,6 +109,7 @@ void ChatViewItem::setShareMessageState(bool flag)
     _pChatMainWgt->setShareMessageState(flag);
     _pInputFrm->setVisible(!flag);
     _pShareMessageFrm->setVisible(flag);
+
     if(flag)
     {
         _pShareMessageFrm->setFixedHeight(_pInputFrm->height());
@@ -113,7 +124,8 @@ void ChatViewItem::setShareMessageState(bool flag)
   * @author   cc
   * @date     2018/09/25
   */
-void ChatViewItem::initUi() {
+void ChatViewItem::initUi()
+{
     setObjectName("ChatViewItem");
     _pLoading = makeLoadingLabel(true, {40, 40}, this);
     _pLoading->movie()->stop();
@@ -134,7 +146,6 @@ void ChatViewItem::initUi() {
     //
     _pToolWgt = new ToolWgt(_pInputWgt, this);
     _pToolWgt->setObjectName("ToolWgt");
-
     _leftLay = new QVBoxLayout;
     _leftLay->setMargin(0);
     _leftLay->setMargin(0);
@@ -164,7 +175,6 @@ void ChatViewItem::initUi() {
     pMidLayout = new QHBoxLayout;
     pMidLayout->setMargin(0);
     pMidLayout->addLayout(_leftLay);
-
     auto *layout = new QVBoxLayout;
     layout->setMargin(0);
     layout->setSpacing(0);
@@ -184,7 +194,6 @@ void ChatViewItem::initUi() {
     _sendBtnLay->addWidget(_sendBtn);
     _leftLay->addWidget(sendBtnFrm);
     connect(_sendBtn, &QPushButton::clicked, _pInputWgt, &InputWgt::sendMessage);
-
 }
 
 /**
@@ -194,10 +203,11 @@ void ChatViewItem::initUi() {
   * @author   cc
   * @date     2018/10/17
   */
-QString ChatViewItem::conversionId() {
-    if (_strConversionId.isEmpty()) {
-        _strConversionId = QString::fromStdString(utils::getMessageId());
-    }
+QString ChatViewItem::conversionId()
+{
+    if (_strConversionId.isEmpty())
+        _strConversionId = QString::fromStdString(QTalk::utils::getMessageId());
+
     return _strConversionId;
 }
 
@@ -210,10 +220,12 @@ QString ChatViewItem::conversionId() {
   * @author   cc
   * @date     2018/09/20
   */
-void ChatViewItem::showMessage(const Entity::ImMessageInfo &message, int jumType) {
-
-    if(_pStatusWgt != nullptr){
-        if(message.ChatType != Enum::ChatType::GroupChat && !message.SendJid.empty()){
+void ChatViewItem::showMessage(const Entity::ImMessageInfo &message, int jumType)
+{
+    if(_pStatusWgt != nullptr)
+    {
+        if(message.ChatType != Enum::ChatType::GroupChat && !message.SendJid.empty())
+        {
             Entity::JID jid(message.SendJid);
             _pStatusWgt->showResource(jid.resources());
         }
@@ -236,10 +248,8 @@ void ChatViewItem::showMessage(const Entity::ImMessageInfo &message, int jumType
     info.backup_info = message.BackupInfo.data();
     info.xmpp_id = message.XmppId.data();
     info.real_id = message.RealJid.data();
-
     info.user_name = message.UserName.data();
     info.user_head = message.HeadSrc.data();
-
     QTalk::analysisMessage(info);
     emit sgShowMessage(info, jumType);
 }
@@ -251,17 +261,20 @@ void ChatViewItem::showMessage(const Entity::ImMessageInfo &message, int jumType
   * @author   cc
   * @date     2018/09/20
   */
-Entity::UID ChatViewItem::getPeerId() {
+Entity::UID ChatViewItem::getPeerId() const
+{
     return _uid;
 }
 
-void ChatViewItem::onRecvAddGroupMember(const std::string &memberId, const std::string &nick, int affiliation) {
+void ChatViewItem::onRecvAddGroupMember(const std::string &memberId, const std::string &nick, int affiliation)
+{
     if(_pGroupSidebar)
         _pGroupSidebar->updateGroupMember(memberId, nick, affiliation);
 }
 
 //
-void ChatViewItem::onRecvRemoveGroupMember(const std::string &memberId) {
+void ChatViewItem::onRecvRemoveGroupMember(const std::string &memberId)
+{
     if(_pGroupSidebar)
         _pGroupSidebar->deleteMember(memberId);
 }
@@ -296,46 +309,50 @@ void ChatViewItem::onShowSearchWnd()
 }
 
 //
-void ChatViewItem::switchSession(const QUInt8 & chatType, const QString & userName, const QTalk::Entity::UID & uid) {
+void ChatViewItem::switchSession(const QUInt8 &chatType, const QString &userName, const QTalk::Entity::UID &uid)
+{
     _uid = uid;
     _name = userName;
     _chatType = (Enum::ChatType) chatType;
+
     //
     if(_pSearchMainWgt)
         emit _pSearchMainWgt->sgUpdateName(userName);
-    _pStatusWgt->switchUser(chatType, uid, userName);
 
+    _pStatusWgt->switchUser(chatType, uid, userName);
     _pToolWgt->switchSession(chatType);
 //    _pInputWgt->clear();
+    std::string userId = Entity::JID(_uid.usrId()).username();
 
-    std::string username = Entity::JID(_uid.usrId()).username();
-    if (_chatType == Enum::System || SYSTEM_XMPPID == username || RBT_SYSTEM == username || RBT_NOTICE == username) {
+    if (_chatType == Enum::System )
+    {
 //        _pToolWgt->setVisible(false);
         _pInputFrm->setVisible(false);
         _sendBtn->setVisible(false);
         sendBtnFrm->setVisible(false);
     }
-    else {
+    else
+    {
         _pInputFrm->setVisible(true);
 //        _pToolWgt->setVisible(true);
-
         sendBtnFrm->setVisible(AppSetting::instance().getShowSendMessageBtnFlag());
         _sendBtn->setVisible(AppSetting::instance().getShowSendMessageBtnFlag());
     }
 
     _pGroupSidebar->setVisible(_chatType == Enum::GroupChat);
-    if (_chatType == Enum::GroupChat) {
+
+    if (_chatType == Enum::GroupChat)
+    {
         pMidLayout->addWidget(_pGroupSidebar);
-        if(_pGroupSidebar && _pGroupSidebar->_pGroupMember)
-            _pGroupSidebar->_pGroupMember->setGroupId(uid.usrId());
+
+        if(_pGroupSidebar )
+            _pGroupSidebar->onUpdateGroupInfo(uid.qUsrId(), userName);
     }
-    else if(pMidLayout->indexOf(_pGroupSidebar) != -1){
+    else if(pMidLayout->indexOf(_pGroupSidebar) != -1)
         pMidLayout->removeWidget(_pGroupSidebar);
-    }
 
 //    if(_pGroupSidebar)
 //        _pGroupSidebar->clearData();
-
 //    _pChatMainWgt->clearData();
 }
 
@@ -343,12 +360,14 @@ void ChatViewItem::switchSession(const QUInt8 & chatType, const QString & userNa
 void ChatViewItem::onShowLoading(bool show)
 {
     _pLoading->setVisible(show);
+
     if(show)
         _pLoading->movie()->start();
     else
         _pLoading->movie()->stop();
 }
 
-void ChatViewItem::freeView() {
+void ChatViewItem::freeView()
+{
     _pChatMainWgt->freeView();
 }

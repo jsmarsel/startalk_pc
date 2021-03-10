@@ -41,7 +41,7 @@ QRect FullScreenPrivate::GetTheTopRect(const QPoint& point)
         return destTopRect;
     }
 
-    for (QRect rect : m_WndRects)
+    for each (QRect rect in m_WndRects)
     {
         if (rect.contains(point))
         {

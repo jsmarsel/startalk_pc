@@ -40,7 +40,7 @@ public:
         titLay->addWidget(_closeBtn, 0);
 
         auto* lay = new QVBoxLayout(this);
-        lay->addWidget(new Line());
+        lay->addWidget(new Line(this));
         lay->addLayout(titLay);
         lay->addWidget(_pProcessBar);
 

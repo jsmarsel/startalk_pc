@@ -9,7 +9,6 @@
 #include <QMap>
 #include "../include/Spinlock.h"
 #include <QtWidgets/QListWidgetItem>
-#include "../include/ThreadPool.h"
 #include "MessageManager.h"
 #include "SearchView.h"
 #include <set>

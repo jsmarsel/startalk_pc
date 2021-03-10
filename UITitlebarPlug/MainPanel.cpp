@@ -17,24 +17,24 @@
 #include "../CustomUi/QtMessageBox.h"
 #include "ChangeHeadWnd.h"
 
-void deleteDir(const QString& path)
+void deleteDir(const QString &path)
 {
     if (path.isEmpty())
         return;
 
     QFileInfo info(path);
-    if(!info.exists())
+    if (!info.exists())
         return;
 
-    if(info.isDir())
+    if (info.isDir())
     {
         QDir dir(path);
-        if(!dir.exists())
+        if (!dir.exists())
             return;
 
         dir.setFilter(QDir::AllEntries | QDir::NoDotAndDotDot);
         QFileInfoList fileList = dir.entryInfoList();
-        for (const auto& fi : fileList)
+        for (const auto &fi : fileList)
         {
             deleteDir(fi.absoluteFilePath());
         }
@@ -46,9 +46,8 @@ void deleteDir(const QString& path)
     }
 }
 
-
-MainPanel::MainPanel(QWidget *parent) :
-        QFrame(parent) {
+MainPanel::MainPanel(QWidget *parent) : QFrame(parent)
+{
 
     init();
     //
@@ -58,7 +57,7 @@ MainPanel::MainPanel(QWidget *parent) :
 
 MainPanel::~MainPanel()
 {
-    if(_pMessageListener)
+    if (_pMessageListener)
         delete _pMessageListener;
 }
 
@@ -67,15 +66,17 @@ MainPanel::~MainPanel()
   * @参数
   * @date 2018.9.17
   */
-void MainPanel::setCtrlWdt(QWidget *wdt) {
+void MainPanel::setCtrlWdt(QWidget *wdt)
+{
     _pCtrlWdt = wdt;
     _pCtrlWdt->installEventFilter(this);
 }
 
-void MainPanel::getSelfCard() {
-    QtConcurrent::run( [](){
+void MainPanel::getSelfCard()
+{
+    QtConcurrent::run([]() {
         TitlebarMsgManager::getUserCard(PLAT.getSelfDomain(),
-                                      PLAT.getSelfUserId(), 0);
+                                        PLAT.getSelfUserId(), 0);
     });
 }
 
@@ -86,16 +87,19 @@ void MainPanel::getSelfCard() {
   * @author   cc
   * @date     2018/09/29
   */
-void MainPanel::recvUserCard(const std::vector<QTalk::StUserCard> &userCards) {
+void MainPanel::recvUserCard(const std::vector<QTalk::StUserCard> &userCards)
+{
     std::string strSelfId = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
 
-    auto itFind = std::find_if(userCards.begin(), userCards.end(), [strSelfId](const QTalk::StUserCard& user) {
+    auto itFind = std::find_if(userCards.begin(), userCards.end(), [strSelfId](const QTalk::StUserCard &user) {
         return user.xmppId == strSelfId;
     });
 
-    if (itFind != userCards.end() ) {
+    if (itFind != userCards.end())
+    {
         std::string headPath = TitlebarMsgManager::getHeadPath(itFind->headerSrc);
-        if (!headPath.empty() && _userBtn) {
+        if (!headPath.empty() && _userHeadBtn)
+        {
             emit setHeadSignal(QString::fromStdString(itFind->nickName), QString::fromStdString(headPath));
         }
     }
@@ -106,7 +110,8 @@ void MainPanel::recvUserCard(const std::vector<QTalk::StUserCard> &userCards) {
   * @参数
   * @date 2018.9.17
   */
-void MainPanel::mousePressEvent(QMouseEvent *e) {
+void MainPanel::mousePressEvent(QMouseEvent *e)
+{
 
     _press = true;
     chickPos = QCursor::pos();
@@ -119,29 +124,31 @@ void MainPanel::mousePressEvent(QMouseEvent *e) {
   * @参数
   * @date 2018.9.17
   */
-void MainPanel::mouseMoveEvent(QMouseEvent *e) {
-    if(_press)
+void MainPanel::mouseMoveEvent(QMouseEvent *e)
+{
+    if (_press)
     {
         QPoint curPos = QCursor::pos();
         QPoint movePos = curPos - chickPos;
 
-        if (_pCtrlWdt && _pCtrlWdt->isMaximized() && curPos != chickPos) {
+        if (_pCtrlWdt && _pCtrlWdt->isMaximized() && curPos != chickPos)
+        {
             auto geo = _pCtrlWdt->geometry();
-			
+
 #ifdef Q_OS_WIN
             _pCtrlWdt->setWindowState(_pCtrlWdt->windowState() & ~Qt::MaximumSize);
 #endif
             _pCtrlWdt->setGeometry(geo);
-//            _pCtrlWdt->showNormal();
-//			_press = false;
-//            return;
+            //            _pCtrlWdt->showNormal();
+            //			_press = false;
+            //            return;
         }
 
-
         chickPos = curPos;
-        if (_pCtrlWdt) {
-			_pCtrlWdt->move(_pCtrlWdt->x() + movePos.x(), _pCtrlWdt->y() + movePos.y());
-		}
+        if (_pCtrlWdt)
+        {
+            _pCtrlWdt->move(_pCtrlWdt->x() + movePos.x(), _pCtrlWdt->y() + movePos.y());
+        }
     }
 
     QFrame::mouseMoveEvent(e);
@@ -159,7 +166,8 @@ void MainPanel::mouseReleaseEvent(QMouseEvent *e)
   * @参数
   * @date 2018.9.17
   */
-void MainPanel::init() {
+void MainPanel::init()
+{
     _pMessageListener = new TitlebarMsgListener(this);
 
     this->setObjectName("titleMainFrm");
@@ -220,7 +228,7 @@ void MainPanel::init() {
     _pQuickBtn = new QToolButton(this);
     _pQuickBtn->setObjectName(QStringLiteral("creatGroupBtn"));
     _pQuickBtn->setFixedSize(_property._qrCodeBtnSize);
-//    _creatGroupBtn->setToolTip(tr("快速建群"));
+    //    _creatGroupBtn->setToolTip(tr("快速建群"));
     _hbox->addWidget(_pQuickBtn);
     _hbox->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding));
 
@@ -257,16 +265,16 @@ void MainPanel::init() {
     _hbox->addItem(new QSpacerItem(100, 1, QSizePolicy::Fixed));
 #endif
 
-    _userBtn = new HeadPhotoLab;
-    _userBtn->setObjectName("userBtn");
+    _userHeadBtn = new HeadPhotoLab(this);
+    _userHeadBtn->setObjectName("userBtn");
 #ifdef _STARTALK
     QString defaultHead(":/QTalk/image1/StarTalk_defaultHead.png");
 #else
     QString defaultHead(":/QTalk/image1/headPortrait.png");
 #endif
-    _userBtn->setHead(defaultHead, 18, false, false);
-    _userBtn->installEventFilter(this);
-    _hbox->addWidget(_userBtn);
+    _userHeadBtn->setHead(defaultHead, 18, false, false);
+    _userHeadBtn->installEventFilter(this);
+    _hbox->addWidget(_userHeadBtn);
     _hbox->addItem(new QSpacerItem(15, 1, QSizePolicy::Fixed, QSizePolicy::Fixed));
 
 #ifndef _MACOS
@@ -288,14 +296,14 @@ void MainPanel::init() {
 
     _pQuickMenu = new QMenu(this);
     _pQuickMenu->setAttribute(Qt::WA_TranslucentBackground, true);
-    auto* creatGroupAct = new QAction(tr("创建群聊"), this);
+    auto *creatGroupAct = new QAction(tr("创建群聊"), this);
     _pQuickMenu->addAction(creatGroupAct);
 #ifdef TSCREEN
-    auto* throwing = new QAction(tr("发起投屏"), this);
+    auto *throwing = new QAction(tr("发起投屏"), this);
     _pQuickMenu->addAction(throwing);
     connect(throwing, &QAction::triggered, this, &MainPanel::sgShowThrowingScreenWnd);
 #endif
-//    this->setFocusProxy(this);
+    //    this->setFocusProxy(this);
     //
     connect(_closeBtn, SIGNAL(clicked()), this, SLOT(onCtrlWdtClose()));
     connect(_minimizeBtn, SIGNAL(clicked()), this, SLOT(showSmall()));
@@ -312,27 +320,30 @@ void MainPanel::init() {
             this, &MainPanel::onClearSearch, Qt::QueuedConnection);
     connect(_pSearchResultPanel, &SearchResultPanel::sgShowFileRecordWnd,
             this, &MainPanel::onClearSearch, Qt::QueuedConnection);
-    connect(_dropMenu, &DropMenu::sgShowAboutWnd, [this](){
-        if(nullptr!= _pAboutWnd)
+    connect(_dropMenu, &DropMenu::sgShowAboutWnd, [this]() {
+        if (nullptr != _pAboutWnd)
             _pAboutWnd->showCenter(true, _pCtrlWdt);
     });
-    connect(_dropMenu, &DropMenu::sgShowSystemSetting, [this](){
-        if (nullptr != _pSystemSettingWnd) {
-//            _pSystemSettingWnd->showCenter(false, _pCtrlWdt);
+    connect(_dropMenu, &DropMenu::sgShowSystemSetting, [this]() {
+        if (nullptr != _pSystemSettingWnd)
+        {
+            //            _pSystemSettingWnd->showCenter(false, _pCtrlWdt);
             _pSystemSettingWnd->setVisible(false);
             _pSystemSettingWnd->setVisible(true);
+            QApplication::setActiveWindow(this);
         }
     });
+    connect(_dropMenu, &DropMenu::sgDoUpdateClient, this, &MainPanel::sgDoUpdateClient);
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgSetAutoLogin, this, &MainPanel::sgSetAutoLogin);
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgFeedbackLog, this, &MainPanel::feedbackLog);
 
-	connect(_pSystemSettingWnd, &SystemSettingWnd::saveConfig, [this]() {
+    connect(_pSystemSettingWnd, &SystemSettingWnd::saveConfig, [this]() {
         emit sgSaveSysConfig();
         TitlebarMsgManager::saveConfig();
-	});
-    connect(_pSystemSettingWnd, &SystemSettingWnd::sgClearSystemCache, [this](){
+    });
+    connect(_pSystemSettingWnd, &SystemSettingWnd::sgClearSystemCache, [this]() {
         int ret = QtMessageBox::question(this, tr("友情提示"), tr("是否要清除应用缓存，清除后应用会自动重启？"), QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
-        if(ret == QtMessageBox::EM_BUTTON_YES)
+        if (ret == QtMessageBox::EM_BUTTON_YES)
         {
             // 清除文件夹
             QString userPath = PLAT.getAppdataRoamingUserPath().data();
@@ -352,21 +363,19 @@ void MainPanel::init() {
         }
     });
 
-    connect(_pChangeHeadWnd, &ChangeHeadWnd::sgChangeHead, [this](const QString& headPath){
-
-        if(headPath.isEmpty() || headPath == _headPath)
+    connect(_pChangeHeadWnd, &ChangeHeadWnd::sgChangeHead, [this](const QString &headPath) {
+        if (headPath.isEmpty() || headPath == _headPath)
             return;
         TitlebarMsgManager::changeUserHead(headPath.toLocal8Bit().toStdString());
-
     });
 
-    connect(_pSearchResultPanel, &SearchResultPanel::sgSetEditFocus, [this](){
+    connect(_pSearchResultPanel, &SearchResultPanel::sgSetEditFocus, [this]() {
         this->activateWindow();
         _searchFrm->_searchEdt->setFocus();
         emit sgOperator(tr("搜索"));
     });
 
-    connect(_pQuickBtn, &QToolButton::clicked, [this](){
+    connect(_pQuickBtn, &QToolButton::clicked, [this]() {
         QPoint pos;
         auto geo = this->geometry();
         pos.setY(mapToGlobal(geo.bottomLeft()).y() - 5);
@@ -374,7 +383,7 @@ void MainPanel::init() {
         _pQuickMenu->exec(pos);
     });
 
-    connect(creatGroupAct, &QAction::triggered, [this](){
+    connect(creatGroupAct, &QAction::triggered, [this]() {
         QString userCard = QString::fromStdString(PLAT.getSelfXmppId());
         emit creatGroup(userCard);
     });
@@ -385,9 +394,9 @@ void MainPanel::init() {
 void MainPanel::onTabGroupClicked(int tab)
 {
     static int old_tab = 0;
-    if(old_tab == tab)
+    if (old_tab == tab)
     {
-        if(tab == 0)
+        if (tab == 0)
             emit sgJumpToNewMessage();
         return;
     }
@@ -396,17 +405,17 @@ void MainPanel::onTabGroupClicked(int tab)
     QString desc;
     switch (tab)
     {
-        case 0:
-            desc = "tab - 会话";
-            break;
-        case 1:
-            desc = "tab - 联系人";
-            break;
-        case 2:
-            desc = "tab - 应用";
-            break;
-        default:
-            break;
+    case 0:
+        desc = "tab - 会话";
+        break;
+    case 1:
+        desc = "tab - 联系人";
+        break;
+    case 2:
+        desc = "tab - 应用";
+        break;
+    default:
+        break;
     }
 
     emit sgOperator(desc);
@@ -419,29 +428,28 @@ void MainPanel::onTabGroupClicked(int tab)
   * @参数
   * @date 2018.11.06
   */
-void MainPanel::connects() {
+void MainPanel::connects()
+{
     connect(_searchFrm, &SeachEditPanel::sgIsOpenSearch, this, &MainPanel::onSearchResultVisible);
 
     connect(_searchFrm, &SeachEditPanel::sgSelectUp, _pSearchResultPanel, &SearchResultPanel::sgSelectUp);
     connect(_searchFrm, &SeachEditPanel::sgSelectDown, _pSearchResultPanel, &SearchResultPanel::sgSelectDown);
     connect(_searchFrm, &SeachEditPanel::sgSelectItem, _pSearchResultPanel, &SearchResultPanel::sgSelectItem);
-    connect(_searchFrm, &SeachEditPanel::sgKeyEsc, [this](){
-        if(_pSearchResultPanel->isVisible())
+    connect(_searchFrm, &SeachEditPanel::sgKeyEsc, [this]() {
+        if (_pSearchResultPanel->isVisible())
             _pSearchResultPanel->setVisible(false);
     });
 
     connect(_pSearchResultPanel, &SearchResultPanel::sgOpenSearch, this, &MainPanel::onSearchResultVisible);
     connect(_searchFrm, &SeachEditPanel::sgStartSearch, _pSearchResultPanel, &SearchResultPanel::addSearchReq);
 
-//    connect(_sessionBtn, &SessionBtn::clicked, this, &MainPanel::sgJumpToNewMessage);
+    //    connect(_sessionBtn, &SessionBtn::clicked, this, &MainPanel::sgJumpToNewMessage);
     connect(_dropMenu, &DropMenu::showSelfUserCard, [this]() {
         QString userCard = QString::fromStdString(PLAT.getSelfXmppId());
         emit showSelfUserCard(userCard);
     });
     connect(_dropMenu, &DropMenu::sysQuit, this, &MainPanel::systemQuitSignal);
 
-    connect(_dropMenu, &DropMenu::sgCheckUpdate, this, &MainPanel::sgCheckUpdate);
-    connect(_pSystemSettingWnd, &SystemSettingWnd::sgCheckUpdate, this, &MainPanel::sgCheckUpdate);
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgUpdateHotKey, this, &MainPanel::sgUpdateHotKey);
     connect(_pSystemSettingWnd, &SystemSettingWnd::msgSoundChanged, this, &MainPanel::msgSoundChanged);
     //
@@ -452,39 +460,45 @@ void MainPanel::connects() {
 /**
  *
  */
-void MainPanel::onSwitchUserStatus(const QString& status)
+void MainPanel::onSwitchUserStatus(const QString &status)
 {
 
     _dropMenu->setVisible(false);
-    QtConcurrent::run([ status](){
+    QtConcurrent::run([status]() {
         TitlebarMsgManager::chanegUserStatus(status.toStdString());
     });
 }
 
-void MainPanel::showSmall() {
+void MainPanel::showSmall()
+{
 
     if (_pCtrlWdt)
     {
-//#ifdef _MACOS
-//        emit sgShowMinWnd();
-//#elif
+        //#ifdef _MACOS
+        //        emit sgShowMinWnd();
+        //#elif
         _pCtrlWdt->showMinimized();
-//#endif
+        //#endif
     }
-
 }
 
-void MainPanel::showMaxRestore() {
-    if (_pCtrlWdt) {
+void MainPanel::showMaxRestore()
+{
+    if (_pCtrlWdt)
+    {
 
 #ifndef _MACOS
-        if (_pCtrlWdt->isMaximized()) {
+        if (_pCtrlWdt->isMaximized())
+        {
             _pCtrlWdt->showNormal();
-        } else {
+        }
+        else
+        {
             _pCtrlWdt->showMaximized();
         }
 #else
-        if (_pCtrlWdt->isFullScreen()) {
+        if (_pCtrlWdt->isFullScreen())
+        {
             _pCtrlWdt->showNormal();
         }
         else
@@ -495,11 +509,13 @@ void MainPanel::showMaxRestore() {
     }
 }
 
-void MainPanel::onCtrlWdtClose() {
+void MainPanel::onCtrlWdtClose()
+{
 
-    if (nullptr == _pCtrlWdt) return;
+    if (nullptr == _pCtrlWdt)
+        return;
 
-    if(_pCtrlWdt->isFullScreen())
+    if (_pCtrlWdt->isFullScreen())
         _pCtrlWdt->setWindowState(_pCtrlWdt->windowState() & ~Qt::WindowFullScreen);
     else
     {
@@ -511,25 +527,27 @@ void MainPanel::onCtrlWdtClose() {
     }
 }
 
-bool MainPanel::eventFilter(QObject *o, QEvent *e) {
-    if (o == _userBtn && e->type() == QEvent::MouseButtonPress) {
-        if (_dropMenu) {
-            QPoint pos = _userBtn->geometry().bottomLeft();
+bool MainPanel::eventFilter(QObject *o, QEvent *e)
+{
+    if (o == _userHeadBtn && e->type() == QEvent::MouseButtonPress)
+    {
+        if (_dropMenu)
+        {
+            QPoint pos = _userHeadBtn->geometry().bottomLeft();
             auto x = qMin(pos.x() - _dropMenu->width() / 2, this->geometry().right() - _dropMenu->width() - 15);
             _dropMenu->move(mapToGlobal(QPoint(x, this->geometry().bottom())));
             _dropMenu->show();
         }
     }
-    else if(o == _pCtrlWdt && e->type() == QEvent::WindowStateChange)
+    else if (o == _pCtrlWdt && e->type() == QEvent::WindowStateChange)
     {
 #ifndef Q_OS_MAC
         _maximizeBtn->setVisible(!_pCtrlWdt->isMaximized());
         _restoreBtn->setVisible(_pCtrlWdt->isMaximized());
 #endif // !Q_OS_MAC
     }
-    else if(o == _pSearchResultPanel)
+    else if (o == _pSearchResultPanel)
     {
-
     }
 
     return QFrame::eventFilter(o, e);
@@ -542,9 +560,12 @@ bool MainPanel::eventFilter(QObject *o, QEvent *e) {
   * @author cc
   * @date 2018.12.06
   */
-void MainPanel::onSearchResultVisible(const bool &visible) {
-    if (_pSearchResultPanel) {
-        if (visible) {
+void MainPanel::onSearchResultVisible(const bool &visible)
+{
+    if (_pSearchResultPanel)
+    {
+        if (visible)
+        {
             QWidget *wgt = UICom::getInstance()->getAcltiveMainWnd();
             if (nullptr == wgt)
                 return;
@@ -555,8 +576,10 @@ void MainPanel::onSearchResultVisible(const bool &visible) {
             _pSearchResultPanel->setFixedHeight(wgt->height() - 80);
             _pSearchResultPanel->setVisible(true);
             _pSearchResultPanel->move(pos);
-//            _searchFrm->setEditFocus();
-        } else {
+            //            _searchFrm->setEditFocus();
+        }
+        else
+        {
             _pSearchResultPanel->close();
         }
     }
@@ -568,15 +591,18 @@ void MainPanel::onSearchResultVisible(const bool &visible) {
   * @参数
   * @date 2018.11.06
   */
-void MainPanel::onMousePressGolbalPos(const QPoint &gpos) {
-    if (_searchFrm && _pSearchResultPanel) {
+void MainPanel::onMousePressGolbalPos(const QPoint &gpos)
+{
+    if (_searchFrm && _pSearchResultPanel)
+    {
         QPoint startpos = _searchFrm->mapToGlobal(QPoint(0, 0));
         QRect _searchFrmGR = QRect(startpos, QSize(_searchFrm->width(), _searchFrm->height()));
 
         startpos = _pSearchResultPanel->mapToGlobal(QPoint(0, 0));
         QRect _searchResultGR = QRect(startpos, QSize(_pSearchResultPanel->width(), _pSearchResultPanel->height()));
 
-        if (_pSearchResultPanel->isVisible() && !_searchResultGR.contains(gpos) && !_searchFrmGR.contains(gpos)) {
+        if (_pSearchResultPanel->isVisible() && !_searchResultGR.contains(gpos) && !_searchFrmGR.contains(gpos))
+        {
             _searchFrm->closeSearch();
             _pSearchResultPanel->closeSearch();
             _pSearchResultPanel->hide();
@@ -591,7 +617,6 @@ void MainPanel::onMousePressGolbalPos(const QPoint &gpos) {
             _dropMenu->setVisible(false);
         }
 #endif // _WINDOWS
-
     }
 }
 
@@ -601,16 +626,20 @@ void MainPanel::onMousePressGolbalPos(const QPoint &gpos) {
   * @参数
   * @date 2018.11.08
   */
-void MainPanel::onOpenNewSession(const StSessionInfo &into) {
+void MainPanel::onOpenNewSession(const StSessionInfo &into)
+{
     _searchFrm->closeSearch();
     _pSearchResultPanel->closeSearch();
     _pSearchResultPanel->hide();
+    onSwitchFunc(0);
     emit sgOpenNewSession(into);
 }
 
-void MainPanel::onAppDeactivated() {
+void MainPanel::onAppDeactivated()
+{
 
-    if (_pSearchResultPanel && _searchFrm) {
+    if (_pSearchResultPanel && _searchFrm)
+    {
         _searchFrm->closeSearch();
         _pSearchResultPanel->closeSearch();
         _pSearchResultPanel->hide();
@@ -628,21 +657,27 @@ void MainPanel::onAppDeactivated() {
  *
  * @param s
  */
-void MainPanel::onSwitchFunc(int s) {
-    switch (s) {
-        case 0: {
-            _sessionBtn->click();
-            break;
-        }
-        case 1: {
-            _contactBtn->click();
-            break;
-        }
-        case 2: {
-            _multifunctionBtn->click();
-            break;
-        }
-        default:break;
+void MainPanel::onSwitchFunc(int s)
+{
+    switch (s)
+    {
+    case 0:
+    {
+        _sessionBtn->click();
+        break;
+    }
+    case 1:
+    {
+        _contactBtn->click();
+        break;
+    }
+    case 2:
+    {
+        _multifunctionBtn->click();
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -650,17 +685,19 @@ void MainPanel::onSwitchFunc(int s) {
  *
  * @param count
  */
-void MainPanel::updateUnreadCount(int cout) {
+void MainPanel::updateUnreadCount(int cout)
+{
     _sessionBtn->setUnreadCount(cout);
 }
 
-void MainPanel::mouseDoubleClickEvent(QMouseEvent *e) {
+void MainPanel::mouseDoubleClickEvent(QMouseEvent *e)
+{
 
-    if(_pCtrlWdt)
+    if (_pCtrlWdt)
     {
-        if(_pCtrlWdt->isMaximized())
+        if (_pCtrlWdt->isMaximized())
             _pCtrlWdt->showNormal();
-        else if(_pCtrlWdt->isFullScreen())
+        else if (_pCtrlWdt->isFullScreen())
             return;
         else
             _pCtrlWdt->showMaximized();
@@ -672,9 +709,10 @@ void MainPanel::mouseDoubleClickEvent(QMouseEvent *e) {
  *
  * @param newHeadPath
  */
-void MainPanel::setNewHead(const QString &userName, const QString &newHeadPath) {
+void MainPanel::setNewHead(const QString &userName, const QString &newHeadPath)
+{
     _headPath = newHeadPath;
-    _userBtn->setHead(newHeadPath, 18, false, true);
+    _userHeadBtn->setHead(newHeadPath, 18, false, true);
     _dropMenu->setName(userName);
     _dropMenu->setHead(newHeadPath);
 }
@@ -686,7 +724,7 @@ void MainPanel::setNewHead(const QString &userName, const QString &newHeadPath) 
  */
 void MainPanel::onChangeHeadRet(bool ret, const std::string &locaHead)
 {
-    if(ret)
+    if (ret)
     {
         std::string userName = PLAT.getSelfName();
         emit setHeadSignal(QString::fromStdString(userName), QString::fromStdString(locaHead));
@@ -702,37 +740,58 @@ void MainPanel::onChangeHeadRet(bool ret, const std::string &locaHead)
  */
 void MainPanel::onShowHeadWnd(const QString &headPath, bool isSelf)
 {
-    if(_pChangeHeadWnd)
+    if (_pChangeHeadWnd)
     {
         emit sgOperator(tr("查看头像"));
-        if(isSelf)
+        if (isSelf)
             _pChangeHeadWnd->onChangeHeadWnd(headPath);
         else
             _pChangeHeadWnd->onShowHead(headPath);
     }
 }
 
-void MainPanel::recvSwitchUserStatus(const std::string& sts)
+void MainPanel::recvSwitchUserStatus(const std::string &sts)
 {
     emit sgAutoReply(sts == "away");
     emit sgSwitchUserStatusRet(QString::fromStdString(sts));
 }
 
-void MainPanel::onClearSearch() {
+void MainPanel::onClearSearch()
+{
     this->setFocus();
     _searchFrm->closeSearch();
     _pSearchResultPanel->closeSearch();
     _pSearchResultPanel->hide();
 }
 
-void MainPanel::onShowAboutWnd() {
-    if(nullptr!= _pAboutWnd)
+void MainPanel::onShowAboutWnd()
+{
+    if (nullptr != _pAboutWnd)
+    {
         _pAboutWnd->showCenter(true, _pCtrlWdt);
+        _pAboutWnd->raise();
+    }
 }
 
-void MainPanel::onShowSystemWnd() {
-    if (nullptr != _pSystemSettingWnd) {
-        _pSystemSettingWnd->setVisible(false);
+void MainPanel::onShowSystemWnd()
+{
+    if (nullptr != _pSystemSettingWnd)
+    {
         _pSystemSettingWnd->setVisible(true);
+        QApplication::setActiveWindow(_pSystemSettingWnd);
+        _pSystemSettingWnd->raise();
+    }
+}
+
+void MainPanel::onShowUpdateLabel(bool visible)
+{
+    if (_dropMenu)
+    {
+        _dropMenu->setTipVisible(visible);
+    }
+
+    if (_userHeadBtn)
+    {
+        _userHeadBtn->setTip(visible);
     }
 }

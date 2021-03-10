@@ -9,8 +9,8 @@
 
 class DropWnd : public  QFrame{
     Q_OBJECT
-public:
-    explicit DropWnd(QWidget* parent);
+
+    using  QFrame::QFrame;
 
 public:
     void setDrop(const QPixmap& mask, const QString& name);

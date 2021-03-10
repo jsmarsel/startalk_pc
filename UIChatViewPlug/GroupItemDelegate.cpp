@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QPainter>
 #include <QFile>
+#include <QPainterPath>
 #include <QFileInfo>
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../UICom/qimage/qimage.h"
@@ -54,10 +55,10 @@ void GroupItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
         if(headFileInfo.suffix().toLower() == "gif")
         {
             headPath = QTalk::qimage::getGifImagePathNoMark(headPath);
-            pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
+            pixmap = QTalk::qimage::loadImage(headPath, false, true, HEAD_WIDTH * dpi);
         }
         else
-            pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
+            pixmap = QTalk::qimage::loadImage(headPath, false, true, HEAD_WIDTH * dpi);
 
         if(!isOnline)
             pixmap = QTalk::qimage::generateGreyPixmap(pixmap);

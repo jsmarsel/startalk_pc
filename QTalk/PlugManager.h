@@ -6,7 +6,6 @@
 #include <QLibrary>
 #include <QVector>
 #include <memory>
-#include "../UICom/Config/configobject.h"
 
 class PlugManager
 {

@@ -390,28 +390,6 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
     ckeyCookie.setPath("/");
     pAudioVideo->_webView->setCookie(ckeyCookie, url);
 
-#ifdef _QCHAT
-    auto qvt = PLAT.getQvt();
-    QJsonDocument document = QJsonDocument::fromJson(qvt.data());
-    if(!document.isNull())
-    {
-        auto data = document.object().value("data").toObject();
-        auto q = data.value("qcookie").toString();
-        auto v = data.value("vcookie").toString();
-        auto t = data.value("tcookie").toString();
-
-        QNetworkCookie qcookie("_q", q.toUtf8());
-        QNetworkCookie vcookie("_v", v.toUtf8());
-        QNetworkCookie tcookie("_t", t.toUtf8());
-        qcookie.setPath("/");
-        vcookie.setPath("/");
-        tcookie.setPath("/");
-        pAudioVideo->_webView->setCookie(qcookie, url);
-        pAudioVideo->_webView->setCookie(vcookie, url);
-        pAudioVideo->_webView->setCookie(tcookie, url);
-    }
-#endif
-
     pAudioVideo->_webView->setAgent(agent);
     pAudioVideo->_webView->startReq(req);
     pAudioVideo->resize(1000, 750);

@@ -26,15 +26,14 @@
 using namespace QTalk;
 extern ChatViewMainPanel *g_pMainPanel;
 
-GroupMember::GroupMember(QWidget *parent)
+GroupMember::GroupMember(QString& groupId, QWidget *parent)
         : QFrame(parent),
           _selfIsCreator(false) ,
-          _selfIsAdmin(false){
+          _selfIsAdmin(false),
+          _groupId(groupId){
     initUi();
 
 }
-
-GroupMember::~GroupMember() = default;
 
 /**
   * @函数名   addMember
@@ -318,17 +317,17 @@ void GroupMember::initUi() {
 }
 
 void GroupMember::setAdminByJid(const std::string& nick,const std::string& xmppId) {
-    ChatMsgManager::setGroupAdmin(_groupId,nick,xmppId, false);
+    ChatMsgManager::setGroupAdmin(_groupId.toStdString(), nick,xmppId, false);
     _pModel->sort(0);
 }
 
 void GroupMember::removeAdminByJid(const std::string& nick,const std::string& xmppId) {
-    ChatMsgManager::setGroupAdmin(_groupId,nick,xmppId, true);
+    ChatMsgManager::setGroupAdmin(_groupId.toStdString(), nick,xmppId, true);
     _pModel->sort(0);
 }
 
 void GroupMember::removeGroupByJid(const std::string& nick,const std::string& xmppId) {
-    ChatMsgManager::removeGroupMember(_groupId,nick,xmppId);
+    ChatMsgManager::removeGroupMember(_groupId.toStdString(), nick, xmppId);
     _pModel->sort(0);
 }
 
@@ -352,16 +351,15 @@ void GroupMember::onSearchBtnClick() {
         {
             _pSearchLineEdit->clear();
 
-            std::string historyDir = PLAT.getHistoryDir();
-            historyDir += "/" + _groupId + ".txt";
-            QString path = QFileDialog::getSaveFileName(g_pMainPanel, tr("请选择导出目录"), historyDir.data());
+            QString historyDir = QString("%1/%2.txt").arg(PLAT.getHistoryDir().data()).arg(_groupId);
+            QString path = QFileDialog::getSaveFileName(g_pMainPanel, tr("请选择导出目录"), historyDir);
             if(!path.isEmpty())
             {
                 QString data;
 
                 for(const auto &memberId : _mapMemberItem.keys())
                 {
-                    data.append(memberId.data());
+                    data.append(QString(memberId.data()).section("@", 0, 0));
                     data.append("; \n");
                 }
 
@@ -376,17 +374,6 @@ void GroupMember::onSearchBtnClick() {
             }
 
         }
-    }
-    else if("斗图神器" == strContent)
-    {
-        QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qunar.com", QApplication::applicationName());
-        bool showDoutu = false;
-        if(settings.contains("QT_DOU_TU"))
-            showDoutu = settings.value("QT_DOU_TU").toBool();
-        showDoutu = !showDoutu;
-        settings.setValue("QT_DOU_TU", showDoutu);
-        
-        QtMessageBox::information(g_pMainPanel, tr("提醒"), showDoutu ? tr("斗图神器已启动, 重启应用后生效") : tr("斗图神器已关闭, 重启应用后生效"));
     }
 }
 
@@ -487,9 +474,6 @@ void GroupMember::setMemberCount(unsigned int allCount, unsigned int onlineCount
     }
 }
 
-void GroupMember::setGroupId(const std::string &groupId) {
-    _groupId = groupId;
-}
 
 void GroupMember::clearData() {
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key>
@@ -9,31 +9,53 @@
 	<key>CFBundleIconFile</key>
 	<string>StarTalk.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>qunar.com</string>
+	<string>com.im.mac.startalk</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleLongVersionString</key>
 	<string></string>
 	<key>CFBundleName</key>
 	<string>StarTalk</string>
+    <key>CFBundleDisplayName</key>
+    <string>StarTalk</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string></string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string></string>
+	<string>2</string>
+	<key>CFBundleShortVersionString</key>
+	<string>2.0.1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.13</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
-	<key>NSHighResolutionCapable</key><true/>
-    <key>NSCameraUsageDescription</key>
-    <string>请点击"好"以允许访问。
-    若不允许，你将无法使用拍照、录制视频、扫一扫等功能。</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>请点击"好"以允许访问。
-    若不允许，你将无法使用视频通话、发送语音消息等功能。</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>请点击&quot;好&quot;以允许访问。
+若不允许，你将无法使用拍照、录制视频、扫一扫等功能。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>请点击&quot;好&quot;以允许访问。
+若不允许，你将无法使用视频通话、发送语音消息等功能。</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>startaklk url</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>startalk</string>
+				<string>StarTalk</string>
+				<string>starTalk</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

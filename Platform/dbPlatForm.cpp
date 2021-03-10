@@ -4,8 +4,7 @@
 
 #include "dbPlatForm.h"
 #include "../LogicManager/LogicManager.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
-#include "../QtUtil/lib/cjson/cJSON.h"
+#include "../QtUtil/nJson/nJson.h"
 
 dbPlatForm& dbPlatForm::instance() {
     static dbPlatForm platform;
@@ -83,25 +82,17 @@ bool dbPlatForm::isHotLine(const std::string &jid) {
         if(strHotLines.empty())
             return false;
 
-        cJSON *jsonObj = cJSON_Parse(strHotLines.c_str());
-        if (jsonObj == nullptr) {
-            error_log("json paring error");
-            return false;
-        }
-        cJSON_bool ret = QTalk::JSON::cJSON_SafeGetBoolValue(jsonObj, "ret");
-        if(ret){
-            cJSON *data = cJSON_GetObjectItem(jsonObj, "data");
-            cJSON *allHotLines = cJSON_GetObjectItem(data,"allhotlines");
+        nJson obj = Json::parse(strHotLines);
+        if(nullptr != obj ) {
+            bool ret = obj["ret"];
+            if(ret){
+                nJson data = Json::get<nJson >(obj, "data");
+                auto allHotLines = Json::get<nJson>(data, "allhotlines");
 
-            cJSON* hotLine = allHotLines->child;
-            while (hotLine)
-            {
-                if(cJSON_IsString(hotLine))
-                    _hotLines.insert(hotLine->string);
-                hotLine = hotLine->next;
+                for(const nJson & item : allHotLines) {
+                    _hotLines.insert(Json::convert<std::string>(item, ""));
+                }
             }
-
-            cJSON_Delete(jsonObj);
         }
     }
 

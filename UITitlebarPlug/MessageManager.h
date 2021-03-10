@@ -6,6 +6,7 @@
 #include "../EventBus/HandlerRegistration.hpp"
 #include "../Message/UserMessage.h"
 #include "../Message/ChatMessage.h"
+#include <functional>
 
 class SearchInfoEvent;
 class TitlebarMsgManager : public Object

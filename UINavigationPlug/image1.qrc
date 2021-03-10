@@ -3,5 +3,7 @@
         <file>image1/error.png</file>
         <file>image1/system.png</file>
         <file>image1/noNotice.png</file>
+        <file>image1/back_hover.svg</file>
+        <file>image1/back_normal.svg</file>
     </qresource>
 </RCC>

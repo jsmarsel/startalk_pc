@@ -1,7 +1,7 @@
 ﻿#ifndef STYLESHEETMANAGER_H
 #define STYLESHEETMANAGER_H
 
-#include "../UICom/Config/configobject.h"
+#include <QObject>
 
 class StyleManager : public QObject
 {

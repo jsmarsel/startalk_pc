@@ -7,25 +7,29 @@
 #include <QClipboard>
 #include "LiteMessageBox.h"
 
-LinkButton::LinkButton(const QString& text, QWidget* parent)
-    :QLabel(parent), sendSignal(true)
+LinkButton::LinkButton(const QString &text, QWidget *parent)
+    : QLabel(parent), sendSignal(true)
 {
     if(!text.isEmpty())
+    {
         setLinkTextSlot(text);
+    }
 
-    connect(this, SIGNAL(setLinkTextSignal(const QString&)), this, SLOT(setLinkTextSlot(const QString&)));
+    connect(this, SIGNAL(setLinkTextSignal(const QString &)), this, SLOT(setLinkTextSlot(const QString &)));
 }
 
 LinkButton::~LinkButton()
 {
-
 }
 
 //
 void LinkButton::mousePressEvent(QMouseEvent *e)
 {
     if(sendSignal)
+    {
         emit clicked();
+    }
+
     else
     {
         QString text = this->text();

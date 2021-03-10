@@ -24,9 +24,10 @@ class WEBSERVICE_EXPORT WebService : public QDialog{
     Q_OBJECT
 private:
     WebService();
+    ~WebService() override;
 
 public:
-    ~WebService() override;
+    static void releaseService();
 
 public:
     static void loadCoEdit(const QUrl& url);

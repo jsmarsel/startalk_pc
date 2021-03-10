@@ -16,10 +16,6 @@ class TitleFrm : public QFrame
 	Q_OBJECT
 public:
     explicit TitleFrm(PictureBrowser* pPicBrowser);
-    ~TitleFrm() override;
-
-protected:
-    bool event(QEvent* e) override ;
 
 private:
     void initUi();
@@ -29,19 +25,20 @@ public:
     void setNextBtnEnable(bool);
 
 private:
-    PictureBrowser* _pPicBrowser;
+    PictureBrowser* _pPicBrowser{};
 
-    QToolButton *_pTurnBeforeBtn;
-    QToolButton *_pTurnNextBtn;
-    QToolButton *_pEnlargeBtn;
-    QToolButton *_pNarrowBtn;
-    QToolButton *_pOne2OneBtn;
-    QToolButton *_pRotateBtn;
-    QToolButton *_pSaveAsBtn;
-    QToolButton *_pMinBtn;
-    QToolButton *_pMaxBtn;
-    QToolButton *_pRestBtn;
-    QToolButton *_pCloseBtn;
+    QToolButton *_pTurnBeforeBtn{};
+    QToolButton *_pTurnNextBtn{};
+    QToolButton *_pEnlargeBtn{};
+    QToolButton *_pNarrowBtn{};
+    QToolButton *_pOne2OneBtn{};
+    QToolButton *_pRotateBtn{};
+    QToolButton *_pSaveAsBtn{};
+    QToolButton *_pMinBtn{};
+    QToolButton *_pMaxBtn{};
+    QToolButton *_pRestBtn{};
+    QToolButton *_pCloseBtn{};
+    QToolButton *dingBtn{};
 };
 
 

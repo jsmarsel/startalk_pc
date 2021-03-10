@@ -123,13 +123,8 @@ set(SOURCE_FILES
         MessageItems/NoticeMessageItem.h MessageItems/NoticeMessageItem.cpp
         MessageItems/SystemMessageItem.h MessageItems/SystemMessageItem.cpp
         MessageItems/MeetingRemindItem.h MessageItems/MeetingRemindItem.cpp
-        SessionTransferWnd.h
-        SessionTransferWnd.cpp
-        SendProductWnd.h SendProductWnd.cpp
-        QuickReplyWnd.h QuickReplyWnd.cpp
         GIFManager.cpp GIFManager.h
         ChatUtil.h ChatUtil.cpp
-        QchatMoreFun.h QchatMoreFun.cpp
         MessageItems/HotLineTipItem.cpp
         MessageItems/HotLineTipItem.h
         MessageItems/HotLineAnswerItem.cpp
@@ -162,9 +157,9 @@ set(SOURCE_FILES
         ChatViewItem.cpp ChatViewItem.h
         ChatMainDelegate.cpp ChatMainDelegate.h
         ChatMainSoreModel.cpp ChatMainSoreModel.h
-        DropWnd.cpp DropWnd.h)
-
-include_directories(douTu/c-gumbo)
+        DropWnd.cpp DropWnd.h
+        GroupTopicEditor.cpp
+        GroupTopicEditor.h)
 
 set(LIBRARY_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")

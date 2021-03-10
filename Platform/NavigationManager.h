@@ -5,10 +5,11 @@
 #include "platform_global.h"
 #include "../include/CommonDefine.h"
 
-class PLATFORMSHARED_EXPORT NavigationManager {
+class PLATFORMSHARED_EXPORT NavigationManager
+{
 
 public:
-    static NavigationManager& instance();
+    static NavigationManager &instance();
 
 private:
     // 导航相关
@@ -29,8 +30,8 @@ private:
     std::string fileurl;
     std::string opsApiHost;
     std::string qcHost;
-	// imconfig
-	int         rsaEncodeType;
+    // imconfig
+    int         rsaEncodeType;
     std::string uploadLog;
 
     std::string phoneAddr;
@@ -70,6 +71,8 @@ private:
 
     // client
     bool        rollback{};
+    // checkupdate
+    std::string checkupdateUrl{};
 
 public:
     NavigationManager();
@@ -79,10 +82,10 @@ public:
 
 public: // base address
 
-    void setXmppHost(const std::string& xmppHost);
+    void setXmppHost(const std::string &xmppHost);
     std::string getXmppHost();
 
-    void setDomain(const std::string& domain);
+    void setDomain(const std::string &domain);
     std::string getDomain();
 
     void setProbufPort(int port);
@@ -91,66 +94,69 @@ public: // base address
     void setApiHost(const std::string &url);
     std::string getApiUrl();
 
-    void setJavaHost(const std::string& javaUrl);
+    void setJavaHost(const std::string &javaUrl);
     std::string getJavaHost();
 
-    void setHttpHost(const std::string& httpurl);
+    void setHttpHost(const std::string &httpurl);
     std::string getHttpHost();
 
-    void setPubKey(const std::string& pubKey);
+    void setPubKey(const std::string &pubKey);
     std::string getPubkey();
 
-    void setFileHttpHost(const std::string& fileHttpHost);
+    void setFileHttpHost(const std::string &fileHttpHost);
     std::string getFileHttpHost();
 
     void setPhoneNumAddr(const std::string &phone);
     std::string getPhoneNumAddr();
 
-    void setLeaderUrl(const std::string& leaderUrl);
+    void setLeaderUrl(const std::string &leaderUrl);
     std::string getLeaderUrl();
 
-    void setShareUrl(const std::string& shareUrl);
+    void setShareUrl(const std::string &shareUrl);
     std::string getShareUrl();
 
-    void setVideoUrl(const std::string& videoUrl);
+    void setVideoUrl(const std::string &videoUrl);
     std::string getVideoUrl();
 
-    void setvideoConference(const std::string& videoConference);
+    void setvideoConference(const std::string &videoConference);
     std::string getvideoConference();
 
-public:// imconfig
-	void setRsaEncodeType(int t);
-	int getRsaEncodeType();
-	void setUploadLog(const std::string& lodAddr);
-	std::string getUploadLog();
+    void setCheckUpteUrl(const std::string &url);
+    std::string getCheckUpdateUrl();
 
-	void setFoundConfigUrl(const std::string& url);
-	std::string getFoundConfigUrl();
+public:// imconfig
+    void setRsaEncodeType(int t);
+    int getRsaEncodeType();
+    void setUploadLog(const std::string &lodAddr);
+    std::string getUploadLog();
+
+    void setFoundConfigUrl(const std::string &url);
+    std::string getFoundConfigUrl();
 
 public:// ops
-    void setOpsApiHost(const std::string& opsHost);
+    void setOpsApiHost(const std::string &opsHost);
     std::string getOpsApiHost();
 
 public://ability
-    void setQCHost(const std::string& qcHost);
+    void setQCHost(const std::string &qcHost);
     std::string getQCHost();
 
-    void setSearchUrl(const std::string& searchUrl);
+    void setSearchUrl(const std::string &searchUrl);
     std::string getSearchUrl();
 
 public://qcadmin
-	void setQcadminHost(const std::string& adminHost);
+    void setQcadminHost(const std::string &adminHost);
     std::string getQcadminHost();
 
 public://ability
-	void setShowmsgstat(const bool showmsgstat);
-	bool isShowmsgstat();
-	void setQcGrabOrder(const std::string qcGrabOrder);
-	std::string getQcGrabOrder();
+    void setShowmsgstat(const bool showmsgstat);
+    bool isShowmsgstat();
+    void setQcGrabOrder(const std::string qcGrabOrder);
+    std::string getQcGrabOrder();
 
 public: // client
     void setRollbackFlag(bool flag);
-	bool getRollbackFlag();
+    bool getRollbackFlag();
 
 public://other
     std::string getHealthCheckUrl();
@@ -167,12 +173,12 @@ public://other
 
     int getADSec();
 
-    void setMailSuffix(const std::string& mailSuffix);
+    void setMailSuffix(const std::string &mailSuffix);
     std::string getMailSuffix();
 
 public:
-	std::string getLoginType();
-	void setLoginType(const std::string& lt);
+    std::string getLoginType();
+    void setLoginType(const std::string &lt);
 };
 
 #endif // NAVIGATIONMANAGER_H

@@ -167,7 +167,7 @@ void LocalSearchMainWgt::initUi()
     mainLay->addWidget(toolFrm, 0);
     mainLay->addWidget(_btnFrm, 0);
     mainLay->addWidget(_pSearchCountLabel, 0);
-    mainLay->addWidget(new Line);
+    mainLay->addWidget(new Line(this));
     mainLay->addWidget(_pLoadingMoreR_T);
     mainLay->addWidget(bodyFrm, 1);
     mainLay->addWidget(_pLoadingMoreR_B);
@@ -201,7 +201,7 @@ void LocalSearchMainWgt::initUi()
         _calendarWgt->setVisible(false);
     });
     connect(this, &LocalSearchMainWgt::sgUpdateName, this, &LocalSearchMainWgt::onSetName, Qt::QueuedConnection);
-    connect(this, &LocalSearchMainWgt::sgInitStyle, this, &LocalSearchMainWgt::initStyle, Qt::QueuedConnection);
+//    connect(this, &LocalSearchMainWgt::sgInitStyle, this, &LocalSearchMainWgt::initStyle, Qt::QueuedConnection);
 }
 
 //

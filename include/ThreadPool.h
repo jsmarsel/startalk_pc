@@ -22,9 +22,9 @@
 
 class ThreadPool {
 public:
-    explicit ThreadPool(size_t threads = 1, const char *threadName = "QTalk Thread");
+//    explicit ThreadPool(size_t threads = 1, const char *threadName = "QTalk Thread");
 
-    explicit ThreadPool(const char *threadName = "QTalk Thread");
+    explicit ThreadPool(const std::string& name);
 
     template<class F, class... Args>
     auto enqueue(F &&f, Args &&... args)
@@ -44,11 +44,12 @@ private:
     std::atomic<bool> stop;
 };
 
-inline ThreadPool::ThreadPool(const char *threadName) : stop(false) {
+inline ThreadPool::ThreadPool(const std::string& name)
+    : stop(false) {
 
-    workers.emplace_back([this, threadName] {
+    workers.emplace_back([this, name] {
 #ifdef _MACOS
-        pthread_setname_np(threadName);
+        pthread_setname_np(name.data());
 #endif
         while(!this->stop) {
 
@@ -70,43 +71,33 @@ inline ThreadPool::ThreadPool(const char *threadName) : stop(false) {
 }
 
 // the constructor just launches some amount of workers
-inline ThreadPool::ThreadPool(size_t threads, const char *threadName)
-        : stop(false) {
-
-    for (size_t i = 0; i < threads; ++i) {
-
-        std::stringstream ss;
-
-        ss << threadName;
-        ss << " - ";
-        ss << i;
-
-        std::string yourName = ss.str();
-        workers.emplace_back(
-                [this, yourName] {
-#ifdef _MACOS
-                    pthread_setname_np(yourName.c_str());
-#endif
-                    while(!this->stop) {
-                        std::function<void()> task;
-
-                        {
-                            std::unique_lock<std::mutex> lock(this->queue_mutex);
-                            this->condition.wait(lock,
-                                                 [this] { return this->stop.load() || !this->tasks.empty(); });
-                            if (this->stop && this->tasks.empty())
-                                return;
-                            task = std::move(this->tasks.front());
-                            this->tasks.pop();
-                        }
-
-                        task();
-                    }
-                }
-        );
-    }
-
-}
+//ThreadPool::ThreadPool(size_t threads, const char *threadName)
+//        : stop(false) {
+//
+//    for (size_t i = 0; i < threads; ++i) {
+//
+//        workers.emplace_back(
+//                [this] {
+//                    while(!this->stop) {
+//                        std::function<void()> task;
+//
+//                        {
+//                            std::unique_lock<std::mutex> lock(this->queue_mutex);
+//                            this->condition.wait(lock,
+//                                                 [this] { return this->stop.load() || !this->tasks.empty(); });
+//                            if (this->stop && this->tasks.empty())
+//                                return;
+//                            task = std::move(this->tasks.front());
+//                            this->tasks.pop();
+//                        }
+//
+//                        task();
+//                    }
+//                }
+//        );
+//    }
+//
+//}
 
 // add new work item to the pool
 template<class F, class... Args>
@@ -119,23 +110,22 @@ auto ThreadPool::enqueue(F &&f, Args &&... args)
     );
 
     std::future<return_type> res = task->get_future();
-    {
+    // don't allow enqueueing after stopping the pool
+    if (!stop) {
         std::unique_lock<std::mutex> lock(queue_mutex);
-
-        // don't allow enqueueing after stopping the pool
-        if (stop)
-            throw std::runtime_error("enqueue on stopped ThreadPool");
-
         tasks.emplace([task]() { (*task)(); });
+        condition.notify_one();
     }
-    condition.notify_one();
     return res;
 }
 
 // the destructor joins all threads
 inline ThreadPool::~ThreadPool() {
     stop.store(true);
+    while (!tasks.empty()) tasks.pop();
+#ifndef _WINDOWS
     condition.notify_all();
+#endif
     for (std::thread &worker: workers) {
         worker.join();
     }

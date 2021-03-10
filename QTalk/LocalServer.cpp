@@ -19,6 +19,7 @@
 
 LocalServer::LocalServer() {
     _pServer = new QLocalServer(this);
+    _pServer->setSocketOptions(QLocalServer::WorldAccessOption);
     connect(_pServer, &QLocalServer::newConnection, this, &LocalServer::onNewClient);
 }
 

@@ -19,6 +19,7 @@ endif ()
 find_package(Qt5Core)
 find_package(Qt5Widgets)
 find_package(Qt5Concurrent)
+find_package(Qt5Network)
 #
 set(SOURCE_FILES
         image1.qrc
@@ -51,11 +52,11 @@ target_link_libraries(${PROJECT_NAME}
         Qt5::Core
         Qt5::Widgets
         Qt5::Concurrent
+        Qt5::Network
         EventBus
         CustomUi
         SUICom
         QtUtil
         Platform
         qzxing
-        WebService
         )

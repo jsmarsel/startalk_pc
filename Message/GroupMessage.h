@@ -101,6 +101,13 @@ public:
 	std::shared_ptr<QTalk::StGroupInfo> groupinfo;
 };
 
+class UpdateGroupTopicEvt : public Event
+{
+public:
+    std::string groupId;
+    std::string groupTopic;
+};
+
 class UpdateGroupInfoRet : public Event
 {
 public:

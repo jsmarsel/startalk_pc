@@ -8,7 +8,6 @@
 #include <map>
 #include <set>
 #include <QPointer>
-#include "../include/ThreadPool.h"
 #include "../UICom/UIEntity.h"
 #include "../entity/im_userSupplement.h"
 #include "../entity/im_config.h"

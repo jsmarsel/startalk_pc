@@ -268,7 +268,17 @@ void EmoticonMainWgt::installEmoticon(const QString &pkgId) {
   * @date     2018/10/30
   */
 void EmoticonMainWgt::init() {
-//
+	//
+	Q_INIT_RESOURCE(emoticon);
+	QString styleSheetPath = QString(":/style/style%1/Emoticon.qss").arg(AppSetting::instance().getThemeMode());
+	if (QFile::exists(styleSheetPath)) {
+		QFile file(styleSheetPath);
+		if (file.open(QFile::ReadOnly)) {
+			this->setStyleSheet(file.readAll());
+			file.close();
+		}
+	}
+
 }
 
 /**
@@ -649,7 +659,7 @@ void EmoticonMainWgt::getLocalEmoticon() {
   */
 void EmoticonMainWgt::addMyCollection() {
 
-    _collectionEmo.iconPath = ":/chatview/image1/Emoticon/MyEmoticon.png";
+    _collectionEmo.iconPath = ":/emoImg/image/MyEmoticon.png";
     _collectionEmo.pkgid = DEM_COLLECTION;
     _collectionEmo.name = tr("我的收藏");
     addEmoticon(_collectionEmo);

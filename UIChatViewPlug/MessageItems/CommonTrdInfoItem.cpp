@@ -39,11 +39,7 @@ void load(const StNetMessageResult& msgInfo)
         MapCookie cookies;
         cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
         if (/**userDftBrowser ||**/
-            linkUrl.contains(NavigationManager::instance().getShareUrl().data()) ||
-            linkUrl.contains("tu.qunar.com/vote/vote_list.php") ||
-            linkUrl.contains("tu.qunar.com/vote/cast_vote.php") ||
-            linkUrl.contains("tu.qunar.com/task/task_list.php") ||
-            linkUrl.contains("tu.qunar.com/task/create_task.php"))
+            linkUrl.contains(NavigationManager::instance().getShareUrl().data()))
         {
             if(linkUrl.contains("?"))
                 linkUrl += "&";
@@ -273,7 +269,7 @@ void CommonTrdInfoItem::initContentLayout() {
             hBox->setStretch(1, 1);
             hBox->setAlignment(_iconLab, Qt::AlignTop | Qt::AlignHCenter);
 
-            _titleLab = new QLabel;
+            _titleLab = new QLabel(this);
             _titleLab->setObjectName("CommonTrdInfoItemTitleLabel");
             _titleLab->setFixedHeight(18);
             _titleLab->setFixedSize(_contentSize.width()-10-12-40-18-12-10,18);
@@ -322,7 +318,7 @@ void CommonTrdInfoItem::initContentLayout() {
         connect(this, &CommonTrdInfoItem::sgDownloadedIcon, this, &CommonTrdInfoItem::setIcon, Qt::QueuedConnection);
         QString imgUrl = jsonObject.value("img").toString();
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, true, true, 40, 40);
+        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, false, true, 40, 40);
         if (imgUrl.isEmpty()) {
             _iconLab->setPixmap(defaultPix);
         } else {

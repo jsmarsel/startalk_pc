@@ -14,8 +14,7 @@ class NewMessageTip : public QFrame
 {
 	Q_OBJECT
 public:
-    NewMessageTip(QWidget* parent);
-    ~NewMessageTip();
+    explicit NewMessageTip(QWidget* parent);
 
 public:
     void onNewMessage();
@@ -23,16 +22,16 @@ public:
 	void onResize();
 
 protected:
-    virtual void mousePressEvent(QMouseEvent* e);
+    void mousePressEvent(QMouseEvent* e) override;
 
 private:
-    int _newMessageCount;
+    int _newMessageCount{0};
 
 private:
     QLabel* _pLabel;
 
 private:
-    QWidget* _parentWgt;
+    QWidget* _parentWgt{};
 };
 
 

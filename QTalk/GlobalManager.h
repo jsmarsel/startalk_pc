@@ -1,13 +1,12 @@
 ﻿#ifndef GLOBAL_MANAGER_H
 #define GLOBAL_MANAGER_H
 
-#include "../UICom/Config/configobject.h"
 #include "PlugManager.h"
 #include "StyleManager.h"
 #include "../QtUtil/lib/ini/ConfigLoader.h"
 #include "../Platform/AppSetting.h"
 
-class GlobalManager : public ConfigObject
+class GlobalManager : public QObject
 {
     Q_OBJECT
 public:
@@ -35,7 +34,6 @@ Q_SIGNALS:
     void sgMousePressGlobalPos(const QPoint & pos);
 
 private:
-    QString            _ConfigDataDir;
     PlugManager        _pluginManager;
     StyleManager       _pstyleSheetManager;
 
@@ -46,9 +44,6 @@ private:
     int _font_level{};
 
 public:
-#ifdef _STARTALK
-    bool _check_updater = true;
-#endif
     int  _updater_version = 0;
 };
 

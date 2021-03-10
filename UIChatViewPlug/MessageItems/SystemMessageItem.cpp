@@ -43,11 +43,10 @@ void SystemMessageItem::loadUrl(const StNetMessageResult& msgInfo) {
         cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
         std::string qvt = PLAT.getQvt();
         if(!qvt.empty()){
-            cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
-            std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;
-            std::string vcookie = cJSON_GetObjectItem(qvtJson,"vcookie")->valuestring;
-            std::string tcookie = cJSON_GetObjectItem(qvtJson,"tcookie")->valuestring;
-            cJSON_Delete(qvtJson);
+            nJson qvtJson= Json::get<nJson>(Json::parse(qvt),"data");
+            std::string qcookie = Json::get<std::string>(qvtJson,"qcookie");
+            std::string vcookie = Json::get<std::string>(qvtJson,"vcookie");
+            std::string tcookie = Json::get<std::string>(qvtJson,"tcookie");
             cookies["_q"] = QString::fromStdString(qcookie);
             cookies["_v"] = QString::fromStdString(vcookie);
             cookies["_t"] = QString::fromStdString(tcookie);
@@ -192,20 +191,20 @@ void SystemMessageItem::initContentLayout() {
         vBox->setSpacing(20);
         _contentFrm->setLayout(vBox);
 
-        titleLabel = new QLabel;
+        titleLabel = new QLabel(this);
         titleLabel->setObjectName("titleLab");
         titleLabel->setWordWrap(true);
         titleLabel->setFixedWidth(_contentSize.width() - 20);
         titleLabel->setStyleSheet("QLabel{font-size:14px;color:#212121;}");
         titleLabel->adjustSize();
 
-        contentLabel = new QLabel;
+        contentLabel = new QLabel(this);
         contentLabel->setObjectName("contentLabel");
         contentLabel->setWordWrap(true);
         contentLabel->setFixedWidth(_contentSize.width() - 20);
         contentLabel->setStyleSheet("QLabel{font-size:12px;color:#666666;}");
 
-        promptLabel = new QLabel;
+        promptLabel = new QLabel(this);
         promptLabel->setObjectName("promptLabel");
         promptLabel->setWordWrap(true);
         promptLabel->setFixedWidth(_contentSize.width() - 20);

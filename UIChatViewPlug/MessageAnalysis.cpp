@@ -195,6 +195,10 @@ namespace QTalk {
                     imageMsg.content = localImg;
 
                 messages.push_back(imageMsg);
+            } else {
+	            StTextMessage textMsg(StTextMessage::EM_TEXT);
+	            textMsg.content = item;
+	            messages.push_back(textMsg);
             }
             //
             pos += regExp.matchedLength();

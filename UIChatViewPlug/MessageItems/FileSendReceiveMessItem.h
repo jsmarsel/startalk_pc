@@ -45,7 +45,7 @@ private:
     void setData();
     void judgeFileIsDownLoad();
     void judgeFileIsUpLoad();
-    void sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri);
+    //void sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri);
     void sendNDownLoadFile(const QString &strUri, const QString &strLocalPath);
     void downLoadFile();
     QString getLocalFilePath();

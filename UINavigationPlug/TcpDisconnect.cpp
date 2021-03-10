@@ -2,11 +2,10 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QHBoxLayout>
-#include "NavigationMainPanel.h"
 
-
-TcpDisconnect::TcpDisconnect(NavigationMainPanel *pMainPanel, QWidget *parent)
-        : QFrame(parent), _pMainPanel(pMainPanel) {
+TcpDisconnect::TcpDisconnect(SessionFrm *pMainPanel, QWidget *parent)
+    : QFrame(parent), _pMainPanel(pMainPanel)
+{
     setFrameShape(QFrame::NoFrame);
     setObjectName("TcpDisconnectWgt");
 
@@ -24,8 +23,7 @@ TcpDisconnect::TcpDisconnect(NavigationMainPanel *pMainPanel, QWidget *parent)
     connect(this, &TcpDisconnect::sgSetText, this, &TcpDisconnect::setText);
 }
 
-TcpDisconnect::~TcpDisconnect()
-= default;
+TcpDisconnect::~TcpDisconnect() = default;
 
 /**
   * @函数名   onRetryConnected
@@ -34,26 +32,12 @@ TcpDisconnect::~TcpDisconnect()
   * @author   cc
   * @date     2018/10/24
   */
-void TcpDisconnect::onRetryConnected() {
+void TcpDisconnect::onRetryConnected()
+{
     _pTextLabel->setText(tr("当前网络不可用"));
 }
 
-void TcpDisconnect::setText(const QString& text)
+void TcpDisconnect::setText(const QString &text)
 {
     _pTextLabel->setText(text);
 }
-
-/**
-  * @函数名   mousePressEvent
-  * @功能描述 鼠标点击出发重连
-  * @参数
-  * @author   cc
-  * @date     2018/10/24
-  */
-//void TcpDisconnect::mousePressEvent(QMouseEvent *e) {
-//    if (_pMainPanel) {
-// //        _pTextLabel->setText(tr("正在重连"));
-////        _pMainPanel->retryToConnect();
-//    }
-//    return QFrame::mousePressEvent(e);
-//}

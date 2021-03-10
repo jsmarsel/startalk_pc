@@ -221,7 +221,7 @@ void AudioVideoItem::initContentLayout() {
     lay->addWidget(_pIconLabel, 0);
     lay->addWidget(_contentLab, 1);
 
-    QPixmap icon = QTalk::qimage::loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
+    QPixmap icon = QTalk::qimage::loadImage(":/chatview/image1/messageItem/AudioVideo.png", false);
     icon = icon.scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     _pIconLabel->setPixmap(icon);
     _contentLab->adjustSize();

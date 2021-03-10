@@ -27,5 +27,7 @@
         <file>image1/turnRight_disable.png</file>
         <file>image1/turnRight_hover.png</file>
         <file>image1/turnRight_normal.png</file>
+        <file>image1/ding.svg</file>
+        <file>image1/ding_normal.svg</file>
     </qresource>
 </RCC>

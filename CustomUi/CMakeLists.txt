@@ -30,7 +30,12 @@ set(SOURCE_FILES
         LiteMessageBox.cpp
         LiteMessageBox.h
         NavigationItem.cpp
-        NavigationItem.h MedalWgt.cpp MedalWgt.h TitleBar.cpp TitleBar.h ImageLabel.cpp ImageLabel.h NTMessageBox.cpp NTMessageBox.h)
+        NavigationItem.h
+        MedalWgt.cpp MedalWgt.h
+        TitleBar.cpp TitleBar.h
+        ImageLabel.cpp ImageLabel.h
+        NTMessageBox.cpp NTMessageBox.h
+        UCButton.cpp UCButton.h)
 
 if (APPLE)
     ADD_DEFINITIONS(-D_MACOS)

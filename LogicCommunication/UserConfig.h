@@ -9,21 +9,16 @@
 #include "../include/CommonDefine.h"
 
 class Communication;
-struct cJSON;
 class UserConfig
 {
 public:
     explicit UserConfig(Communication* comm);
-    ~UserConfig();
 
 public:
     void getUserConfigFromServer(bool sendEvt); // sendEvt 在线时发送增量修改
     // update userSttting
     void updateUserSetting(QUInt8 operatorType, const std::string &key, const std::string &subKey,
                            const std::string &val);
-
-public:
-    void updateDbByJson(cJSON* jsObj, bool sendEvt);
 
 private:
     Communication* _pComm;

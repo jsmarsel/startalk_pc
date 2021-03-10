@@ -30,63 +30,63 @@ NavManager::NavManager(LoginPanel *loginPanel)
 void NavManager::initConfig()
 {
     std::string configDirPath = PLAT.getConfigPath();
-    std::string oldConfig = configDirPath + "/NavConf";
+//    std::string oldConfig = configDirPath + "/NavConf";
     std::string newConfig = configDirPath + "/NavConf.data";
 
-    QFileInfo oldConfigInfo(oldConfig.data());
-    bool initoldconfig = false;
-    if (oldConfigInfo.exists() && (oldConfigInfo.size() > 0) && !QFile::exists(newConfig.data()))
-    {
-        auto* _pConfigloader = new QTalk::ConfigLoader(oldConfig.c_str());
-        if(_pConfigloader->reload())
-        {
-            initoldconfig = true;
-            // 读取配置文件
-            QString keys = QString::fromStdString(_pConfigloader->getString(DEM_NAV_KEYS));
-            // 读取配置
-            _defaultKey = QString::fromStdString(_pConfigloader->getString(DEM_DEFAULT_KEY));
-            QStringList keyList = keys.split(",");
-
-            for(const QString& key : keyList)
-            {
-                if(!_pConfigloader->hasKey(key.toStdString()))
-                {
-                    continue;
-                }
-
-                std::string val = _pConfigloader->getString(key.toStdString());
-                QUrl url(val.data());
-
-                QUrlQuery query(url);
-
-                StNav stNav;
-                stNav.name = query.queryItemValue("n");
-                stNav.domain = query.queryItemValue("d");
-                stNav.debug = query.queryItemValue("debug") == "true";
-                query.removeQueryItem("n");
-                query.removeQueryItem("d");
-                query.removeQueryItem("debug");
-
-                QString str = query.toString();
-                stNav.url = url.toString().section("?", 0, 0);
-                if (!str.isEmpty())
-                    stNav.url += "?" + str;
-
-                _mapNav[stNav.name] = stNav;
-            }
-            // 保存旧配置
-            saveConfig();
-            // 删除旧配置文件
-            QFile::remove(oldConfig.data());
-        }
-        else
-        {
-//            if(_pConfigloader)
-//                delete _pConfigloader;
-        }
-    }
+//    QFileInfo oldConfigInfo(oldConfig.data());
+//    bool initoldconfig = false;
+//    if (oldConfigInfo.exists() && (oldConfigInfo.size() > 0) && !QFile::exists(newConfig.data()))
+//    {
+//        auto* _pConfigloader = new QTalk::ConfigLoader(oldConfig.c_str());
+//        if(_pConfigloader->reload())
+//        {
+//            initoldconfig = true;
+//            // 读取配置文件
+//            QString keys = QString::fromStdString(_pConfigloader->getString(DEM_NAV_KEYS));
+//            // 读取配置
+//            _defaultKey = QString::fromStdString(_pConfigloader->getString(DEM_DEFAULT_KEY));
+//            QStringList keyList = keys.split(",");
+//
+//            for(const QString& key : keyList)
+//            {
+//                if(!_pConfigloader->hasKey(key.toStdString()))
+//                {
+//                    continue;
+//                }
+//
+//                std::string val = _pConfigloader->getString(key.toStdString());
+//                QUrl url(val.data());
+//
+//                QUrlQuery query(url);
+//
+//                StNav stNav;
+//                stNav.name = query.queryItemValue("n");
+//                stNav.domain = query.queryItemValue("d");
+//                stNav.debug = query.queryItemValue("debug") == "true";
+//                query.removeQueryItem("n");
+//                query.removeQueryItem("d");
+//                query.removeQueryItem("debug");
+//
+//                QString str = query.toString();
+//                stNav.url = url.toString().section("?", 0, 0);
+//                if (!str.isEmpty())
+//                    stNav.url += "?" + str;
+//
+//                _mapNav[stNav.name] = stNav;
+//            }
+//            // 保存旧配置
+//            saveConfig();
+//            // 删除旧配置文件
+//            QFile::remove(oldConfig.data());
+//        }
+//        else
+//        {
+////            if(_pConfigloader)
+////                delete _pConfigloader;
+//        }
+//    }
     //
-    if(!initoldconfig)
+//    if(!initoldconfig)
     {
 
         auto* navConfig = new QTalk::StConfig;
@@ -116,19 +116,15 @@ void NavManager::initConfig()
 
                     _mapNav[stNav.name] = stNav;
                 }
-
-                if(navConfig) {
-                    delete navConfig;
-                    navConfig = nullptr;
-                    return;
-                }
+				// delete
+                delete navConfig;
+                return;
             }
             else {
                 qWarning() << "invalid nav config, --> delete it";
                 QFile::remove(configDirPath.data());
             }
         }
-//        else
         {
 #ifndef _STARTALK
             // 默认设置
@@ -144,9 +140,8 @@ void NavManager::initConfig()
             saveConfig();
 #endif
         }
-        if(navConfig) {
-            delete navConfig;
-        }
+        // delete
+        delete navConfig;
     }
 
 }

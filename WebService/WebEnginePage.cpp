@@ -5,10 +5,13 @@
 #include "WebEnginePage.h"
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QWebEngineProfile>
 #include "../QtUtil/Utils/Log.h"
 
 WebEnginePage::WebEnginePage(QObject *parent)
         : QWebEnginePage(parent) {
+
+	profile()->setParent(this);
     connect(this, &WebEnginePage::featurePermissionRequested, this, &WebEnginePage::onFeaturePermissionRequested);
 
 //    connect(this, &WebEnginePage::quotaRequested, this, &WebEnginePage::onQuotaRequested);

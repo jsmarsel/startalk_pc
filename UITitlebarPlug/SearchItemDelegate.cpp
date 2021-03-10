@@ -11,19 +11,9 @@
 #include <QFileInfo>
 #include <QMouseEvent>
 #include <QEvent>
+#include <QPainterPath>
 
 #define HEAD_WIDTH 40
-
-SearchItemDelegate::SearchItemDelegate(QAbstractItemView *parent) :
-        QStyledItemDelegate(parent)
-{
-
-}
-
-SearchItemDelegate::~SearchItemDelegate()
-{
-
-}
 
 /**
   * @函数名

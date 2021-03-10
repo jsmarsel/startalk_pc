@@ -307,3 +307,11 @@ QFrame#loginMainFrm {
     background:rgba(255,255,255,1);
     border-radius:6px;
 }
+
+QToolButton#PasswordBtn {
+	border-image:url(:/login/image1/close_eye.svg);
+}
+
+QToolButton#PasswordBtn:checked {
+	border-image:url(:/login/image1/normal_eye.svg);
+}

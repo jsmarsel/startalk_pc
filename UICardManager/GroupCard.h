@@ -41,6 +41,7 @@ private:
     void sendMessageSlot();
     void onClose();
     void onSendMail();
+    void onDestroyGroupGroupCard();
 
 private:
     CardManager* _pCardManager{};

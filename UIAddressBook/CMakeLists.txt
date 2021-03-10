@@ -29,7 +29,7 @@ set(SOURCE_FILES
         MessageManager.cpp
         MessageManager.h
         ListItemView.h
-        )
+        GroupWnd.cpp GroupWnd.h)
 
 
 if (APPLE)

@@ -79,7 +79,7 @@ void SearchResultPanel::initPanel() {
     _pWnLabel->setObjectName("SearchTipWnd");
     _pWnLabel->setContentsMargins(0, 80, 0, 0);
     _pWnLabel->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
-    mainLay->addWidget(new Line);
+    mainLay->addWidget(new Line(this));
     mainLay->addWidget(_pSearchView);
     mainLay->addWidget(_pWnLabel);
     _pSearchView->setVisible(false);

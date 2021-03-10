@@ -164,19 +164,6 @@ public:
 	QTalk::Entity::UID uid;
 };
 
-class GetSeatListRet : public Event
-{
-
-public:
-	GetSeatListRet(std::vector<QTalk::Entity::ImTransfer> _transfers,QTalk::Entity::UID _uid)
-		:transfers(std::move(_transfers)),uid(std::move(_uid)) {}
-
-public:
-	std::vector<QTalk::Entity::ImTransfer> transfers;
-	QTalk::Entity::UID uid;
-
-};
-
 class SessionTransferEvt : public Event
 {
 

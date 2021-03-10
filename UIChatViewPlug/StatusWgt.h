@@ -21,9 +21,7 @@ enum Status
 class StatusLabel : public QLabel
 {
     Q_OBJECT
-public:
-    explicit StatusLabel(QWidget* parent);
-	~StatusLabel() override;
+    using QLabel::QLabel;
 
 public:
 	void setStatus(Status sts);
@@ -32,7 +30,7 @@ protected:
 	void paintEvent(QPaintEvent *e) override;
 
 private:
-	int _sts;
+	int _sts {EM_STS_INVALID};
 };
 
 class QLabel;

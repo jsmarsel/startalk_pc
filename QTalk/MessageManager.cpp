@@ -85,7 +85,7 @@ void QTalkMsgListener::onEvent(GetHistoryError &e) {
 
 void QTalkMsgListener::onEvent(CheckUpdaterResultEvt &e) {
     if (nullptr != _pUiControl) {
-        _pUiControl->onCheckUpdater(e.hasUpdate, e.forceUpdate);
+        _pUiControl->onCheckUpdater(e.hasUpdate, e.link.data(), e.forceUpdate);
     }
 }
 

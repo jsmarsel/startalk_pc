@@ -7,6 +7,7 @@
 #include <QTextEdit>
 #include <QVector>
 #include <vector>
+#include <set>
 #include <QMutexLocker>
 #include <QPointer>
 #include <QListView>
@@ -77,6 +78,7 @@ protected:
     void hideEvent(QHideEvent *e) override;
     void focusOutEvent(QFocusEvent *e) override;
     void inputMethodEvent(QInputMethodEvent *e) override ;
+    void mousePressEvent(QMouseEvent *e) override;
 
 private:
     void initUi();
@@ -98,6 +100,7 @@ private:
 
 private:
     QMutex                       _mutex;
+    std::set<std::string> members;
 
 private:
     bool _atMessage = false;

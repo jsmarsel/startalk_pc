@@ -12,44 +12,43 @@
 #include <QMouseEvent>
 #include "../UICom/uicom.h"
 
+#define BTN_SIZE 30
+
 TitleFrm::TitleFrm(PictureBrowser* pPicBrowser)
     :QFrame(), _pPicBrowser(pPicBrowser)
 {
     initUi();
 }
 
-TitleFrm::~TitleFrm() {
-
-}
 
 void TitleFrm::initUi()
 {
     this->setObjectName("TitleFrame");
     this->setFixedHeight(50);
 
-    _pTurnBeforeBtn = new QToolButton();
-    _pTurnNextBtn = new QToolButton();
-    _pEnlargeBtn = new QToolButton();
-    _pNarrowBtn = new QToolButton();
-    _pOne2OneBtn = new QToolButton();
-    _pRotateBtn = new QToolButton();
-    _pSaveAsBtn = new QToolButton();
-    _pMinBtn = new QToolButton();
-    _pMaxBtn = new QToolButton();
-    _pRestBtn = new QToolButton();
-    _pCloseBtn = new QToolButton();
+    _pTurnBeforeBtn = new QToolButton(this);
+    _pTurnNextBtn = new QToolButton(this);
+    _pEnlargeBtn = new QToolButton(this);
+    _pNarrowBtn = new QToolButton(this);
+    _pOne2OneBtn = new QToolButton(this);
+    _pRotateBtn = new QToolButton(this);
+    _pSaveAsBtn = new QToolButton(this);
+    _pMinBtn = new QToolButton(this);
+    _pMaxBtn = new QToolButton(this);
+    _pRestBtn = new QToolButton(this);
+    _pCloseBtn = new QToolButton(this);
 
-    _pTurnBeforeBtn->setFixedSize(30, 30);
-    _pTurnNextBtn->setFixedSize(30, 30);
-    _pEnlargeBtn->setFixedSize(30, 30);
-    _pNarrowBtn->setFixedSize(30, 30);
-    _pOne2OneBtn->setFixedSize(30, 30);
-    _pRotateBtn->setFixedSize(30, 30);
-    _pSaveAsBtn->setFixedSize(30, 30);
-    _pMinBtn->setFixedSize(30, 30);
-    _pMaxBtn->setFixedSize(30, 30);
-    _pRestBtn->setFixedSize(30, 30);
-    _pCloseBtn->setFixedSize(30, 30);
+    _pTurnBeforeBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pTurnNextBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pEnlargeBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pNarrowBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pOne2OneBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pRotateBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pSaveAsBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pMinBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pMaxBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pRestBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
+    _pCloseBtn->setFixedSize(BTN_SIZE, BTN_SIZE);
 
     _pTurnBeforeBtn->setObjectName("TurnLeftBtn");
     _pTurnNextBtn->setObjectName("TurnRightBtn");
@@ -61,6 +60,12 @@ void TitleFrm::initUi()
     _pMinBtn->setObjectName("MinBtn");
     _pMaxBtn->setObjectName("MaxBtn");
     _pRestBtn->setObjectName("RestBtn");
+
+    dingBtn = new QToolButton(this);
+    dingBtn->setFixedSize(BTN_SIZE - 5, BTN_SIZE - 5);
+    dingBtn->setObjectName("DingBtn");
+    dingBtn->setToolTip(tr("钉"));
+    dingBtn->setCheckable(true);
 
     _pTurnBeforeBtn->setToolTip(tr("上一张"));
     _pTurnNextBtn->setToolTip(tr("下一张"));
@@ -86,15 +91,19 @@ void TitleFrm::initUi()
     topLayout->addItem(new QSpacerItem(8, 1, QSizePolicy::Fixed, QSizePolicy::Fixed));
     topLayout->addWidget(_pCloseBtn);
     topLayout->addItem(new QSpacerItem(8, 1, QSizePolicy::Fixed, QSizePolicy::Fixed));
-    topLayout->addWidget(new Line(Qt::Vertical));
+    topLayout->addWidget(new Line(Qt::Vertical, this));
 #endif
+
+    topLayout->addWidget(dingBtn);
+    topLayout->addWidget(new Line(Qt::Vertical, this));
+
     topLayout->addWidget(_pTurnBeforeBtn);
     topLayout->addWidget(_pTurnNextBtn);
-    //topLayout->addWidget(new Line());
+    //topLayout->addWidget(new Line(this));
     topLayout->addWidget(_pEnlargeBtn);
     topLayout->addWidget(_pNarrowBtn);
     topLayout->addWidget(_pOne2OneBtn);
-    topLayout->addWidget(new Line(Qt::Vertical));
+    topLayout->addWidget(new Line(Qt::Vertical, this));
     topLayout->addWidget(_pRotateBtn);
     topLayout->addWidget(_pSaveAsBtn);
     topLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
@@ -144,28 +153,17 @@ void TitleFrm::initUi()
         }
     });
 
-    connect(_pEnlargeBtn, &QToolButton::clicked, [this]()
-    {
-        emit _pPicBrowser->enlargeSignal();
-    });
+    connect(_pEnlargeBtn, &QToolButton::clicked, _pPicBrowser, &PictureBrowser::enlargeSignal);
+    connect(_pNarrowBtn, &QToolButton::clicked, _pPicBrowser, &PictureBrowser::narrowSignal);
+    connect(_pOne2OneBtn, &QToolButton::clicked, _pPicBrowser, &PictureBrowser::one2oneSiganl);
+    connect(_pRotateBtn, &QToolButton::clicked, _pPicBrowser, &PictureBrowser::rotateSiganl);
+    connect(_pSaveAsBtn, &QToolButton::clicked, _pPicBrowser, &PictureBrowser::saveAsSignal);
 
-    connect(_pNarrowBtn, &QToolButton::clicked, [this]()
-    {
-        emit _pPicBrowser->narrowSignal();
+    connect(dingBtn, &QToolButton::clicked, [this](bool checked){
+        _pPicBrowser->setWindowFlag(Qt::X11BypassWindowManagerHint, checked);
+        _pPicBrowser->setWindowFlag(Qt::WindowStaysOnTopHint, checked);
+        _pPicBrowser->setVisible(true);
     });
-    connect(_pOne2OneBtn, &QToolButton::clicked, [this]()
-    {
-        emit _pPicBrowser->one2oneSiganl();
-    });
-    connect(_pRotateBtn, &QToolButton::clicked, [this]()
-    {
-        emit _pPicBrowser->rotateSiganl();
-    });
-    connect(_pSaveAsBtn, &QToolButton::clicked, [this]()
-    {
-        emit _pPicBrowser->saveAsSignal();
-    });
-
 }
 
 void TitleFrm::setBeforeBtnEnable(bool enable) {
@@ -175,20 +173,4 @@ void TitleFrm::setBeforeBtnEnable(bool enable) {
 void TitleFrm::setNextBtnEnable(bool enable) {
 
     _pTurnNextBtn->setEnabled(enable);
-}
-
-/**
- *
- * @param e
- * @return
- */
-bool TitleFrm::event(QEvent *e) {
-   /* if(e->type() == QEvent::MouseButtonDblClick)
-    {
-        if(_pPicBrowser->isMaximized())
-            _pPicBrowser->showNormal();
-        else
-            _pPicBrowser->showMaximized();
-    }*/
-    return QFrame::event(e);
 }

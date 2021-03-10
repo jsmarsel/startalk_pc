@@ -25,6 +25,10 @@ public:
 //        }
 //        this->setStyleSheet("background:rgba(238,238,238,1);");
 //    }
+    explicit Line( QWidget* parent = nullptr)
+        : Line(Qt::Horizontal, parent) {
+
+    }
 
     explicit Line(Qt::Orientation direction = Qt::Horizontal, QWidget* parent = nullptr)
             : QFrame(parent)
@@ -40,15 +44,7 @@ public:
             setFixedWidth(1);
             setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
         }
-//        if (colorStr == nullptr) {
-//            this->setStyleSheet("background:rgba(238,238,238,1);");
-//        } else {
-//            this->setStyleSheet("background:"+colorStr+";");
-//        }
     }
-
-    ~Line() override = default;
-
 
 };
 

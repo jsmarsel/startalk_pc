@@ -29,6 +29,8 @@
         <file>image1/loginbj/16.png</file>
         <file>image1/loginbj/17.png</file>
         <file>image1/loginbj/18.png</file>
-        <file>tips.xml</file>
+        <file>image1/close_eye.svg</file>
+        <file>image1/normal_eye.svg</file>
+        <file>tips.json</file>
     </qresource>
 </RCC>

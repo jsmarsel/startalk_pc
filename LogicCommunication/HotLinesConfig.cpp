@@ -7,7 +7,7 @@
 #include "../Platform/NavigationManager.h"
 #include "../Platform/Platform.h"
 #include "../Platform/dbPlatForm.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include <iostream>
 
 HotLinesConfig::HotLinesConfig(Communication *comm)
@@ -24,36 +24,33 @@ void HotLinesConfig::getVirtualUserRole(){
         << "/admin/outer/qtalk/getHotlineList";
     std::string strUrl = url.str();
 
-    cJSON* obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "username", PLAT.getSelfName().data());
-    cJSON_AddStringToObject(obj, "host", PLAT.getSelfDomain().data());
-    std::string postDta = QTalk::JSON::cJSON_to_string(obj);
-    cJSON_Delete(obj);
+    nJson obj;
+    obj["username"] = PLAT.getSelfName().data();
+    obj["host"] = PLAT.getSelfDomain().data();
+    std::string postDta = obj.dump();
     //
     std::set<std::string> hotlines;
     auto callback = [ &hotlines](int code, const std::string &responseData) {
         if (code == 200) {
-            cJSON* json = cJSON_Parse(responseData.c_str());
+            nJson json= Json::parse(responseData);
             if(nullptr == json)
             {
                 error_log("error json {0}", responseData);
                 return;
             }
 
-            cJSON_bool ret = QTalk::JSON::cJSON_SafeGetBoolValue(json, "ret");
+            bool ret = Json::get<bool>(json, "ret");
             if(ret)
             {
-                cJSON* data = cJSON_GetObjectItem(json, "data");
-                cJSON* allhotlines = cJSON_GetObjectItem(data, "allhotlines");
+                nJson data= Json::get<nJson >(json, "data");
+                nJson allhotlines= Json::get<nJson >(data, "allhotlines");
 
-                cJSON* item = nullptr;
-                cJSON_ArrayForEach(item, allhotlines) {
-                    if(item && cJSON_IsString(item))
-                        hotlines.insert(item->valuestring);
+                for(auto &item : allhotlines) {
+                    if(item && item.is_string())
+                        hotlines.insert(item.get<std::string>());
                 }
             }
-            cJSON_Delete(json);
-        }
+            }
     };
     if (_pComm) {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
@@ -84,11 +81,11 @@ void HotLinesConfig::getServiceSeat() {
     if(qvt.empty()){
         return;
     }
-    cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
-    std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;
-    std::string vcookie = cJSON_GetObjectItem(qvtJson,"vcookie")->valuestring;
-    std::string tcookie = cJSON_GetObjectItem(qvtJson,"tcookie")->valuestring;
-    cJSON_Delete(qvtJson);
+    nJson qvtJson= Json::get<nJson >(Json::parse(qvt),"data");
+
+    auto qcookie = Json::get<std::string>(qvtJson,"qcookie");
+    auto vcookie = Json::get<std::string>(qvtJson,"vcookie");
+    auto tcookie = Json::get<std::string>(qvtJson,"tcookie");
     if (_pComm) {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::GET);
         std::string requestHeaders = std::string("_q=") + qcookie + ";_v=" + vcookie + ";_t=" + tcookie;
@@ -120,11 +117,10 @@ void HotLinesConfig::setServiceSeat(int sid, int state) {
     if(qvt.empty()){
         return;
     }
-    cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
-    std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;
-    std::string vcookie = cJSON_GetObjectItem(qvtJson,"vcookie")->valuestring;
-    std::string tcookie = cJSON_GetObjectItem(qvtJson,"tcookie")->valuestring;
-    cJSON_Delete(qvtJson);
+    nJson qvtJson= Json::get<nJson >(Json::parse(qvt),"data");
+    auto qcookie = Json::get<std::string>(qvtJson,"qcookie");
+    auto vcookie = Json::get<std::string>(qvtJson,"vcookie");
+    auto tcookie = Json::get<std::string>(qvtJson,"tcookie");
     if (_pComm) {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::GET);
         std::string requestHeaders = std::string("_q=") + qcookie + ";_v=" + vcookie + ";_t=" + tcookie;
@@ -142,12 +138,10 @@ void HotLinesConfig::serverCloseSession(const std::string& username, const std::
         << "/admin/outer/qtalk/closeSession";
     std::string strUrl = url.str();
 
-    cJSON* obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "customerName", username.data());
-    cJSON_AddStringToObject(obj, "hotlineName", virtualname.data());
-    std::string postDta = QTalk::JSON::cJSON_to_string(obj);
-    cJSON_Delete(obj);
-
+    nJson obj;
+    obj["customerName"] = username.data();
+    obj["hotlineName"] = virtualname.data();
+    std::string postDta = obj.dump();
     //
     auto callback = [virtualname, username](int code, const std::string &responseData) {
         if(code == 200)
@@ -163,48 +157,45 @@ void HotLinesConfig::serverCloseSession(const std::string& username, const std::
     }
 }
 
-void HotLinesConfig::getTransferSeatsList(const QTalk::Entity::UID& uid) {
-    QTalk::Entity::JID jid(uid.usrId().c_str());
-    std::string shopJId = jid.username();
-    std::ostringstream url;
-    url << NavigationManager::instance().getHttpHost()
-        << "/admin/outer/qtalk/hotlineSeatList.json";
-    std::string strUrl = url.str();
-    //
-    cJSON* obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "customerName", QTalk::Entity::JID(uid.realId()).username().data());
-    cJSON_AddStringToObject(obj, "hotlineName", shopJId.data());
-    std::string postDta = QTalk::JSON::cJSON_to_string(obj);
-    cJSON_Delete(obj);
-    //
-    auto callback = [this, uid](int code, const std::string &responseData) {
-
-        if (code == 200) {
-            cJSON* json = cJSON_Parse(responseData.c_str());
-            cJSON_bool ret = QTalk::JSON::cJSON_SafeGetBoolValue(json,"ret");
-            if(ret){
-                std::vector<QTalk::Entity::ImTransfer> transfers;
-                cJSON* data = cJSON_GetObjectItem(json,"data");
-                cJSON* item = nullptr;
-                cJSON_ArrayForEach(item, data) {
-                    QTalk::Entity::ImTransfer transfer;
-                    transfer.userId = QTalk::JSON::cJSON_SafeGetStringValue(item,"userId");
-                    transfer.userName = QTalk::JSON::cJSON_SafeGetStringValue(item,"userName");
-                    transfers.push_back(transfer);
-                }
-
-                CommMsgManager::setSeatList(uid,transfers);
-            }
-            cJSON_Delete(json);
-        }
-    };
-    if (_pComm) {
-        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
-        req.header["Content-Type"] = "application/json;";
-        req.body = postDta;
-        _pComm->addHttpRequest(req, callback);
-    }
-}
+//void HotLinesConfig::getTransferSeatsList(const QTalk::Entity::UID& uid) {
+//    QTalk::Entity::JID jid(uid.usrId().c_str());
+//    std::string shopJId = jid.username();
+//    std::ostringstream url;
+//    url << NavigationManager::instance().getHttpHost()
+//        << "/admin/outer/qtalk/hotlineSeatList.json";
+//    std::string strUrl = url.str();
+//    //
+//    nJson obj;
+//    obj[ "customerName"] = QTalk::Entity::JID(uid.realId()).username();
+//    obj["hotlineName"] = shopJId.data();
+//    std::string postDta = obj.dump();
+//    //
+//    auto callback = [ uid](int code, const std::string &responseData) {
+//
+//        if (code == 200) {
+//            nJson json= Json::parse(responseData);
+//            bool ret = Json::get<bool>(json,"ret");
+//            if(ret){
+//                std::vector<QTalk::Entity::ImTransfer> transfers;
+//                nJson data= Json::get<nJson >(json,"data");
+//                for(auto &item : data) {
+//                    QTalk::Entity::ImTransfer transfer;
+//                    transfer.userId = Json::get<std::string >(item,"userId");
+//                    transfer.userName = Json::get<std::string >(item,"userName");
+//                    transfers.push_back(transfer);
+//                }
+//
+//                CommMsgManager::setSeatList(uid,transfers);
+//            }
+//        }
+//    };
+//    if (_pComm) {
+//        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
+//        req.header["Content-Type"] = "application/json;";
+//        req.body = postDta;
+//        _pComm->addHttpRequest(req, callback);
+//    }
+//}
 
 void HotLinesConfig::transferCsr(const QTalk::Entity::UID& uid,
                                  const std::string& newCsrName, const std::string &reason) {
@@ -215,14 +206,13 @@ void HotLinesConfig::transferCsr(const QTalk::Entity::UID& uid,
         << "/admin/outer/qtalk/transformSeat.json";
 
     std::string strUrl = url.str();
-    cJSON* obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "customerName", customerName.data());
-    cJSON_AddStringToObject(obj, "hotlineName", shopJId.data());
-    cJSON_AddStringToObject(obj, "currentCsrName", PLAT.getSelfUserId().data());
-    cJSON_AddStringToObject(obj, "newCsrName", newCsrName.data());
-    cJSON_AddStringToObject(obj, "reason", reason.data());
-    std::string postDta = QTalk::JSON::cJSON_to_string(obj);
-    cJSON_Delete(obj);
+    nJson obj;
+    obj["customerName"] = customerName.data();
+    obj["hotlineName"] = shopJId.data();
+    obj["currentCsrName"] = PLAT.getSelfUserId().data();
+    obj["newCsrName"] = newCsrName.data();
+    obj["reason"] = reason.data();
+    std::string postDta = obj.dump();
     //
     auto callback = [](int code, const std::string &responseData) {
 
@@ -252,18 +242,13 @@ void HotLinesConfig::updateQuickReply() {
 
     std::string strUrl = url.str();
 
-    cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *username = cJSON_CreateString(PLAT.getSelfUserId().c_str());
-    cJSON_AddItemToObject(jsonObject, "username", username);
-    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "host", host);
-    cJSON *versiong = cJSON_CreateNumber(gversion);
-    cJSON_AddItemToObject(jsonObject, "groupver", versiong);
-    cJSON *versionc = cJSON_CreateNumber(cversion);
-    cJSON_AddItemToObject(jsonObject, "contentver", versionc);
+    nJson jsonObject;
+    jsonObject["username"] = PLAT.getSelfUserId();
+    jsonObject["host"] = PLAT.getSelfDomain();
+    jsonObject["groupver"] = gversion;
+    jsonObject["contentver"] = cversion;
 
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
+    std::string postData = jsonObject.dump();
     //
     auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {
@@ -288,33 +273,21 @@ void HotLinesConfig::sendProduct(const std::string& username, const std::string&
 
     std::string strUrl = url.str();
 
-//    cJSON * prod = cJSON_Parse(product.c_str());
+//    nJson prod= Json::parse(product.c_str());
 
-    cJSON *jsonObject = cJSON_CreateObject();
+    nJson jsonObject;
+    nJson args;
 
-    cJSON *args = cJSON_CreateObject();
+    args["type"] = type;
+    args["seatQName"] = PLAT.getSelfUserId();
+    args["userHost"] = PLAT.getSelfDomain();
+    args["userQName"] = username;
+    args["virtualId"] = virtualname;
+    args["seatHost"] = PLAT.getSelfDomain();
+    jsonObject["noteArgs"] = args;
+    jsonObject["productVO"] = product;
 
-    cJSON *typeJson = cJSON_CreateString(type.c_str());
-    cJSON_AddItemToObject(args, "type", typeJson);
-    cJSON *seatQName = cJSON_CreateString(PLAT.getSelfUserId().c_str());
-    cJSON_AddItemToObject(args, "seatQName", seatQName);
-    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(args, "userHost", host);
-    cJSON *userQName = cJSON_CreateString(username.c_str());
-    cJSON_AddItemToObject(args, "userQName", userQName);
-    cJSON *virtualId = cJSON_CreateString(virtualname.c_str());
-    cJSON_AddItemToObject(args, "virtualId", virtualId);
-    cJSON *seatHost = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(args, "seatHost", seatHost);
-
-    cJSON_AddItemToObject(jsonObject, "noteArgs", args);
-    cJSON *productVo = cJSON_CreateString(product.c_str());
-    cJSON_AddItemToObject(jsonObject,"productVO",productVo);
-
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-
-    debug_log("sendProduct:" + postData);
+    std::string postData = jsonObject.dump();
 
     auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {
@@ -337,18 +310,12 @@ void HotLinesConfig::sendWechat(const QTalk::Entity::UID &uid) {
 
     std::string strUrl = url.str();
 
-    cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *from = cJSON_CreateString(PLAT.getSelfXmppId().c_str());
-    cJSON_AddItemToObject(jsonObject,"from",from);
-    cJSON *to = cJSON_CreateString(uid.usrId().c_str());
-    cJSON_AddItemToObject(jsonObject,"to",to);
-    cJSON *realJid = cJSON_CreateString(uid.realId().c_str());
-    cJSON_AddItemToObject(jsonObject,"realJid", realJid);
-    cJSON *chatType = cJSON_CreateString("5");
-    cJSON_AddItemToObject(jsonObject,"chatType",chatType);
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-
+    nJson jsonObject;
+    jsonObject["from"] = PLAT.getSelfXmppId();
+    jsonObject["to"] = uid.usrId();
+    jsonObject["realJid"] = uid.realId();
+    jsonObject["chatType"] = "5";
+    std::string postData = jsonObject.dump();
     auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {
 

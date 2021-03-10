@@ -12,6 +12,8 @@
 
 class CUSTOMUISHARED_EXPORT HeadPhotoLab : public QLabel
 {
+    using QLabel::QLabel;
+
 public:
     explicit HeadPhotoLab(
             QString  strHeadPath = QString(),
@@ -30,6 +32,7 @@ public:
 
     void startMovie();
     void stopMovie();
+    void setTip(bool tip);
 
 protected:
     void paintEvent(QPaintEvent* e) override;
@@ -37,15 +40,16 @@ protected:
 
 private:
     QString _imagePath;
-    int     _radius;
-    bool    _isGrey;
-    bool    _startMovie;
-    bool    _showRect;
+    int     _radius{0};
+    bool    _isGrey{false};
+    bool    _startMovie{false};
+    bool    _showRect{false};
 
 private:
-    QMovie* _mov;
-
+    QMovie* _mov{nullptr};
     QVector<QPixmap> _pixmap;
+
+    bool    _showDot{false};
 };
 
 #endif // HEADPHOTOBTN_H

@@ -5,12 +5,6 @@
 #include "DropWnd.h"
 #include <QPainter>
 
-DropWnd::DropWnd(QWidget *parent)
-    :QFrame(parent)
-{
-
-}
-
 void DropWnd::paintEvent(QPaintEvent *e) {
     //
     QPainter painter(this);

@@ -22,7 +22,7 @@ WebView::WebView(QWidget* parent)
 	_pWebCannel = new QWebChannel(this);
     _downloadWgt = new DownLoadWgt(this);
 //	_pWebView->settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
-    _pWebPage = new WebEnginePage(this);
+    _pWebPage = new WebEnginePage(_pWebView);
     _pWebView->setPage(_pWebPage);
     auto * lay = new QVBoxLayout(this);
     lay->setMargin(0);
@@ -62,7 +62,8 @@ WebView::WebView(QWidget* parent)
 
 WebView::~WebView() 
 {
-
+    _pWebView->releaseMouse();
+    _pWebView->releaseKeyboard();
 }
 
 void WebView::setObj(WebJsObj *obj) {

@@ -41,7 +41,6 @@ public:
     QString getDomainByNav(const QString& nav);
     void saveHeadPath();
     void loginError(const std::string& errMsg);
-    void getTokenByQVT(const std::string& qvt,bool isAutoLogin);
 
 public slots:
     void onSynDataSuccess();
@@ -52,6 +51,8 @@ Q_SIGNALS:
     void sgSynDataSuccess();
     void AuthFailedSignal(const QString& msg);
     void systemQuitSignal();
+    void sgSetTip(const QString&);
+    void sgStartLocalServer();
 
 protected:
     void init();
@@ -60,6 +61,7 @@ protected:
     void initloginWnd();
     void initLogingWnd();
     void onLoginBtnClicked();
+    void onStartLocalServer();
 
 protected:
     void mousePressEvent(QMouseEvent *e) override ;
@@ -115,9 +117,6 @@ private:
     QFrame  *_pAuthFailedSpaceFrm{};
     QLabel  *_pStsLabel{};
     QPushButton  *_cancelLoginBtn{};
-
-private:
-    QLabel  *_pWebLogin{};
 
 private:
     QString            _strConfPath;

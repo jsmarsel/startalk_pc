@@ -46,13 +46,13 @@ public:
                 //warn_log("load head failed, use default picture-> imagePath:{0}, realMessage:{0}", imagePath);
 
                 imagePath = ":/chatview/image1/defaultImage.png";
-                image = QTalk::qimage::loadImage(imagePath, true, true, 80, 80);
+                image = QTalk::qimage::loadImage(imagePath, false, true, 80, 80);
             } else {
 
                 image = QPixmap(imagePath);
                 if (image.isNull()) {
                     imagePath = ":/chatview/image1/defaultImage.png";
-                    image = QTalk::qimage::loadImage(imagePath, true, true, 80, 80);
+                    image = QTalk::qimage::loadImage(imagePath, false, true, 80, 80);
                 } else {
                     image = image.scaled(width, height, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 }

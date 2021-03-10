@@ -4,7 +4,7 @@
 #include <iostream>
 #include "CacheDataDao.h"
 #include "../QtUtil/Utils/Log.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 
 #define HOTLINE_KEY "hotline"
 #define HOTLINE_TYPE 8
@@ -118,27 +118,24 @@ bool CacheDataDao::isHotlineMerchant(const std::string& xmppid) {
 
         if (query.executeNext()) {
             std::string value = query.getColumn(0).getString();
-            cJSON *jsonObj = cJSON_Parse(value.c_str());
+            nJson jsonObj= Json::parse(value);
             if (jsonObj == nullptr) {
                 error_log("json paring error"); return false;
             }
-            int ret = cJSON_GetObjectItem(jsonObj, "ret")->valueint;
+            bool ret = Json::get<bool >(jsonObj, "ret");
             if(ret){
-                cJSON *data = cJSON_GetObjectItem(jsonObj, "data");
-                cJSON* array = cJSON_GetObjectItem(data,"myhotlines");
+                nJson data = Json::get<nJson>(jsonObj, "data");
+                nJson array= Json::get<nJson>(data,"myhotlines");
 
                 if(array == nullptr){
                     return false;
                 }
-                int size = cJSON_GetArraySize(array);
-                if(size == 0){
+                if(array.empty()){
                     return false;
                 }
-                for(int i = 0;i<size;i++){
-                    std::string result = cJSON_GetArrayItem(array,i)->valuestring;
-                    if(xmppid.compare(result)){
-
-                        cJSON_Delete(jsonObj);
+                for(auto & item : array){
+                    std::string result = Json::convert<std::string>(item);
+                    if(xmppid == result){
                         return true;
                     }
                 }

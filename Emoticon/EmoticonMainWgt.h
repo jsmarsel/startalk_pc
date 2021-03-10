@@ -10,7 +10,6 @@
 #include <QMutexLocker>
 #include "emoticon_global.h"
 #include "EmoticonStruct.h"
-#include "../include/ThreadPool.h"
 #include "../include/CommonStrcut.h"
 #include "../entity/im_config.h"
 

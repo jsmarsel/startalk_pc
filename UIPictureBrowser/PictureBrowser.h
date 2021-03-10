@@ -15,13 +15,11 @@
 class QToolButton;
 
 class PictureBrowser : public UShadowDialog {
-Q_OBJECT
+    Q_OBJECT
 public:
-    explicit PictureBrowser(QWidget *parent = nullptr);
-    ~PictureBrowser() override;
+    explicit PictureBrowser();
 
 public slots:
-
     void onShowChatPicture(const QString &messageId, const QString &messageContent, int index);
     void showPicture(const QString &picPath, const QString& linkPath);
 
@@ -51,8 +49,8 @@ private:
     void getNextImgs(const std::string& msgId);
 
 private:
-    PictureFrm *_pPicFrm{};
-    TitleFrm *_pPTitleFrm{};
+    PictureFrm *_pPicFrm{nullptr};
+    TitleFrm *_pPTitleFrm{nullptr};
 
 //    PictureMsgManager* _msgManager;
 

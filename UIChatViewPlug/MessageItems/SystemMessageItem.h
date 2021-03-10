@@ -7,8 +7,7 @@
 
 #include <QWebEngineView>
 #include "MessageItemBase.h"
-#include "../QtUtil/lib/cjson/cJSON.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 
 class SystemMessageItem : public MessageItemBase
 {

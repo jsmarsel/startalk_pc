@@ -2,4 +2,18 @@
     <qresource prefix="/emo">
         <file>emoticon.zip</file>
     </qresource>
+    <qresource prefix="/emoImg">
+        <file>image/closeBtn_hover.png</file>
+        <file>image/closeBtn_normal.png</file>
+        <file>image/leftPage_disabled.png</file>
+        <file>image/leftPage_hover.png</file>
+        <file>image/leftPage_normal.png</file>
+        <file>image/MyEmoticon.png</file>
+        <file>image/NormalEmoticon.png</file>
+        <file>image/RightPage_disabled.png</file>
+        <file>image/RightPage_hover.png</file>
+        <file>image/RightPage_normal.png</file>
+        <file>image/Setting_hover.png</file>
+        <file>image/Setting_normal.png</file>
+    </qresource>
 </RCC>

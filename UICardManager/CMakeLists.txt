@@ -21,8 +21,8 @@ set(SOURCE_FILES
         image1.qrc
         CardManagerPlug.h
         CardManagerPlug.cpp
-        UserCardMsgManager.cpp
-        UserCardMsgManager.h
+        MsgManager.cpp
+        MsgManager.h
         medal/UserMedalWnd.cpp
         medal/UserMedalWnd.h
         medal/UserMedalItem.cpp

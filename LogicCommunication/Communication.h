@@ -10,6 +10,7 @@
 #include "MessageManager.h"
 #include <thread>
 #include <regex>
+#include "../include/ThreadPool.h"
 #include "../include/Spinlock.h"
 #include "../include/STLazyQueue.h"
 #include "../interface/logic/ILogicObject.h"
@@ -37,7 +38,7 @@ public:
 
 public:
     bool OnLogin(const std::string& userName, const std::string& password);
-    void
+    bool
     AsyncConnect(const std::string &userName, const std::string &password, const std::string &host, int port);
 
     bool tryConnectToServer();
@@ -189,7 +190,7 @@ public:
 
 public:
     //新登录获取token
-    void getNewLoginToken(const std::string u, const std::string p,std::map<std::string,std::string> &map);
+    void getNewLoginToken(const std::string& u, const std::string& p, std::map<std::string,std::string> &info);
 
 public:
 //    CommMsgManager *_pMsgManager;
@@ -219,7 +220,7 @@ private:
     int _port;
 
 private:
-    static const int _threadPoolCount = 5;
+    static const int _threadPoolCount = 3;
     STLazyQueue<std::pair<std::string, UserCardMapParam>> *userCardQueue;
     std::vector<ThreadPool *> _httpPool;
 };

@@ -3,7 +3,7 @@
 #include <sstream>
 #include "../Platform/NavigationManager.h"
 #include "../Platform/Platform.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include "Communication.h"
 #include "../QtUtil/Utils/Log.h"
 
@@ -25,22 +25,21 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
     std::string searchUrl = NavigationManager::instance().getSearchUrl();
     std::string userId = PLAT.getSelfXmppId();
 
-    cJSON *gObj = cJSON_CreateObject();
-    cJSON_AddNumberToObject(gObj, "start", e.start);
-    cJSON_AddNumberToObject(gObj, "length", e.length);
-    cJSON_AddStringToObject(gObj, "key", e.key.c_str());
-    cJSON_AddStringToObject(gObj, "qtalkId", userId.c_str());
-    cJSON_AddNumberToObject(gObj, "action", e.action);
+    nJson obj;
+    obj["start"] = e.start;
+    obj["length"] = e.length;
+    obj["key"] = e.key.c_str();
+    obj["qtalkId"] = userId.c_str();
+    obj["action"] = e.action;
     if (!e.to_user.empty())
-        cJSON_AddStringToObject(gObj, "to_user", e.to_user.data());
+        obj["to_user"] = e.to_user.data();
     else if(!e.to_muc.empty())
-        cJSON_AddStringToObject(gObj, "to_muc", e.to_muc.data());
-    std::string postData = QTalk::JSON::cJSON_to_string(gObj);
-    cJSON_Delete(gObj);
+        obj["to_muc"] = e.to_muc.data();
+    std::string postData = obj.dump();
 
     auto callback = [&e](int code, const std::string &responseData) {
 
-        cJSON* response = cJSON_Parse(responseData.data());
+        nJson response= Json::parse(responseData);
         if(nullptr == response)
         {
             error_log("search error retData:{0}", responseData);
@@ -49,34 +48,32 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
 
         if (code == 200) {
 
-            cJSON_bool ret = JSON::cJSON_SafeGetBoolValue(response, "ret");
+            bool ret = Json::get<bool>(response, "ret");
             if(ret)
             {
-                cJSON* data = cJSON_GetObjectItem(response, "data");
-                cJSON *item = nullptr;
+                nJson data= Json::get<nJson>(response, "data");
                 //
-                cJSON_ArrayForEach(item, data) {
+                for(auto &item : data) {
 
-                    cJSON* info = cJSON_GetObjectItem(item, "info");
+                    nJson info= Json::get<nJson >(item, "info");
                     if(nullptr == info) continue;
 
                     Search::StSearchResult tmpRet = Search::StSearchResult();
-                    tmpRet.resultType = JSON::cJSON_SafeGetIntValue(item, "resultType");
-//                    tmpRet.default_portrait = JSON::cJSON_SafeGetStringValue(item, "defaultportrait");
-//                    tmpRet.groupId = JSON::cJSON_SafeGetStringValue(item, "groupId");
-                    tmpRet.groupLabel = JSON::cJSON_SafeGetStringValue(item, "groupLabel");
-                    tmpRet.hasMore = JSON::cJSON_SafeGetBoolValue(item, "hasMore");
+                    tmpRet.resultType = Json::get<int >(item, "resultType");
+//                    tmpRet.default_portrait = Json::get<std::string >(item, "defaultportrait");
+//                    tmpRet.groupId = Json::get<std::string >(item, "groupId");
+                    tmpRet.groupLabel = Json::get<std::string >(item, "groupLabel");
+                    tmpRet.hasMore = Json::get<bool>(item, "hasMore");
 
                     if(tmpRet.resultType & Search::EM_ACTION_USER)
                     {
-                        cJSON *iitem = nullptr;
-                        cJSON_ArrayForEach(iitem, info) {
+                        for (auto &iitem : info) {
                             Search::StUserItem tmpItem;
-                            tmpItem.xmppId = JSON::cJSON_SafeGetStringValue(iitem, "uri");
-                            tmpItem.name = JSON::cJSON_SafeGetStringValue(iitem, "name");
-                            tmpItem.tips = JSON::cJSON_SafeGetStringValue(iitem, "label");
-                            tmpItem.icon = JSON::cJSON_SafeGetStringValue(iitem, "icon");
-                            tmpItem.structure = JSON::cJSON_SafeGetStringValue(iitem, "content");
+                            tmpItem.xmppId = Json::get<std::string >(iitem, "uri");
+                            tmpItem.name = Json::get<std::string >(iitem, "name");
+                            tmpItem.tips = Json::get<std::string >(iitem, "label");
+                            tmpItem.icon = Json::get<std::string >(iitem, "icon");
+                            tmpItem.structure = Json::get<std::string >(iitem, "content");
 
                             tmpRet._users.push_back(tmpItem);
                         }
@@ -84,21 +81,19 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
                     else if((tmpRet.resultType & Search::EM_ACTION_MUC)
                         || (tmpRet.resultType & Search::EM_ACTION_COMMON_MUC))
                     {
-                        cJSON *iitem = nullptr;
-                        cJSON_ArrayForEach(iitem, info) {
+                        for (auto &iitem : info) {
                             Search::StGroupItem tmpItem;
 
-                            cJSON* hits = cJSON_GetObjectItem(iitem, "hit");
-                            tmpItem.type = JSON::cJSON_SafeGetIntValue(iitem, "todoType");
-                            tmpItem.xmppId = JSON::cJSON_SafeGetStringValue(iitem, "uri");
-                            tmpItem.name = JSON::cJSON_SafeGetStringValue(iitem, "label");
-                            tmpItem.icon = JSON::cJSON_SafeGetStringValue(iitem, "icon");
+                            nJson hits= Json::get<nJson >(iitem, "hit");
+                            tmpItem.type = Json::get<int >(iitem, "todoType");
+                            tmpItem.xmppId = Json::get<std::string >(iitem, "uri");
+                            tmpItem.name = Json::get<std::string >(iitem, "label");
+                            tmpItem.icon = Json::get<std::string >(iitem, "icon");
 
                             if(nullptr != hits)
                             {
-                                cJSON *iiitem = nullptr;
-                                cJSON_ArrayForEach(iiitem, hits) {
-                                    tmpItem._hits.emplace_back(iiitem->valuestring);
+                                for (auto &iiitem : hits) {
+                                    tmpItem._hits.push_back(Json::convert<std::string>(iiitem));
                                 }
                             }
 
@@ -108,50 +103,48 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
                     else if((tmpRet.resultType & Search::EM_ACTION_HS_SINGLE) ||
                             (tmpRet.resultType & Search::EM_ACTION_HS_MUC))
                     {
-                        cJSON *iitem = nullptr;
-                        cJSON_ArrayForEach(iitem, info) {
+                        for(auto &iitem : info) {
                             Search::StHistory tmpItem;
 
                             tmpItem.key = e.key;
-                            tmpItem.type = JSON::cJSON_SafeGetIntValue(iitem, "todoType");
-                            tmpItem.name = JSON::cJSON_SafeGetStringValue(iitem, "label");
-                            tmpItem.icon = JSON::cJSON_SafeGetStringValue(iitem, "icon");
-                            if (cJSON_HasObjectItem(iitem, "count"))
-                                tmpItem.count = JSON::cJSON_SafeGetIntValue(iitem, "count");
-                            tmpItem.body = JSON::cJSON_SafeGetStringValue(iitem, "body");
-                            tmpItem.time = atoll(JSON::cJSON_SafeGetStringValue(iitem, "time"));
-                            tmpItem.from = JSON::cJSON_SafeGetStringValue(iitem, "from");
-                            tmpItem.to = JSON::cJSON_SafeGetStringValue(iitem, "to");
-                            tmpItem.msg_type = atoi(JSON::cJSON_SafeGetStringValue(iitem, "mtype"));
-                            tmpItem.msg_id = JSON::cJSON_SafeGetStringValue(iitem, "msgid");
-                            tmpItem.extend_info = JSON::cJSON_SafeGetStringValue(iitem, "extendinfo");
-//                            tmpItem.real_from = JSON::cJSON_SafeGetStringValue(iitem, "realfrom");
-//                            tmpItem.real_to = JSON::cJSON_SafeGetStringValue(iitem, "realto");
+                            tmpItem.type = Json::get<int >(iitem, "todoType");
+                            tmpItem.name = Json::get<std::string >(iitem, "label");
+                            tmpItem.icon = Json::get<std::string >(iitem, "icon");
+                            if (iitem.contains( "count"))
+                                tmpItem.count = Json::get<int >(iitem, "count");
+                            tmpItem.body = Json::get<std::string >(iitem, "body");
+                            tmpItem.time = atoll(Json::get<std::string >(iitem, "time").data());
+                            tmpItem.from = Json::get<std::string >(iitem, "from");
+                            tmpItem.to = Json::get<std::string >(iitem, "to");
+                            tmpItem.msg_type = atoi(Json::get<std::string >(iitem, "mtype").data());
+                            tmpItem.msg_id = Json::get<std::string >(iitem, "msgid");
+                            tmpItem.extend_info = Json::get<std::string >(iitem, "extendinfo");
+//                            tmpItem.real_from = Json::get<std::string >(iitem, "realfrom");
+//                            tmpItem.real_to = Json::get<std::string >(iitem, "realto");
 
                             tmpRet._history.push_back(tmpItem);
                         }
                     }
                     else if((tmpRet.resultType & Search::EM_ACTION_HS_FILE)) {
-                        cJSON *iitem = nullptr;
-                        cJSON_ArrayForEach(iitem, info) {
+                        for (auto &iitem : info) {
                             Search::StHistoryFile tmpItem;
 
                             tmpItem.key = e.key;
-                            tmpItem.source = JSON::cJSON_SafeGetStringValue(iitem, "source");
-                            tmpItem.msg_id = JSON::cJSON_SafeGetStringValue(iitem, "msgid");
-//                            tmpItem.icon = JSON::cJSON_SafeGetStringValue(iitem, "icon");
-                            tmpItem.body = JSON::cJSON_SafeGetStringValue(iitem, "body");
-                            tmpItem.extend_info = JSON::cJSON_SafeGetStringValue(iitem, "extendinfo");
-                            tmpItem.time = atoll(JSON::cJSON_SafeGetStringValue(iitem, "time"));
-                            tmpItem.from = JSON::cJSON_SafeGetStringValue(iitem, "from");
-                            tmpItem.to = JSON::cJSON_SafeGetStringValue(iitem, "to");
+                            tmpItem.source = Json::get<std::string >(iitem, "source");
+                            tmpItem.msg_id = Json::get<std::string >(iitem, "msgid");
+//                            tmpItem.icon = Json::get<std::string >(iitem, "icon");
+                            tmpItem.body = Json::get<std::string >(iitem, "body");
+                            tmpItem.extend_info = Json::get<std::string >(iitem, "extendinfo");
+                            tmpItem.time = atoll(Json::get<std::string >(iitem, "time").data());
+                            tmpItem.from = Json::get<std::string >(iitem, "from");
+                            tmpItem.to = Json::get<std::string >(iitem, "to");
 
-                            cJSON* file_item = cJSON_GetObjectItem(iitem, "fileinfo");
+                            nJson file_item= Json::get<nJson >(iitem, "fileinfo");
 
-                            tmpItem.file_md5 = JSON::cJSON_SafeGetStringValue(file_item, "FILEMD5");
-                            tmpItem.file_name = JSON::cJSON_SafeGetStringValue(file_item, "FileName");
-                            tmpItem.file_size = JSON::cJSON_SafeGetStringValue(file_item, "FileSize");
-                            tmpItem.file_url = JSON::cJSON_SafeGetStringValue(file_item, "HttpUrl");
+                            tmpItem.file_md5 = Json::get<std::string >(file_item, "FILEMD5");
+                            tmpItem.file_name = Json::get<std::string >(file_item, "FileName");
+                            tmpItem.file_size = Json::get<std::string >(file_item, "FileSize");
+                            tmpItem.file_url = Json::get<std::string >(file_item, "HttpUrl");
 
                             tmpRet._files.push_back(tmpItem);
                         }
@@ -160,11 +153,10 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
                 }
             }
         } else {
-            std::string errmsg = JSON::cJSON_SafeGetStringValue(response, "errmsg");
+            std::string errmsg = Json::get<std::string >(response, "errmsg");
             error_log("search error errmsg:{0}", errmsg);
         }
 
-        cJSON_Delete(response);
     };
 
     if (_pComm) {

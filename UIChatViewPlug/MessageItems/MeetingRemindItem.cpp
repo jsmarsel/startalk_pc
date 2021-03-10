@@ -181,7 +181,7 @@ void MeetingRemindItem::initContentLayout() {
         vBox->setSpacing(20);
         _contentFrm->setLayout(vBox);
 
-        contentLabel = new QLabel;
+        contentLabel = new QLabel(this);
         contentLabel->setObjectName("contentLabel");
         contentLabel->setWordWrap(true);
         contentLabel->setFixedWidth(_contentSize.width() - 20);
@@ -208,7 +208,7 @@ void MeetingRemindItem::initContentLayout() {
             contentLabel->adjustSize();
         }
 
-        clickLabel = new QLabel;
+        clickLabel = new QLabel(this);
         clickLabel->setObjectName("MessageItemTipLabel");
         clickLabel->setFixedWidth(_contentSize.width() - 20);
         clickLabel->setText(tr("点击查看详情>>"));

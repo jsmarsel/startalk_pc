@@ -15,21 +15,21 @@
 #include <QFileInfo>
 #include <QtConcurrent>
 
-PictureBrowser::PictureBrowser(QWidget *parent)
+PictureBrowser::PictureBrowser()
         : UShadowDialog(nullptr, true)
         , _curIndex(0)
         , _hasBefore(false)
         , _hasNext(false)
 {
 //    _msgManager = new PictureMsgManager;
-    setWindowFlags(windowFlags() | Qt::Widget);
+    Qt::WindowFlags flags = Qt::Dialog | Qt::WindowContextHelpButtonHint | Qt::FramelessWindowHint
+                            | Qt::WindowFullscreenButtonHint | Qt::WindowCloseButtonHint | Qt::WindowTitleHint;
+    setWindowFlags(flags);
     setAttribute(Qt::WA_QuitOnClose, false);
     initUi();
 
     connect(this, &PictureBrowser::sgGotSourceImg, this, &PictureBrowser::gotSourceImg);
 }
-
-PictureBrowser::~PictureBrowser() = default;
 
 void PictureBrowser::initUi() {
     this->setMinimumSize(480, 480);
@@ -48,8 +48,6 @@ void PictureBrowser::initUi() {
     _pCenternWgt->setLayout(layout);
 
     setMoverAble(true, _pPTitleFrm);
-    //
-
 }
 
 void PictureBrowser::onShowChatPicture(const QString &messageId, const QString &messageContent, int index) {
@@ -270,9 +268,14 @@ void PictureBrowser::turnNext()
  */
 void PictureBrowser::loadImage(bool isFirst)
 {
+    if(_images.size() <= _curIndex)
+    {
+        QtMessageBox::error(this, tr("错误"), tr("消息解析错误!"));
+        return;
+    }
     auto item = _images[_curIndex];
     _curLink = item.second;
-    QString imgPath = QString::fromStdString(QTalk::GetSrcImagePathByUrl(_curLink));
+    auto imgPath = QString::fromStdString(QTalk::GetSrcImagePathByUrl(_curLink));
     QFileInfo info(imgPath);
     if(!info.exists() || info.isDir())
     {

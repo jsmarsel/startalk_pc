@@ -41,7 +41,6 @@ void PlugManager::LoadPluginAllQt() {
             qInfo() << "plugin has been found:  " << plugin;
             auto *loader = new QPluginLoader(plugin);
             _pluginRegisterQt.insert(plug, loader);
-
         } else {
             qWarning() << "plugin file is not exists... path: " << plugin;
         }

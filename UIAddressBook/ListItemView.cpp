@@ -7,6 +7,7 @@
 #include <QPainter>
 #include <QFile>
 #include <QEvent>
+#include <QPainterPath>
 #include <QtWidgets/QListView>
 #include "AddressBookPanel.h"
 #include "../UICom/qimage/qimage.h"

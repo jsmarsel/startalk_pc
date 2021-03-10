@@ -2,10 +2,12 @@
 // Created by lihaibin on 2019-06-26.
 //
 #include "QuickReplyDao.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/Utils/utils.h"
+#include "../QtUtil/Utils/Log.h"
+#include "../QtUtil/nJson/nJson.h"
 
 QuickReplyDao::QuickReplyDao(qtalk::sqlite::database *sqlDb) :
-    DaoInterface(sqlDb, "IM_QUICK_REPLY_GROUP"){
+        DaoInterface(sqlDb, "IM_QUICK_REPLY_GROUP"){
 
 }
 
@@ -22,12 +24,12 @@ bool QuickReplyDao::creatTable() {
     qtalk::sqlite::statement query(*_pSqlDb, sql);
 
     std::string sql1 = "CREATE TABLE IF NOT EXISTS `IM_QUICK_REPLY_CONTENT` ( "
-                      "`sid`	        Long, "
-                      "`gid`	        Long, "
-                      "`content`	        TEXT, "
-                      "`contentseq`	            INTEGER, "
-                      "`version`	        INTEGER default 1, "
-                      "PRIMARY KEY(`sid`,'gid') ) ";
+                       "`sid`	        Long, "
+                       "`gid`	        Long, "
+                       "`content`	        TEXT, "
+                       "`contentseq`	            INTEGER, "
+                       "`version`	        INTEGER default 1, "
+                       "PRIMARY KEY(`sid`,'gid') ) ";
     qtalk::sqlite::statement query1(*_pSqlDb, sql1);
 
     bool result = query.executeStep() && query1.executeStep();
@@ -40,13 +42,14 @@ bool QuickReplyDao::creatTable() {
     }
 }
 
-void QuickReplyDao::batchInsertQuickReply(const std::string &data) {
-    cJSON *jsonObj = cJSON_Parse(data.c_str());
+void QuickReplyDao::batchInsertQuickReply(const std::string & pData) {
+
+    nJson jsonObj = Json::parse(pData);
 
     if (jsonObj == nullptr) {
         error_log("json paring error"); return;
     }
-    cJSON_bool ret = QTalk::JSON::cJSON_SafeGetBoolValue(jsonObj, "ret");
+    bool ret = Json::get<bool>(jsonObj, "ret");
     if(ret){
         std::string sql = "insert or REPLACE into IM_QUICK_REPLY_GROUP(sid, groupname, groupseq, version) values(?, ?, ?, ?);";
         std::string deleteSql = "delete from IM_QUICK_REPLY_GROUP where sid = ?";
@@ -62,62 +65,61 @@ void QuickReplyDao::batchInsertQuickReply(const std::string &data) {
 
         qtalk::sqlite::statement deleteStatement1(*_pSqlDb, deleteSql1);
 
-
-
-        cJSON* data = cJSON_GetObjectItem(jsonObj,"data");
-
-        cJSON* groups = cJSON_GetObjectItem(cJSON_GetObjectItem(data,"groupInfo"),"groups");
-        int size = cJSON_GetArraySize(groups);
-
-        cJSON* contents = cJSON_GetObjectItem(cJSON_GetObjectItem(data,"contentInfo"),"contents");
-        int size1 = cJSON_GetArraySize(contents);
+        nJson data = Json::get<nJson >(jsonObj, "data");
+        nJson groupInfo = Json::get<nJson >(data, "groupInfo");
+        nJson groups = Json::get<nJson >(groupInfo, "groups");
+        nJson contentInfo = Json::get<nJson >(data, "contentInfo");
+        nJson contents = Json::get<nJson >(contentInfo, "contents");
 
         try {
             _pSqlDb->exec("begin immediate;");
-            for(int i = 0;i<size;i++){
-                cJSON* group = cJSON_GetArrayItem(groups,i);
-                int isDel = QTalk::JSON::cJSON_SafeGetIntValue(group,"isdel");
-                if(isDel){
-                    deleteStatement.bind(1,QTalk::JSON::cJSON_SafeGetLonglongValue(group,"id"));
-                    deleteStatement.executeStep();
-                    deleteStatement.resetBindings();
-                } else{
-                    insertStatement.bind(1,QTalk::JSON::cJSON_SafeGetLonglongValue(group,"id"));
-                    insertStatement.bind(2,QTalk::JSON::cJSON_SafeGetStringValue(group,"groupname"));
-                    insertStatement.bind(3,QTalk::JSON::cJSON_SafeGetLonglongValue(group,"groupseq"));
-                    insertStatement.bind(4,QTalk::JSON::cJSON_SafeGetLonglongValue(group,"version"));
-                    insertStatement.executeStep();
-                    insertStatement.resetBindings();
-                }
-            }
-            insertStatement.clearBindings();
-            deleteStatement.clearBindings();
+            if(groups.is_array()) {
+                for(auto& group : groups){
 
-            for(int i = 0;i<size1;i++){
-                cJSON* content = cJSON_GetArrayItem(contents,i);
-                int isDel = QTalk::JSON::cJSON_SafeGetIntValue(content,"isdel");
-                if(isDel){
-                    deleteStatement1.bind(1,QTalk::JSON::cJSON_SafeGetLonglongValue(content,"id"));
-                    deleteStatement1.executeStep();
-                    deleteStatement1.resetBindings();
-                } else{
-                    insertStatement1.bind(1,QTalk::JSON::cJSON_SafeGetLonglongValue(content,"id"));
-                    insertStatement1.bind(2,QTalk::JSON::cJSON_SafeGetLonglongValue(content,"groupid"));
-                    insertStatement1.bind(3,QTalk::JSON::cJSON_SafeGetStringValue(content,"content"));
-                    insertStatement1.bind(4,QTalk::JSON::cJSON_SafeGetLonglongValue(content,"contentseq"));
-                    insertStatement1.bind(5,QTalk::JSON::cJSON_SafeGetLonglongValue(content,"version"));
-                    insertStatement1.executeStep();
-                    insertStatement1.resetBindings();
+                    int isDel = Json::get<bool >(group,"isdel");
+                    if(isDel){
+                        deleteStatement.bind(1, group["id"].get<std::string>());
+                        deleteStatement.executeStep();
+                        deleteStatement.resetBindings();
+                    } else{
+                        insertStatement.bind(1, Json::get<long long >(group,"id"));
+                        insertStatement.bind(2, Json::get<std::string >(group,"groupname"));
+                        insertStatement.bind(3, Json::get<long long >(group,"groupseq"));
+                        insertStatement.bind(4, Json::get<long long >(group,"version"));
+
+                        insertStatement.executeStep();
+                        insertStatement.resetBindings();
+                    }
                 }
+                insertStatement.clearBindings();
+                deleteStatement.clearBindings();
             }
-            insertStatement1.clearBindings();
-            deleteStatement1.clearBindings();
+
+
+            if(contents.is_array()) {
+                for(const auto& content : contents){
+                    bool isDel = Json::get<bool >(content,"isdel");
+                    if(isDel){
+                        deleteStatement1.bind(1,Json::get<long long >(content,"id"));
+                        deleteStatement1.executeStep();
+                        deleteStatement1.resetBindings();
+                    } else{
+                        insertStatement1.bind(1,Json::get<long long >(content,"id"));
+                        insertStatement1.bind(2,Json::get<long long >(content,"groupid"));
+                        insertStatement1.bind(3,Json::get<std::string >(content,"content"));
+                        insertStatement1.bind(4,Json::get<long long >(content,"contentseq"));
+                        insertStatement1.bind(5,Json::get<long long >(content,"version"));
+                        insertStatement1.executeStep();
+                        insertStatement1.resetBindings();
+                    }
+                }
+                insertStatement1.clearBindings();
+                deleteStatement1.clearBindings();
+            }
 
             _pSqlDb->exec("commit transaction;");
 
-            cJSON_Delete(jsonObj);
-        }catch(std::exception e) {
-            warn_log("exception : {0}", e.what());
+        } catch(...) {
             insertStatement.clearBindings();
             deleteStatement.clearBindings();
             insertStatement1.clearBindings();

@@ -44,9 +44,7 @@ set(SOURCE_FILES
         ChangeHeadWnd.cpp
         ChangeHeadWnd.h
         SearchView.cpp
-        SearchView.h
-        UCButton.cpp
-        UCButton.h)
+        SearchView.h)
 
 
 if (APPLE)

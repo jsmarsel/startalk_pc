@@ -16,6 +16,7 @@
 #include <ChatUtil.h>
 #include <QFileInfo>
 #include <QApplication>
+#include <QPainterPath>
 #include "../ChatViewMainPanel.h"
 #include "../../CustomUi/QtMessageBox.h"
 #include "../../UICom/StyleDefine.h"

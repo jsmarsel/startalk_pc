@@ -1,9 +1,26 @@
 ﻿
 QFrame#navigationMainPanel{
-	background:rgba(255,255,255,1);
+    background:rgba(255,255,255,1);
 }
 
 QFrame#TcpDisconnectWgt {
     height: 40px;
     background: rgba(255,108,86,0.2);
+}
+
+QPushButton#SessionBackBtn {
+    border-image: url(":/UINavigationPlug/image1/back_normal.svg");
+}
+
+QPushButton#SessionBackBtn:hover {
+    border-image: url(":/UINavigationPlug/image1/back_hover.svg");
+}
+
+QFrame#SessionBackFrm {
+    background: rgb(242, 242, 242);
+}
+
+QLabel#SessionLabel {
+    font-size: 15px;
+    color: "#555";
 }

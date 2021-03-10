@@ -12,6 +12,12 @@
 #include <QMutexLocker>
 #include <set>
 #include <vector>
+#include <QThreadPool>
+#include <QPointer>
+#include <QQueue>
+#include <list>
+#include <climits>
+#include <limits.h>
 #include "../include/CommonDefine.h"
 #include "NativeChatStruct.h"
 #include "NewMessageTip.h"
@@ -25,6 +31,9 @@ class MessageItemBase;
 class FileSendReceiveMessItem;
 class VideoMessageItem;
 class ChatMainDelegate;
+class ChatMainWgt;
+class DownloadImageTask;
+/** ChatMainWgt  */
 class ChatMainWgt : public QListView
 {
 	Q_OBJECT
@@ -52,7 +61,9 @@ Q_SIGNALS:
 	void sgSelectItem();
 	void sgSelectedSize(unsigned int);
 	void sgUploadShareMsgSuccess(const QString&, int type, const QString&);
-	void sgImageDownloaded(const QString&, const QString&);
+//	void sgImageDownloaded(const QString&, const QString&);
+    void sgDownloadImageOperate(const QString&, const QString&);
+    void sgDownloadEmoOperate(const QString&, const QString&, const QString&);
 	void sgJumTo();
 	void sgDownloadFileSuccess(const QString&);
 	void sgUploadFileSuccess(const QString&, const QString&);
@@ -114,7 +125,7 @@ Q_SIGNALS:
     void sgSendFailed(const QString& msgId);
     void sgDownloadFileFailed(const QString& msgId);
     void sgGotMState(const QString& msgId, const long long& time);
-    void sgEnableScroll();
+//    void sgEnableScroll();
 
 private:
     void downloadImage(const QString& msgId, const QString& link, int width, int height);
@@ -163,8 +174,7 @@ private:
 	QMap<QString, MessageItemBase*> _mapItemWgt;
 	QMap<QString, QStandardItem*>   _mapItem;
 	QMap<QString, QStandardItem*>   _mapTimeItem;
-	std::list<QInt64>               _times;
-
+    QMap<qint64, QString>           _times;
     ChatMainDelegate*               _pDelegate{};
 
 public:
@@ -181,6 +191,22 @@ public:
 private:
     bool _isLeave {};
     bool _wheelFlag = false;
+    qint64 _request_time{LLONG_MAX};
+
+private:
+    DownloadImageTask* _downloadTask{};
+};
+
+
+/** DownloadImageTask  */
+class DownloadImageTask : public QObject {
+    Q_OBJECT
+public slots:
+    void downloadImage(const QString& msgId, const QString& link);
+    void downloadEmo(const QString& msgId, const QString& pkgid, const QString& shortCut);
+
+Q_SIGNALS:
+    void downloadFinish(const QString& id, const QString& res);
 };
 
 #endif//_CHATMAINWGT_H_

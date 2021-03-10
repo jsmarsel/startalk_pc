@@ -152,7 +152,7 @@ void ImageMessItem::initSendLayout() {
     contentLay->setContentsMargins(_contentMargin);
     rightLay->setSpacing(_rightSpacing);
     if (nullptr == _imageLab) {
-        _imageLab = new QLabel;
+        _imageLab = new QLabel(this);
     }
     contentLay->addWidget(_imageLab);
     contentLay->setSpacing(_contentSpacing);
@@ -216,7 +216,7 @@ void ImageMessItem::initReceiveLayout() {
     _contentFrm->setLayout(contentLay);
 
     if (!_imageLab) {
-        _imageLab = new QLabel;
+        _imageLab = new QLabel(this);
     }
     contentLay->addWidget(_imageLab);
     contentLay->setSpacing(_contentSpacing);

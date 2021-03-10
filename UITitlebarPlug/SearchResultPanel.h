@@ -1,5 +1,5 @@
 ﻿#if _MSC_VER >= 1600
-#pragma execution_character_set("utf-8")
+    #pragma execution_character_set("utf-8")
 #endif
 #ifndef SEARCHPANEL_H
 #define SEARCHPANEL_H
@@ -9,7 +9,7 @@
 #include <QStackedWidget>
 #include <QPushButton>
 #include <QLabel>
-#include "UCButton.h"
+#include "../CustomUi/UCButton.h"
 #include "../CustomUi/UShadowWnd.h"
 #include "MessageManager.h"
 #include "../UICom/UIEntity.h"
@@ -17,7 +17,8 @@
 
 class SearchThread;
 
-class SearchResultPanel : public UShadowDialog {
+class SearchResultPanel : public UShadowDialog
+{
     Q_OBJECT
 public:
     explicit SearchResultPanel(QWidget *parent);
@@ -36,7 +37,7 @@ public slots:
     void onSearchHistory();
     void onSearchFile();
     void addSearchReq(const QString &req);
-    void onGotSearchResult(const QString& key, const SearchResult& ret);
+    void onGotSearchResult(const QString &key, const SearchResult &ret);
     void onGetMore(int req);
 
 Q_SIGNALS:
@@ -46,12 +47,12 @@ Q_SIGNALS:
     void sgSelectUp();
     void sgSelectDown();
     void sgSelectItem();
-    void sgGotSearchResult(const QString& key, const SearchResult& ret);
-    void sgShowMessageRecordWnd(const QString&, const QString&);
-    void sgShowFileRecordWnd(const QString&);
+    void sgGotSearchResult(const QString &key, const SearchResult &ret);
+    void sgShowMessageRecordWnd(const QString &, const QString &);
+    void sgShowFileRecordWnd(const QString &);
 
 private:
-    SearchView* _pSearchView {};
+    SearchView *_pSearchView {};
     UCButton  *_allBtn {};        // 全部
     UCButton  *_contactBtn {};    // 联系人
     UCButton  *_groupChatBtn {};  // 群聊

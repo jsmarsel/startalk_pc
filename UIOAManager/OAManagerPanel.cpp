@@ -36,7 +36,7 @@ void OAManagerPanel::initUi() {
     _pRightLay->setMargin(0);
     _pEmptyLabel = new QLabel(this);
     _pRightLay->addWidget(_pEmptyLabel);
-    _pRightLay->addWidget(new Line());
+    _pRightLay->addWidget(new Line(this));
     // main layout
     _pSplitter->addWidget(leftFrame);
     _pSplitter->addWidget(rightFrm);

@@ -378,7 +378,6 @@ else ()
             ${PROJECT_SOURCE_DIR}/zxing/bigint/BigUnsignedInABase.cc
             ${PROJECT_SOURCE_DIR}/zxing/bigint/NumberlikeArray.hh
 
-
             # zxing/zxing
 
             ${PROJECT_SOURCE_DIR}/zxing/zxing/BarcodeFormat.cpp
@@ -621,6 +620,13 @@ else ()
             ${WINDOWS_SOURCE})
 
 endif ()
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/zxing/bigint/BigInteger.hh PROPERTY SKIP_AUTOMOC ON)
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/zxing/bigint/BigIntegerAlgorithms.hh PROPERTY SKIP_AUTOMOC ON)
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/zxing/bigint/BigIntegerLibrary.hh PROPERTY SKIP_AUTOMOC ON)
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/zxing/bigint/BigIntegerUtils.hh PROPERTY SKIP_AUTOMOC ON)
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/zxing/bigint/BigUnsigned.hh PROPERTY SKIP_AUTOMOC ON)
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/zxing/bigint/BigUnsignedInABase.hh PROPERTY SKIP_AUTOMOC ON)
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/zxing/bigint/NumberlikeArray.hh PROPERTY SKIP_AUTOMOC ON)
 
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})

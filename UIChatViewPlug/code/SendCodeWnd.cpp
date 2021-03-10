@@ -43,7 +43,7 @@ void SendCodeWnd::initUi()
     bottomLay->addWidget(cancelBtn);
     bottomLay->addWidget(sendBtn);
 
-    _pCodeShell->getMainLay()->addWidget(new Line());
+    _pCodeShell->getMainLay()->addWidget(new Line(this));
     _pCodeShell->getMainLay()->addWidget(bottomFrm);
     //
     setMoverAble(true, _pCodeShell->getTitleFrm());

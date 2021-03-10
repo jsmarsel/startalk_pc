@@ -3,15 +3,16 @@
 
 #include "NavigationManager.h"
 
-NavigationManager& NavigationManager::instance() {
+NavigationManager &NavigationManager::instance()
+{
     static NavigationManager navManager;
     return navManager;
 }
 
 NavigationManager::NavigationManager()
 {
-	rsaEncodeType = 0;
-	probufPort = 0;
+    rsaEncodeType = 0;
+    probufPort = 0;
 }
 
 void NavigationManager::setVersion(QInt64 verion)
@@ -24,7 +25,8 @@ void NavigationManager::setXmppHost(const std::string &xmppHost)
     this->xmppHost = xmppHost;
 }
 
-std::string NavigationManager::getXmppHost() {
+std::string NavigationManager::getXmppHost()
+{
     return this->xmppHost;
 }
 
@@ -33,7 +35,8 @@ void NavigationManager::setDomain(const std::string &domain)
     this->domain = domain;
 }
 
-std::string NavigationManager::getDomain() {
+std::string NavigationManager::getDomain()
+{
     return this->domain;
 }
 
@@ -42,7 +45,8 @@ void NavigationManager::setProbufPort(int port)
     this->probufPort = port;
 }
 
-int NavigationManager::getProbufPort() {
+int NavigationManager::getProbufPort()
+{
     return this->probufPort;
 }
 
@@ -51,16 +55,18 @@ void NavigationManager::setApiHost(const std::string &url)
     this->apiurl = url;
 }
 
-std::string NavigationManager::getApiUrl() {
+std::string NavigationManager::getApiUrl()
+{
     return this->apiurl;
 }
 
-void NavigationManager::setJavaHost(const std::string& javaUrl)
+void NavigationManager::setJavaHost(const std::string &javaUrl)
 {
     this->javaUrl = javaUrl;
 }
 
-std::string NavigationManager::getJavaHost() {
+std::string NavigationManager::getJavaHost()
+{
     return this->javaUrl;
 }
 
@@ -69,7 +75,8 @@ void NavigationManager::setHttpHost(const std::string &httpurl)
     this->httpurl = httpurl;
 }
 
-std::string NavigationManager::getHttpHost() {
+std::string NavigationManager::getHttpHost()
+{
     return this->httpurl;
 }
 
@@ -78,7 +85,8 @@ void NavigationManager::setPubKey(const std::string &pubKey)
     this->pubkey = pubKey;
 }
 
-std::string NavigationManager::getPubkey() {
+std::string NavigationManager::getPubkey()
+{
     return this->pubkey;
 }
 
@@ -92,46 +100,53 @@ std::string NavigationManager::getFileHttpHost()
     return this->fileurl;
 }
 
-void NavigationManager::setPhoneNumAddr(const std::string &phone) {
+void NavigationManager::setPhoneNumAddr(const std::string &phone)
+{
     phoneAddr = phone;
 }
 
-std::string NavigationManager::getPhoneNumAddr() {
+std::string NavigationManager::getPhoneNumAddr()
+{
     return phoneAddr;
 }
 
-void NavigationManager::setLeaderUrl(const std::string &leaderUrl) {
+void NavigationManager::setLeaderUrl(const std::string &leaderUrl)
+{
     this->leaderUrl = leaderUrl;
 }
 
-std::string NavigationManager::getLeaderUrl() {
+std::string NavigationManager::getLeaderUrl()
+{
     return this->leaderUrl;
 }
 
 void NavigationManager::setRsaEncodeType(int t)
 {
-	rsaEncodeType = t;
+    rsaEncodeType = t;
 }
 
 int NavigationManager::getRsaEncodeType()
 {
-	return rsaEncodeType;
+    return rsaEncodeType;
 }
 
-void NavigationManager::setUploadLog(const std::string& lodAddr)
+void NavigationManager::setUploadLog(const std::string &lodAddr)
 {
     uploadLog = lodAddr;
 }
 
-std::string NavigationManager::getUploadLog() {
+std::string NavigationManager::getUploadLog()
+{
     return uploadLog;
 }
 
-void NavigationManager::setFoundConfigUrl(const std::string &url) {
+void NavigationManager::setFoundConfigUrl(const std::string &url)
+{
     this->foundConfigUrl = url;
 }
 
-std::string NavigationManager::getFoundConfigUrl() {
+std::string NavigationManager::getFoundConfigUrl()
+{
     return foundConfigUrl;
 }
 
@@ -140,11 +155,13 @@ void NavigationManager::setOpsApiHost(const std::string &opsHost)
     this->opsApiHost = opsHost;
 }
 
-std::string NavigationManager::getOpsApiHost() {
+std::string NavigationManager::getOpsApiHost()
+{
     return this->opsApiHost;
 }
 
-std::string NavigationManager::getQCHost() {
+std::string NavigationManager::getQCHost()
+{
     return this->qcHost;
 }
 
@@ -153,47 +170,58 @@ void NavigationManager::setQCHost(const std::string &qcHost)
     this->qcHost = qcHost;
 }
 
-std::string NavigationManager::getHealthCheckUrl() {
+std::string NavigationManager::getHealthCheckUrl()
+{
     return this->healthcheckUrl;
 }
 
-std::string NavigationManager::getQCGrabOrderUrl() {
+std::string NavigationManager::getQCGrabOrderUrl()
+{
     return this->qcGrabOrderUrl;
 }
 
-std::string NavigationManager::getQCOrderManager() {
+std::string NavigationManager::getQCOrderManager()
+{
     return this->qcOrderManager;
 }
 
-std::string NavigationManager::getAccountConfigUrl() {
+std::string NavigationManager::getAccountConfigUrl()
+{
     return this->accountConfigUrl;
 }
 
-bool NavigationManager::getReadFlag() {
+bool NavigationManager::getReadFlag()
+{
     return this->readFlag;
 }
 
-std::string NavigationManager::getADUrl() {
+std::string NavigationManager::getADUrl()
+{
     return this->adUrl;
 }
 
-int NavigationManager::getADSec() {
+int NavigationManager::getADSec()
+{
     return this->adSec;
 }
 
-void NavigationManager::setSearchUrl(const std::string &searchUrl) {
+void NavigationManager::setSearchUrl(const std::string &searchUrl)
+{
     this->searchUrl = searchUrl;
 }
 
-std::string NavigationManager::getSearchUrl() {
+std::string NavigationManager::getSearchUrl()
+{
     return this->searchUrl;
 }
 
-void NavigationManager::setMailSuffix(const std::string &mailSuffix) {
+void NavigationManager::setMailSuffix(const std::string &mailSuffix)
+{
     this->mailSuffix = mailSuffix;
 }
 
-std::string NavigationManager::getMailSuffix() {
+std::string NavigationManager::getMailSuffix()
+{
     return this->mailSuffix;
 }
 
@@ -202,62 +230,88 @@ void NavigationManager::setShareUrl(const std::string &shareUrl)
     this->shareUrl = shareUrl;
 }
 
-std::string NavigationManager::getShareUrl() {
+std::string NavigationManager::getShareUrl()
+{
     return shareUrl;
 }
 
-void NavigationManager::setVideoUrl(const std::string &videoUrl) {
+void NavigationManager::setVideoUrl(const std::string &videoUrl)
+{
     this->videoUrl = videoUrl;
 }
 
-std::string NavigationManager::getVideoUrl() {
+std::string NavigationManager::getVideoUrl()
+{
     return videoUrl;
 }
 
-void NavigationManager::setvideoConference(const std::string &videoUrl) {
+void NavigationManager::setvideoConference(const std::string &videoUrl)
+{
     this->videoConference = videoUrl;
 }
 
-std::string NavigationManager::getvideoConference() {
+std::string NavigationManager::getvideoConference()
+{
     return videoConference;
 }
 
-void NavigationManager::setQcadminHost(const std::string &adminHost) {
+// check updaete
+void NavigationManager::setCheckUpteUrl(const std::string &url)
+{
+    checkupdateUrl = url;
+}
+
+std::string NavigationManager::getCheckUpdateUrl()
+{
+    return checkupdateUrl;
+}
+
+void NavigationManager::setQcadminHost(const std::string &adminHost)
+{
     this->qcadminHost = adminHost;
 }
 
-std::string NavigationManager::getQcadminHost() {
+std::string NavigationManager::getQcadminHost()
+{
     return qcadminHost;
 }
 
-void NavigationManager::setShowmsgstat(const bool showmsgstat) {
+void NavigationManager::setShowmsgstat(const bool showmsgstat)
+{
     this->showmsgstat = showmsgstat;
 }
 
-bool NavigationManager::isShowmsgstat() {
+bool NavigationManager::isShowmsgstat()
+{
     return showmsgstat;
 }
 
-void NavigationManager::setQcGrabOrder(const std::string qcGrabOrder) {
+void NavigationManager::setQcGrabOrder(const std::string qcGrabOrder)
+{
     this->qcGrabOrder = qcGrabOrder;
 }
 
-std::string NavigationManager::getQcGrabOrder() {
+std::string NavigationManager::getQcGrabOrder()
+{
     return qcGrabOrder;
 }
 
-void NavigationManager::setLoginType(const std::string &lt) {
+void NavigationManager::setLoginType(const std::string &lt)
+{
     this->loginType = lt;
 }
 
-std::string NavigationManager::getLoginType() {
+std::string NavigationManager::getLoginType()
+{
     return loginType;
 }
 
-void NavigationManager::setRollbackFlag(bool flag) {
+void NavigationManager::setRollbackFlag(bool flag)
+{
     rollback = flag;
 }
 
-bool NavigationManager::getRollbackFlag() {
+bool NavigationManager::getRollbackFlag()
+{
     return rollback;
 }

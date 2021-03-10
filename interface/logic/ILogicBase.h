@@ -52,8 +52,12 @@ public:
                                 bool isHtml, std::string& error) = 0;
 
 public:
-    // 开启自动重连
-    virtual void startAutoReconnectToServer() = 0;
+    /**
+     * enable auto reconnect network
+     *
+     * @param checkNetworkHost eg.(qunar.com)
+     */
+    virtual void startAutoReconnectToServer(const std::string & checkNetworkHost = "") = 0;
 };
 
 #endif //QTALK_V2_ILOGICBASE_H

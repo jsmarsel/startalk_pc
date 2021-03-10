@@ -19,27 +19,9 @@ namespace QTalk
         std::string nickName;
         std::string searchKey;
         std::string mood;
-        int         gender; // 1男 2 女
-        int         version;
+        int gender; // 1男 2 女
+        int version;
     };
-
-    //// 数据库返回单人或者群历史消息
-    //struct StUserHistoryMessage
-    //{
-    //    std::string msgId;
-    //    std::string xmppId;
-    //    QUInt8      chatType;
-    //    QInt32      msgType;
-    //    std::string headSrc;
-    //    std::string userName;
-    //    std::string messgae;
-    //    std::string from;
-    //    QUInt64     time;
-    //    QUInt8      state;
-    //    QUInt8      readTag;
-    //    QUInt8      direction;
-    //    std::string extendedInfo;
-    //};
 
     struct StUserCardF
     {
@@ -48,7 +30,6 @@ namespace QTalk
         std::string strName;
         std::string desc;
         std::string headSrc;
-
     };
 
     struct StGroupInfo
@@ -58,7 +39,7 @@ namespace QTalk
         std::string name;
         std::string headSrc;
         std::string title; // 公告
-        int         version = 0;
+        int version = 0;
     };
 
     struct StGroupMember
@@ -70,10 +51,10 @@ namespace QTalk
         int affiliation;
     };
 
-    struct StNav 
+    struct StNav
     {
-        QInt64      version = 0;
-		int         rsaEncodeType = 0;
+        QInt64 version = 0;
+        int rsaEncodeType = 0;
         std::string xmppHost;
         std::string domain;
         int protobufPcPort;
@@ -89,6 +70,7 @@ namespace QTalk
         std::string qCloudHost;
         std::string searchUrl;
         std::string uploadLog;
+        std::string checkUpdateUrl;
 
         std::string videoUrl;
 
@@ -112,27 +94,29 @@ namespace QTalk
     {
         struct StMember
         {
-            enum {
+            enum
+            {
                 ACTION_TYPE_H5 = 0,
                 ACTION_TYPE_NATIVE = 1
             };
 
-            enum {
+            enum
+            {
                 NATIVE_TYPE_INVALID = 0,
                 NATIVE_TYPE_THROWING_SCREEN = 1
             };
 
-            int          memberId{};
-            int          action_type{};
-            int          native_action_type{};
-            std::string  memberName;
-            std::string  memberIcon;
-            std::string  memberAction;
+            int memberId{};
+            int action_type{};
+            int native_action_type{};
+            std::string memberName;
+            std::string memberIcon;
+            std::string memberAction;
         };
 
-        int                   groupId;
-        std::string           groupName;
-        std::string           groupIcon;
+        int groupId;
+        std::string groupName;
+        std::string groupIcon;
         std::vector<StMember> members;
     };
 
@@ -144,7 +128,7 @@ namespace QTalk
 
     struct StShareSession
     {
-        int         chatType;
+        int chatType;
         std::string xmppId;
         std::string realJid;
         std::string name;
@@ -155,67 +139,73 @@ namespace QTalk
     struct StUserMedal
     {
         int medalId = -1;
-        int medalStatus= 0;
+        int medalStatus = 0;
 
-        StUserMedal() : medalId(-1), medalStatus(0) {
-
-        }
-
-        StUserMedal(int id, int status) : medalId(id), medalStatus(status) {
-
-        }
-
-        bool operator<(const StUserMedal& other) const
+        StUserMedal() : medalId(-1), medalStatus(0)
         {
-            if(this->medalId == other.medalId)
+        }
+
+        StUserMedal(int id, int status) : medalId(id), medalStatus(status)
+        {
+        }
+
+        bool operator<(const StUserMedal &other) const
+        {
+            if (this->medalId == other.medalId)
                 return false;
 
-            if(this->medalStatus == other.medalStatus)
+            if (this->medalStatus == other.medalStatus)
                 return this->medalId < other.medalId;
             else
                 return this->medalStatus > other.medalStatus;
         }
     };
 
-    struct StMedalUser {
+    struct StMedalUser
+    {
         std::string xmppId{};
         std::string userHead{};
         std::string userName{};
     };
-}
+} // namespace QTalk
 
+namespace QTalk
+{
 
-namespace QTalk {
+    //    enum RequestMethod {
+    //        UNSET, POST, GET
+    //    };
 
-//    enum RequestMethod {
-//        UNSET, POST, GET
-//    };
-
-    struct HttpRequest {
+    struct HttpRequest
+    {
         std::string url;
         unsigned char method{};
-        long timeout {10L};
+        long timeout{10L};
         HttpRequestHeader header;
         std::string formFile;
         std::string body;
         // process callback
         bool addProcessCallback{};
         std::string processCallbackKey;
-
+        // limit the download speed
+        int speed{-1};
 
         explicit HttpRequest(std::string url, unsigned char method = 2)
-                : url(std::move(url)), method(method), addProcessCallback(false) {
+            : url(std::move(url)), method(method), addProcessCallback(false)
+        {
         }
 
-        HttpRequest()= default;
+        HttpRequest() = default;
     };
-};
+}; // namespace QTalk
 
 namespace QTalk
 {
-    namespace Search {
+    namespace Search
+    {
 
-        enum Action {
+        enum Action
+        {
             EM_ACTION_INVALID = 0,
             EM_ACTION_USER = 1,
             EM_ACTION_MUC = 2,
@@ -228,10 +218,10 @@ namespace QTalk
         struct StUserItem
         {
             std::string xmppId;
-            std::string name; // 名称
-//            std::string pingying;
-            std::string tips; // 签名
-            std::string icon; // 头像
+            std::string name;      // 名称
+            //            std::string pingying;
+            std::string tips;      // 签名
+            std::string icon;      // 头像
             std::string structure; // 架构
         };
 
@@ -241,36 +231,37 @@ namespace QTalk
             std::string xmppId;
             std::string name;
             std::string icon;
-//            std::string topic;
+            //            std::string topic;
             std::vector<std::string> _hits;
         };
 
         struct StHistory
         {
-            int         type{};
+            int type{};
             std::string key;
             std::string name;
             std::string icon;
-            int         count{};       // 匹配消息数
+            int count{}; // 匹配消息数
             std::string msg_id;
-            int         msg_type{};
+            int msg_type{};
             std::string body;
-            QInt64      time;
+            QInt64 time;
             std::string from;
             std::string to;
             std::string extend_info;
-//            std::string real_from;
-//            std::string real_to;
+            //            std::string real_from;
+            //            std::string real_to;
         };
 
-        struct StHistoryFile {
+        struct StHistoryFile
+        {
             std::string key;
             std::string source;
             std::string icon;
             std::string msg_id;
             std::string body;
             std::string extend_info;
-            QInt64      time;
+            QInt64 time;
             std::string from;
             std::string to;
 
@@ -295,9 +286,8 @@ namespace QTalk
 
             std::vector<StHistoryFile> _files;
         };
-    }
-}
-
+    } // namespace Search
+} // namespace QTalk
 
 struct StNetEmoticon
 {
@@ -306,16 +296,16 @@ struct StNetEmoticon
     std::string emoFile;
     std::string desc;
     std::string iconPath;
-    QInt32      filesize;
+    QInt32 filesize;
     std::string md5;
 };
-typedef std::vector<std::shared_ptr<StNetEmoticon> > ArStNetEmoticon;
+typedef std::vector<std::shared_ptr<StNetEmoticon>> ArStNetEmoticon;
 typedef std::map<int, QTalk::Search::StSearchResult> SearchResult;
 
-
-
-namespace QTalk {
-    struct StNotificationParam {
+namespace QTalk
+{
+    struct StNotificationParam
+    {
         std::string title{};
         std::string message{};
         std::string icon{};
@@ -325,8 +315,8 @@ namespace QTalk {
         std::string from{};
         std::string realJid{};
         std::string loginUser{};
-        int   chatType{};
+        int chatType{};
     };
-}
+} // namespace QTalk
 
-#endif//_COMMONSTRCUT_H_
+#endif //_COMMONSTRCUT_H_

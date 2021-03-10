@@ -205,7 +205,7 @@ void CodeItem::initContentLayout() {
 
     _iconLab = new QLabel(this);
     _iconLab->setFixedSize(40, 40);
-    auto pix = QTalk::qimage::loadImage(":/chatview/image1/messageItem/code.png", true, true, 40, 40);
+    auto pix = QTalk::qimage::loadImage(":/chatview/image1/messageItem/code.png", false, true, 40, 40);
     _iconLab->setPixmap(pix);
     leftLay->addWidget(_iconLab);
     leftLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Fixed, QSizePolicy::Expanding));

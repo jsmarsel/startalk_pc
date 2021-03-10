@@ -224,7 +224,7 @@ QLineEdit {
     font-weight: 400;
 }
 
-QTextEdit#TopicEdit, #searchEdt {
+QTextEdit#TopicEdit, #searchEdt, QLabel#TopicEmptyLabel {
     background-color: rgba(53, 57, 61, 1);
     font-size: 12px;
     color: rgba(177, 191, 199, 1);
@@ -1004,4 +1004,45 @@ QFrame#searchFrm  {
 QListWidget#QuickReplyWndList {
     background:rgba(39, 43, 48,1);
     color:rgba(236,241,243,1);
+}
+
+QToolButton#GroupTopicEditBtn {
+    border-image: url(:/chatview/image1/group_topic_more.svg);
+}
+
+QToolButton#GroupTopicEdit {
+    border-image: url(:/chatview/image1/edit_normal.svg);
+}
+
+QToolButton#GroupTopicEdit:hover {
+    border-image: url(:/chatview/image1/edit_hover.svg);
+}
+
+QToolButton#GroupTopicClear {
+    border-image: url(:/chatview/image1/clear_normal.svg);
+}
+
+QToolButton#GroupTopicClear:hover {
+    border-image: url(:/chatview/image1/clear_hover.svg);
+}
+
+QToolButton#GroupTopicOk {
+    border-image: url(:/chatview/image1/commit.svg);
+}
+
+QToolButton#GroupTopicCancel {
+    border-image: url(:/chatview/image1/cancel.svg);
+}
+
+QFrame#GroupTopicMainFrm
+{
+    background:rgba(53, 56, 61, 1);
+    border-bottom-right-radius:6px;
+    border-bottom-left-radius:6px;
+    border-top-left-radius:6px;
+    border-top-right-radius:6px;
+}
+
+QFrame#GroupTopicBtnFrm {
+    background:rgba(53, 56, 61, 1);
 }

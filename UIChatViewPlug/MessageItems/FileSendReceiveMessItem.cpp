@@ -20,7 +20,6 @@
 #include "../../UICom/qimage/qimage.h"
 #include "../../CustomUi/LiteMessageBox.h"
 #include "../../QtUtil/Utils/Log.h"
-#include "../../QtUtil/lib/MacHelper.h"
 #include "../../QtUtil/Utils/utils.h"
 #include <math.h>
 
@@ -440,13 +439,13 @@ void FileSendReceiveMessItem::initSendContentTopFrmLayout() {
     contentTopRightFrmHlay->setSpacing(8);
     contentTopFrmHlay->addLayout(contentTopRightFrmHlay);
     if (!_contentTopFrmFileNameLab) {
-        _contentTopFrmFileNameLab = new QLabel;
+        _contentTopFrmFileNameLab = new QLabel(this);
     }
     _contentTopFrmFileNameLab->setObjectName("contentTopFrmFileNameLab");
     _contentTopFrmFileNameLab->setFixedHeight(_contentTopFrmFileNameLabHeight);
     contentTopRightFrmHlay->addWidget(_contentTopFrmFileNameLab);
     if (!_contentTopFrmFileSizeLab) {
-        _contentTopFrmFileSizeLab = new QLabel;
+        _contentTopFrmFileSizeLab = new QLabel(this);
     }
     _contentTopFrmFileSizeLab->setObjectName("contentTopFrmFileSizeLab");
     _contentTopFrmFileNameLab->setFixedHeight(_contentTopFrmFileSizeLabHeight);
@@ -467,7 +466,7 @@ void FileSendReceiveMessItem::initSendContentButtomFrmLayout() {
     contentButtomFrmHlay->setContentsMargins(_contentButtomFrmHlayMargin);
     _contentButtomFrm->setLayout(contentButtomFrmHlay);
     if (!_contentButtomFrmMessLab) {
-        _contentButtomFrmMessLab = new QLabel;
+        _contentButtomFrmMessLab = new QLabel(this);
     }
     _contentButtomFrmMessLab->setObjectName("contentButtomFrmMessLab");
     _contentButtomFrmMessLab->setText(tr("正在发送"));
@@ -480,7 +479,7 @@ void FileSendReceiveMessItem::initSendContentButtomFrmLayout() {
     _contentButtomFrmProgressBar->setFixedSize(_btnSzie);
 
     if (!_contentButtomFrmOPenFileBtn) {
-        _contentButtomFrmOPenFileBtn = new QPushButton;
+        _contentButtomFrmOPenFileBtn = new QPushButton(this);
     }
     _contentButtomFrmOPenFileBtn->setObjectName("contentButtomFrmOPenFileBtn");
     _contentButtomFrmOPenFileBtn->setFixedSize(_btnSzie);
@@ -519,13 +518,13 @@ void FileSendReceiveMessItem::initReceiveContentTopFrmLayout() {
     contentTopRightFrmHlay->setSpacing(6);
     contentTopFrmHlay->addLayout(contentTopRightFrmHlay);
     if (!_contentTopFrmFileNameLab) {
-        _contentTopFrmFileNameLab = new QLabel;
+        _contentTopFrmFileNameLab = new QLabel(this);
     }
     _contentTopFrmFileNameLab->setObjectName("contentTopFrmFileNameLab");
     _contentTopFrmFileNameLab->setFixedHeight(_contentTopFrmFileNameLabHeight);
     contentTopRightFrmHlay->addWidget(_contentTopFrmFileNameLab);
     if (!_contentTopFrmFileSizeLab) {
-        _contentTopFrmFileSizeLab = new QLabel;
+        _contentTopFrmFileSizeLab = new QLabel(this);
     }
     _contentTopFrmFileSizeLab->setObjectName("contentTopFrmFileSizeLab");
     _contentTopFrmFileSizeLab->setFixedHeight(_contentTopFrmFileSizeLabHeight);
@@ -546,13 +545,13 @@ void FileSendReceiveMessItem::initReceiveContentButtomFrmLayout() {
     contentButtomFrmHlay->setContentsMargins(_contentButtomFrmHlayMargin);
     _contentButtomFrm->setLayout(contentButtomFrmHlay);
     if (!_contentButtomFrmMessLab) {
-        _contentButtomFrmMessLab = new QLabel;
+        _contentButtomFrmMessLab = new QLabel(this);
     }
     _contentButtomFrmMessLab->setObjectName("contentButtomFrmMessLab");
     _contentButtomFrmMessLab->setText(tr("等待接收"));
     contentButtomFrmHlay->addWidget(_contentButtomFrmMessLab);
     if (!_contentButtomFrmDownLoadBtn) {
-        _contentButtomFrmDownLoadBtn = new QPushButton;
+        _contentButtomFrmDownLoadBtn = new QPushButton(this);
     }
     _contentButtomFrmDownLoadBtn->setObjectName("contentButtomFrmDownLoadBtn");
     _contentButtomFrmDownLoadBtn->setFixedSize(_btnSzie);
@@ -565,14 +564,14 @@ void FileSendReceiveMessItem::initReceiveContentButtomFrmLayout() {
     _contentButtomFrmProgressBar->setFixedSize(_btnSzie);
     contentButtomFrmHlay->addWidget(_contentButtomFrmProgressBar);
     if (!_contentButtomFrmOPenFileBtn) {
-        _contentButtomFrmOPenFileBtn = new QPushButton;
+        _contentButtomFrmOPenFileBtn = new QPushButton(this);
     }
     _contentButtomFrmOPenFileBtn->setObjectName("contentButtomFrmOPenFileBtn");
     _contentButtomFrmOPenFileBtn->setFixedSize(_btnSzie);
     contentButtomFrmHlay->addWidget(_contentButtomFrmOPenFileBtn);
 
     if (!_contentButtomFrmMenuBtn) {
-        _contentButtomFrmMenuBtn = new QToolButton;
+        _contentButtomFrmMenuBtn = new QToolButton(this);
     }
     _contentButtomFrmMenuBtn->setObjectName("contentButtomFrmMenuBtn");
     _contentButtomFrmMenuBtn->setFixedSize(_btnSzie);
@@ -672,9 +671,9 @@ void FileSendReceiveMessItem::judgeFileIsUpLoad() {
   * @author cc
   * @date 2018.10.22
   */
-void FileSendReceiveMessItem::sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri) {
-    ChatMsgManager::sendDownLoadFile(strLocalPath, strUri, _msgInfo.msg_id.toStdString());
-}
+//void FileSendReceiveMessItem::sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri) {
+//    ChatMsgManager::sendDownLoadFile(strLocalPath, strUri, _msgInfo.msg_id.toStdString());
+//}
 
 void FileSendReceiveMessItem::sendNDownLoadFile(const QString &strUri, const QString &strLocalPath) {
     g_pMainPanel->downloadFileWithProcess(strUri, strLocalPath, _msgInfo.msg_id, this);
@@ -734,6 +733,7 @@ void FileSendReceiveMessItem::downLoadFile()
 //        file.close();
 //    }
     //下载文件
+    qLocalFilePath.replace(",", "，"); // windows explorer , error
     localPath = qLocalFilePath.toStdString();
 //    sendDownLoadFile(localPath, netPath);
     sendNDownLoadFile(netPath, qLocalFilePath);
@@ -909,10 +909,17 @@ void FileSendReceiveMessItem::onUploadFailed() {
 
 void FileSendReceiveMessItem::onDownloadFailed() {
     isDownLoad = false;
-    _contentButtomFrmDownLoadBtn->show();
-    _contentButtomFrmMenuBtn->show();
-    _contentButtomFrmProgressBar->hide();
-    _contentButtomFrmOPenFileBtn->hide();
+    if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
+        _contentButtomFrmDownLoadBtn->show();
+        _contentButtomFrmMenuBtn->show();
+        _contentButtomFrmProgressBar->hide();
+        _contentButtomFrmOPenFileBtn->hide();
+    }
+    else if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
+        _contentButtomFrmProgressBar->hide();
+        _contentButtomFrmOPenFileBtn->show();
+        _contentButtomFrmMessLab->setText(tr("上传成功"));
+    }
 }
 
 void FileSendReceiveMessItem::downloadOrUploadSuccess() {

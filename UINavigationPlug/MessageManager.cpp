@@ -7,22 +7,22 @@
 #include "../Message/UserMessage.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../Platform/Platform.h"
+#include "SessionFrm.h"
 
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @date 2018.9.29
-  */
-void NavigationMsgManager::sendDownLoadHeadPhotosMsg(const std::vector<std::string> &_withoutHeadPhotos,
-                                                     const std::set<std::string> &_withoutGroupHeadPhotos) {
+
+void NavigationMsgManager::downloadUserHeads(const std::set<std::string> &withoutHeadUsers)
+{
     DownLoadHeadPhotoEvent event;
-    event._withoutHeadPhotos = _withoutHeadPhotos;
+    event._withoutHeadPhotos.resize(withoutHeadUsers.size());
+    std::copy(withoutHeadUsers.begin(), withoutHeadUsers.end(), event._withoutHeadPhotos.begin());
     EventBus::FireEvent(event);
+}
 
+void NavigationMsgManager::downloadGroupHeads(const std::set<std::string> &groupHeadSrcs)
+{
     DownLoadGroupHeadPhotoEvent eventg;
-    eventg._withoutHeadPhotos.resize(_withoutGroupHeadPhotos.size());
-    std::copy(_withoutGroupHeadPhotos.begin(), _withoutGroupHeadPhotos.end(), eventg._withoutHeadPhotos.begin());
+    eventg._withoutHeadPhotos.resize(groupHeadSrcs.size());
+    std::copy(groupHeadSrcs.begin(), groupHeadSrcs.end(), eventg._withoutHeadPhotos.begin());
     EventBus::FireEvent(eventg);
 }
 
@@ -32,9 +32,10 @@ void NavigationMsgManager::sendDownLoadHeadPhotosMsg(const std::vector<std::stri
   * @参数
   * @date 2018.10.12
   */
-void NavigationMsgManager::sendGetUserStatus(const std::set<std::string> &users) {
+void NavigationMsgManager::sendGetUserStatus(const std::string &user)
+{
     GetUsersOnlineEvent e;
-    e._users = users;
+    e._user = user;
     EventBus::FireEvent(e);
 }
 
@@ -51,27 +52,28 @@ void NavigationMsgManager::sendGetUserStatus(const std::set<std::string> &users)
 //}
 
 //
-void NavigationMsgManager::sendReadedMessage(const std::string &messageId, const std::string& userId, QUInt8 chatType) {
+void NavigationMsgManager::sendReadedMessage(const std::string &messageId, const std::string &userId, QUInt8 chatType)
+{
     ReadedMessage e(messageId, userId, chatType);
     EventBus::FireEvent(e);
 }
 
-void NavigationMsgManager::getSessionData() {
-
+void NavigationMsgManager::getSessionData()
+{
     GetSessionData e;
     EventBus::FireEvent(e);
 }
 
-void NavigationMsgManager::removeSession(std::string &peerId) {
+void NavigationMsgManager::removeSession(const std::string &peerId)
+{
     RemoveSessionData e(peerId);
     EventBus::FireEvent(e);
 }
 
 void NavigationMsgManager::setUserSetting(bool isSetting, const std::string &key, const std::string &subKey,
-                                          const std::string &val) {
-
+        const std::string &val)
+{
     debug_log("setting userconfig -> issetting:{0}, key:{1}, subKey:{2}, val:{3}", isSetting, key, subKey, val);
-
     UserSettingMsg e;
     e.operatorType = isSetting ? UserSettingMsg::EM_OPERATOR_CANCEL : UserSettingMsg::EM_OPERATOR_SET;
     e.key = key;
@@ -88,7 +90,8 @@ void NavigationMsgManager::addEmptyMessage(const QTalk::Entity::ImMessageInfo &i
 }
 
 //
-void NavigationMsgManager::quitGroupById(const std::string& groupId) {
+void NavigationMsgManager::quitGroupById(const std::string &groupId)
+{
     QuitGroupMsg e;
     e.groupId = groupId;
     EventBus::FireEvent(e);
@@ -100,33 +103,27 @@ void NavigationMsgManager::quitGroupById(const std::string& groupId) {
   * @参数
   * @date 2018.9.20
   */
-NavigationMsgListener::NavigationMsgListener(NavigationMainPanel *navigationMainPanel) :
-        _pNavigationMainPanel(navigationMainPanel) {
-	EventBus::AddHandler<R_Message>(*this);
-	EventBus::AddHandler<S_Message>(*this);
-	EventBus::AddHandler<DownloadHeadSuccess>(*this);
-	EventBus::AddHandler<DownloadGroupHeadSuccess>(*this);
-	EventBus::AddHandler<UpdateOnlineEvent>(*this);
-	EventBus::AddHandler<GetUsersOnlineSucessEvent>(*this);
-	EventBus::AddHandler<DisconnectToServer>(*this);
-//	EventBus::AddHandler<RetryConnectRet>(*this);
-	EventBus::AddHandler<SynOfflineSuccees>(*this);
-	EventBus::AddHandler<UpdateGroupInfoRet>(*this);
-	EventBus::AddHandler<SignalReadState>(*this);
-	EventBus::AddHandler<GroupReadState>(*this);
-	EventBus::AddHandler<RevokeMessage>(*this);
-	EventBus::AddHandler<S_RevokeMessage>(*this);
-	EventBus::AddHandler<UpdateUserConfigMsg>(*this);
-	EventBus::AddHandler<DestroyGroupRet>(*this);
-	EventBus::AddHandler<ChangeHeadRetMessage>(*this);
-	EventBus::AddHandler<UserCardMessgae>(*this);
-	EventBus::AddHandler<IncrementConfig>(*this);
-	EventBus::AddHandler<RecvVideoMessage>(*this);
-	EventBus::AddHandler<MStateEvt>(*this);
-}
-
-NavigationMsgListener::~NavigationMsgListener() {
-
+NavigationMsgListener::NavigationMsgListener(SessionFrm *mainPanel) : _pMainPanel(mainPanel)
+{
+    EventBus::AddHandler<R_Message>(*this);
+    EventBus::AddHandler<S_Message>(*this);
+    EventBus::AddHandler<DownloadHeadSuccess>(*this);
+    EventBus::AddHandler<DownloadGroupHeadSuccess>(*this);
+    EventBus::AddHandler<UpdateOnlineEvent>(*this);
+    EventBus::AddHandler<GetUsersOnlineSucessEvent>(*this);
+    EventBus::AddHandler<DisconnectToServer>(*this);
+    EventBus::AddHandler<SynOfflineSuccees>(*this);
+    EventBus::AddHandler<UpdateGroupInfoRet>(*this);
+    EventBus::AddHandler<SignalReadState>(*this);
+    EventBus::AddHandler<GroupReadState>(*this);
+    EventBus::AddHandler<RevokeMessage>(*this);
+    EventBus::AddHandler<S_RevokeMessage>(*this);
+    EventBus::AddHandler<UpdateUserConfigMsg>(*this);
+    EventBus::AddHandler<DestroyGroupRet>(*this);
+    EventBus::AddHandler<ChangeHeadRetMessage>(*this);
+    EventBus::AddHandler<UserCardMessgae>(*this);
+    EventBus::AddHandler<IncrementConfig>(*this);
+    EventBus::AddHandler<MStateEvt>(*this);
 }
 
 /**
@@ -135,8 +132,10 @@ NavigationMsgListener::~NavigationMsgListener() {
   * @参数
   * @date 2018.9.20
   */
-void NavigationMsgListener::onEvent(R_Message &e) {
-    _pNavigationMainPanel->receiveSession(e);
+void NavigationMsgListener::onEvent(R_Message &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->receiveSession(e);
 }
 
 /**
@@ -145,10 +144,11 @@ void NavigationMsgListener::onEvent(R_Message &e) {
   * @参数
   * @date 2018.10.26
   */
-void NavigationMsgListener::onEvent(S_Message &e) {
-    _pNavigationMainPanel->sendSession(e);
+void NavigationMsgListener::onEvent(S_Message &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->sendSession(e);
 }
-
 
 /**
   * @函数名
@@ -156,13 +156,11 @@ void NavigationMsgListener::onEvent(S_Message &e) {
   * @参数
   * @date 2018.9.29
   */
-void NavigationMsgListener::onEvent(DownloadHeadSuccess &e) {
-
-    if (_pNavigationMainPanel) {
-        _pNavigationMainPanel->onDownLoadHeadPhotosFinish();
-    }
+void NavigationMsgListener::onEvent(DownloadHeadSuccess &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->onDownLoadHeadPhotosFinish();
 }
-
 
 /**
   * @函数名
@@ -170,10 +168,10 @@ void NavigationMsgListener::onEvent(DownloadHeadSuccess &e) {
   * @参数
   * @date 2018.9.30
   */
-void NavigationMsgListener::onEvent(DownloadGroupHeadSuccess &e) {
-    if (_pNavigationMainPanel) {
-        _pNavigationMainPanel->onDownLoadGroupHeadPhotosFinish();
-    }
+void NavigationMsgListener::onEvent(DownloadGroupHeadSuccess &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->onDownLoadGroupHeadPhotosFinish();
 }
 
 /**
@@ -182,10 +180,10 @@ void NavigationMsgListener::onEvent(DownloadGroupHeadSuccess &e) {
   * @参数
   * @date 2018.10.12
   */
-void NavigationMsgListener::onEvent(UpdateOnlineEvent &e) {
-    if (_pNavigationMainPanel) {
-        _pNavigationMainPanel->onUpdateOnline();
-    }
+void NavigationMsgListener::onEvent(UpdateOnlineEvent &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->onUpdateOnline();
 }
 
 /**
@@ -194,121 +192,93 @@ void NavigationMsgListener::onEvent(UpdateOnlineEvent &e) {
   * @参数
   * @date 2018.10.15
   */
-void NavigationMsgListener::onEvent(GetUsersOnlineSucessEvent &e) {
-    if (_pNavigationMainPanel) {
-        _pNavigationMainPanel->onUpdateOnlineUsers(e._userstatus);
-    }
+void NavigationMsgListener::onEvent(GetUsersOnlineSucessEvent &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->onUpdateOnlineUsers(e._user.data());
 }
 
 /**
-  * @函数名   
-  * @功能描述 
+  * @函数名
+  * @功能描述
   * @参数     DisconnectToServer 断链消息
      void
   * @author   cc
   * @date     2018/10/23
   */
-void NavigationMsgListener::onEvent(DisconnectToServer &e) {
-    if (e.getCanceled()) return;
-
-    if (_pNavigationMainPanel) {
-        _pNavigationMainPanel->onTcpDisconnect();
-    }
+void NavigationMsgListener::onEvent(DisconnectToServer &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->onTcpDisconnect();
 }
 
 /**
-  * @函数名   
-  * @功能描述 
+  * @函数名
+  * @功能描述
   * @参数
   * @author   cc
   * @date     2018/10/24
   */
-//void NavigationMsgListener::onEvent(RetryConnectRet &e) {
-//    if (e.getCanceled()) return;
-//
-//    if (_pNavigationMianPanel) {
-//        _pNavigationMianPanel->onRetryConnected();
-//    }
-//}
-
-/**
-  * @函数名   
-  * @功能描述 
-  * @参数
-  * @author   cc
-  * @date     2018/10/24
-  */
-void NavigationMsgListener::onEvent(SynOfflineSuccees &e) {
-    if (e.getCanceled()) {
-        return;
-    }
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->onLoginSuccess();
-    }
+void NavigationMsgListener::onEvent(SynOfflineSuccees &e)
+{
+    if (nullptr != _pMainPanel)
+        _pMainPanel->onLoginSuccess();
 }
 
-void NavigationMsgListener::onEvent(UpdateGroupInfoRet &e) {
-    if (e.getCanceled()) {
-        return;
-    }
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->onUpdateGroupInfo(e.groupinfo);
-    }
+void NavigationMsgListener::onEvent(UpdateGroupInfoRet &e)
+{
+    if (nullptr != _pMainPanel)
+        _pMainPanel->onUpdateGroupInfo(*e.groupinfo);
 }
 
-void NavigationMsgListener::onEvent(SignalReadState &e) {
-
-    if (e.getCanceled()) return;
-
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->updateReadCount(QTalk::Entity::UID(e.userId, e.realJid), e.mapReadState.size());
-    }
+void NavigationMsgListener::onEvent(SignalReadState &e)
+{
+    if (nullptr != _pMainPanel)
+        _pMainPanel->onUpdateReadedCount(QTalk::Entity::UID(e.userId, e.realJid), e.mapReadState.size());
 }
 
-void NavigationMsgListener::onEvent(GroupReadState &e) {
-
-    if (e.getCanceled()) return;
-
-    if (nullptr != _pNavigationMainPanel) {
+void NavigationMsgListener::onEvent(GroupReadState &e)
+{
+    if (nullptr != _pMainPanel)
+    {
         auto it = e.mapReadCount.begin();
-        for (; it != e.mapReadCount.end(); it++) {
-            _pNavigationMainPanel->updateReadCount(QTalk::Entity::UID(it->first, it->first), it->second);
-        }
+
+        for (; it != e.mapReadCount.end(); it++)
+            _pMainPanel->onUpdateReadedCount(QTalk::Entity::UID(it->first, it->first), it->second);
     }
 }
 
-void NavigationMsgListener::onEvent(RevokeMessage &e) {
+void NavigationMsgListener::onEvent(RevokeMessage &e)
+{
+    if (e.getCanceled())
+        return;
 
-    if (e.getCanceled()) return;
-
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->recvRevokeMessage(e.uid, e.messageFrom);
-    }
+    if (nullptr != _pMainPanel)
+        _pMainPanel->recvRevikeMessage(e.uid, e.messageFrom.data());
 }
 
-void NavigationMsgListener::onEvent(S_RevokeMessage &e) {
-    if (e.getCanceled()) return;
+void NavigationMsgListener::onEvent(S_RevokeMessage &e)
+{
+    if (e.getCanceled())
+        return;
 
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->recvRevokeMessage(e.uid, e.messageFrom);
-    }
+    if (nullptr != _pMainPanel)
+        _pMainPanel->recvRevikeMessage(e.uid, e.messageFrom.data());
 }
 
-void NavigationMsgListener::onEvent(UpdateUserConfigMsg &e) {
+void NavigationMsgListener::onEvent(UpdateUserConfigMsg &e)
+{
+    if (e.getCanceled())
+        return;
 
-    if (e.getCanceled()) return;
-
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->onUpdateUserConfig(e.arConfigs);
-    }
+    if (nullptr != _pMainPanel)
+        _pMainPanel->onUpdateUserConfig(e.arConfigs);
 }
 
-void NavigationMsgListener::onEvent(DestroyGroupRet &e) {
-    if (e.getCanceled()) return;
-
-    if (_pNavigationMainPanel) {
-        _pNavigationMainPanel->onDestroyGroup(e.groupId);
-    }
+void NavigationMsgListener::onEvent(DestroyGroupRet &e)
+{
+    if (_pMainPanel)
+        _pMainPanel->onDestroyGroup(e.groupId.data());
 }
 
 /**
@@ -317,46 +287,24 @@ void NavigationMsgListener::onEvent(DestroyGroupRet &e) {
  */
 void NavigationMsgListener::onEvent(ChangeHeadRetMessage &e)
 {
-    if(e.getCanceled()) return;
-
-    if(_pNavigationMainPanel)
-    {
-        std::string xmppId = PLAT.getSelfXmppId();
-        _pNavigationMainPanel->onChangeHeadRet(e.ret, xmppId, e.localHead);
-    }
+    if (_pMainPanel && e.ret)
+        _pMainPanel->onGotUserCard(PLAT.getSelfXmppId().data());
 }
 
 void NavigationMsgListener::onEvent(UserCardMessgae &e)
 {
-    if(e.getCanceled()) return;
-
-    if(_pNavigationMainPanel)
-    {
-        auto userCards = e.userCards;
-        for(const auto& userCard : userCards)
-        {
-            std::string localHead = QTalk::GetHeadPathByUrl(userCard.headerSrc);
-            _pNavigationMainPanel->onChangeHeadRet(true, userCard.xmppId, localHead);
-        }
-    }
+    if (_pMainPanel)
+        _pMainPanel->onGotUserCards(e.userCards);
 }
 
-void NavigationMsgListener::onEvent(IncrementConfig &e) {
-    if(e.getCanceled()) return;
-
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->onUpdateUserConfig(e.deleteData, e.arImConfig);
-    }
+void NavigationMsgListener::onEvent(IncrementConfig &e)
+{
+    if (nullptr != _pMainPanel)
+        _pMainPanel->onUpdateUserConfig(e.deleteData, e.arImConfig);
 }
 
-void NavigationMsgListener::onEvent(RecvVideoMessage &e) {
-    if (nullptr != _pNavigationMainPanel) {
-
-    }
-}
-
-void NavigationMsgListener::onEvent(MStateEvt &e) {
-    if (nullptr != _pNavigationMainPanel) {
-        _pNavigationMainPanel->onGotMState(QTalk::Entity::UID(e.userId, e.realJid), e.messageId.data(), e.time);
-    }
+void NavigationMsgListener::onEvent(MStateEvt &e)
+{
+    if (nullptr != _pMainPanel)
+        _pMainPanel->onGotMState(QTalk::Entity::UID(e.userId, e.realJid), e.messageId.data(), e.time);
 }

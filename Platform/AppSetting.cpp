@@ -3,8 +3,7 @@
 //
 
 #include "AppSetting.h"
-#include "../QtUtil/lib/cjson/cJSON.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 
 AppSetting::AppSetting()
 : _newMsgAudioNotify(true)
@@ -18,7 +17,7 @@ AppSetting::AppSetting()
         , _leaveCheckEnable(false)
 //        , _leaveMinute(5)
 //        , _autoReplyPreset(true)
-        , _autoReplyMsg("不在办公室")
+        , _autoReplyMsg("")
         , _themeMode(1)
         , _fontLevel(FONT_LEVEL_NORMAL)
         , _autoStartUp(false)            // 开机自启动
@@ -32,36 +31,35 @@ AppSetting::AppSetting()
 
 void AppSetting::initAppSetting(const std::string& setting)
 {
-	cJSON* obj = cJSON_Parse(setting.data());
-	if (obj)
-	{
+    nJson obj = Json::parse(setting);
+    if (obj != nullptr)
+    {
         std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-		_newMsgAudioNotify = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "NEWMSGAUDIO", _newMsgAudioNotify);
-		_newMsgAudioPath = QTalk::JSON::cJSON_SafeGetStringValue(obj, "NEWMSGAUDIOPATH", _newMsgAudioPath.data());
-		_newMsgTipWindowNotify = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "NEWMSGTIPWINDOW", _newMsgTipWindowNotify);
-		_screenshotKey = QTalk::JSON::cJSON_SafeGetStringValue(obj, "SCREENSHOT", _screenshotKey.data());
-		_wakeWndKey = QTalk::JSON::cJSON_SafeGetStringValue(obj, "WAKEWND", _wakeWndKey.data());
-		_openOaWithAppBrowser = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "OPENOAWITHAPPBROWSER", _openOaWithAppBrowser);
-        _screentShotHideWndFlag = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "SCREENTSHOTHIDEWNDFLAG", _screentShotHideWndFlag);
-        _showSendMessageBtn = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "SHOWSENDMESSAGEBTN", _showSendMessageBtn);
-        _strongWarn = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "STRONGWARN", _strongWarn);
-        _hotCutEnable = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "HOTCUTENABLE", _hotCutEnable);
-        _sendMessageKey = QTalk::JSON::cJSON_SafeGetStringValue(obj, "SENDMESSAGEKEY", "Enter");
-        _showMoodFlag = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "SHOWMOODFLAG", true);
-        _autoStartUp = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "AUTOSTARTUP", false);
-        _leaveCheckEnable = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "LEAVECHECKENABLE", false);
-        _awaysAutoReply = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "AWAYSAUTOREPLY", false);
-        _autoReplyMsg = QTalk::JSON::cJSON_SafeGetStringValue(obj, "AUTOREPLYMSG");
-//        _autoReplyCusMsg = QTalk::JSON::cJSON_SafeGetStringValue(obj, "AUTOREPLYCUSMSG");
-        _leaveMinute = QTalk::JSON::cJSON_SafeGetIntValue(obj, "LEAVEMINUTE", 5);
-        _useNativeMessagePrompt = QTalk::JSON::cJSON_SafeGetBoolValue(obj, "USENATIVEMESSAGEPROMPT", false);
-        _autoDeleteSession = QTalk::JSON::cJSON_SafeGetBoolValue(obj, "AUTODELETESESSION", true);
+        _newMsgAudioNotify = Json::get<bool>(obj, "NEWMSGAUDIO", _newMsgAudioNotify);
 
-        _autoReplyStartTime = QTalk::JSON::cJSON_SafeGetIntValue(obj, "AUTOREPLYSTARTTIME", 0);
-        _autoReplyEndTime = QTalk::JSON::cJSON_SafeGetIntValue(obj, "AUTOREPLYENDTIME", 24);
+        _newMsgAudioNotify = Json::get<bool>(obj, "NEWMSGAUDIO", _newMsgAudioNotify);
+        _newMsgAudioPath = Json::get<std::string>(obj, "NEWMSGAUDIOPATH", _newMsgAudioPath);
+        _newMsgTipWindowNotify = Json::get<bool>(obj, "NEWMSGTIPWINDOW", _newMsgTipWindowNotify);
+        _screenshotKey = Json::get<std::string>(obj, "SCREENSHOT", _screenshotKey);
+        _wakeWndKey = Json::get<std::string>(obj, "WAKEWND", _wakeWndKey);
+        _openOaWithAppBrowser = Json::get<bool>(obj, "OPENOAWITHAPPBROWSER", _openOaWithAppBrowser);
+        _screentShotHideWndFlag = Json::get<bool>(obj, "SCREENTSHOTHIDEWNDFLAG", _screentShotHideWndFlag);
+        _showSendMessageBtn = Json::get<bool>(obj, "SHOWSENDMESSAGEBTN", _showSendMessageBtn);
+        _strongWarn = Json::get<bool>(obj, "STRONGWARN", _strongWarn);
+        _hotCutEnable = Json::get<bool>(obj, "HOTCUTENABLE", _hotCutEnable);
+        _sendMessageKey = Json::get<std::string>(obj, "SENDMESSAGEKEY", "Enter");
+        _showMoodFlag = Json::get<bool>(obj, "SHOWMOODFLAG", true);
+        _autoStartUp = Json::get<bool>(obj, "AUTOSTARTUP", false);
+        _leaveCheckEnable = Json::get<bool>(obj, "LEAVECHECKENABLE", false);
+        _awaysAutoReply = Json::get<bool>(obj, "AWAYSAUTOREPLY", false);
+        _autoReplyMsg = Json::get<std::string>(obj, "AUTOREPLYMSG");
+        _leaveMinute = Json::get<int>(obj, "LEAVEMINUTE", 5);
+        _useNativeMessagePrompt = Json::get<bool>(obj, "USENATIVEMESSAGEPROMPT", false);
+        _autoDeleteSession = Json::get<bool>(obj, "AUTODELETESESSION", true);
+        _autoReplyStartTime = Json::get<int>(obj, "AUTOREPLYSTARTTIME", 0);
+        _autoReplyEndTime = Json::get<int>(obj, "AUTOREPLYENDTIME", 24);
 
-		cJSON_Delete(obj);
-	}
+    }
 }
 
 AppSetting & AppSetting::instance()
@@ -400,6 +398,17 @@ int AppSetting::getNewVersion() {
     return _newVersion ;
 }
 
+void AppSetting::setEnableProxy(bool enable) {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    _enableProxy = enable ;
+}
+
+bool AppSetting::enableProxy() {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    return _enableProxy ;
+}
+
+
 //std::string AppSetting::getCoEdit() {
 //    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
 //    return _coEditor;
@@ -416,34 +425,29 @@ int AppSetting::getNewVersion() {
  */
 std::string AppSetting::saveAppSetting() {
 
-    std::string ret;
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-	cJSON* obj = cJSON_CreateObject();
-	cJSON_AddBoolToObject(obj, "NEWMSGAUDIO", _newMsgAudioNotify);
-	cJSON_AddStringToObject(obj, "NEWMSGAUDIOPATH", _newMsgAudioPath.data());
-	cJSON_AddBoolToObject(obj, "NEWMSGTIPWINDOW", _newMsgTipWindowNotify);
-	cJSON_AddStringToObject(obj, "SCREENSHOT", _screenshotKey.data());
-	cJSON_AddStringToObject(obj, "WAKEWND", _wakeWndKey.data());
-	cJSON_AddBoolToObject(obj, "OPENOAWITHAPPBROWSER", _openOaWithAppBrowser);
-	cJSON_AddBoolToObject(obj, "SCREENTSHOTHIDEWNDFLAG", _screentShotHideWndFlag);
-	cJSON_AddBoolToObject(obj, "SHOWSENDMESSAGEBTN", _showSendMessageBtn);
-	cJSON_AddBoolToObject(obj, "STRONGWARN", _strongWarn);
-	cJSON_AddBoolToObject(obj, "HOTCUTENABLE", _hotCutEnable);
-    cJSON_AddStringToObject(obj, "SENDMESSAGEKEY", _sendMessageKey.data());
-    cJSON_AddBoolToObject(obj, "SHOWMOODFLAG", _showMoodFlag);
-    cJSON_AddBoolToObject(obj, "AUTOSTARTUP", _autoStartUp);
-    cJSON_AddBoolToObject(obj, "LEAVECHECKENABLE", _leaveCheckEnable);
-    cJSON_AddBoolToObject(obj, "AWAYSAUTOREPLY", _awaysAutoReply);
-    cJSON_AddStringToObject(obj, "AUTOREPLYMSG", _autoReplyMsg.data());
-//    cJSON_AddStringToObject(obj, "AUTOREPLYCUSMSG", _autoReplyCusMsg.data());
-    cJSON_AddNumberToObject(obj, "LEAVEMINUTE", _leaveMinute);
-    cJSON_AddBoolToObject(obj, "USENATIVEMESSAGEPROMPT", _useNativeMessagePrompt);
-    cJSON_AddBoolToObject(obj, "AUTODELETESESSION", _autoDeleteSession);
+    nJson obj ;
+    obj["NEWMSGAUDIO"] = _newMsgAudioNotify;
+    obj["NEWMSGAUDIOPATH"] = _newMsgAudioPath.data();
+    obj["NEWMSGTIPWINDOW"] = _newMsgTipWindowNotify;
+    obj["SCREENSHOT"] = _screenshotKey.data();
+    obj["WAKEWND"] = _wakeWndKey.data();
+    obj["OPENOAWITHAPPBROWSER"] = _openOaWithAppBrowser;
+    obj["SCREENTSHOTHIDEWNDFLAG"] = _screentShotHideWndFlag;
+    obj["SHOWSENDMESSAGEBTN"] = _showSendMessageBtn;
+    obj["STRONGWARN"] = _strongWarn;
+    obj["HOTCUTENABLE"] = _hotCutEnable;
+    obj["SENDMESSAGEKEY"] = _sendMessageKey.data();
+    obj["SHOWMOODFLAG"] = _showMoodFlag;
+    obj["AUTOSTARTUP"] = _autoStartUp;
+    obj["LEAVECHECKENABLE"] = _leaveCheckEnable;
+    obj["AWAYSAUTOREPLY"] = _awaysAutoReply;
+    obj["AUTOREPLYMSG"] = _autoReplyMsg.data();
+    obj["LEAVEMINUTE"] = _leaveMinute;
+    obj["USENATIVEMESSAGEPROMPT"] = _useNativeMessagePrompt;
+    obj["AUTODELETESESSION"] = _autoDeleteSession;
+    obj["AUTOREPLYSTARTTIME"] = _autoReplyStartTime;
+    obj["AUTOREPLYENDTIME"] = _autoReplyEndTime;
 
-    cJSON_AddNumberToObject(obj, "AUTOREPLYSTARTTIME", _autoReplyStartTime);
-    cJSON_AddNumberToObject(obj, "AUTOREPLYENDTIME", _autoReplyEndTime);
-
-	ret = QTalk::JSON::cJSON_to_string(obj);
-	cJSON_Delete(obj);
-    return ret;
+    return obj.dump(4);
 }

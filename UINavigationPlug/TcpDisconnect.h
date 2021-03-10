@@ -5,30 +5,26 @@
 #endif
 #include <QFrame>
 
-class NavigationMainPanel;
+class SessionFrm;
 class QLabel;
 class TcpDisconnect : public QFrame
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	explicit TcpDisconnect(NavigationMainPanel* pMainPanel, QWidget *parent = nullptr);
-	~TcpDisconnect() override;
+    explicit TcpDisconnect(SessionFrm *pMainPanel, QWidget *parent = nullptr);
+    ~TcpDisconnect() override;
 
 public:
-	void onRetryConnected();
-	void setText(const QString& text);
-
-//private:
-//	void mousePressEvent(QMouseEvent *e) override;
+    void onRetryConnected();
+    void setText(const QString &text);
 
 Q_SIGNALS:
-    void sgSetText(const QString&);
+    void sgSetText(const QString &);
 
 private:
-	NavigationMainPanel* _pMainPanel;
-	QLabel*              _pTextLabel;
+    SessionFrm *_pMainPanel;
+    QLabel *_pTextLabel;
 };
 
 #endif // _TCPDISCONNECT_H_
-

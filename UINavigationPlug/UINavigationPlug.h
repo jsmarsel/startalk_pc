@@ -3,7 +3,7 @@
 
 #include "uinavigationplug_global.h"
 #include "../interface/view/IUINavigationPlug.h"
-#include "NavigationMainPanel.h"
+#include "SessionFrm.h"
 
 class UINAVIGATIONPLUGSHARED_EXPORT UINavigationPlug : public QObject, public IUINavigationPlug
 {
@@ -17,16 +17,15 @@ public:
 
     // UIPluginInterface interface
 public:
-    QWidget *widget();
+    QWidget *widget() override;
 
     // IUINavigationPlug interface
 private:
-    void init();
+    void init() override;
     void updateReadCount() override;
 
 private:
-    NavigationMainPanel * _mainPanel;
-
+    SessionFrm *_mainPanel;
 };
 
 #endif // UINAVIGATIONPLUG_H

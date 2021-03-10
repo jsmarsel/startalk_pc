@@ -83,7 +83,6 @@ UILoginMsgListener::UILoginMsgListener(LoginPanel* pLoginPanel)
 	EventBus::AddHandler<LoginSuccessMessage>(*this);
 	EventBus::AddHandler<SynOfflineSuccees>(*this);
 	EventBus::AddHandler<AuthFailed>(*this);
-	EventBus::AddHandler<DataBaseOpenMessage>(*this);
 	EventBus::AddHandler<GotStructureMessage>(*this);
 	EventBus::AddHandler<GotUserGroup>(*this);
 	EventBus::AddHandler<LoginErrMessage>(*this);
@@ -129,19 +128,6 @@ void UILoginMsgListener::onEvent(AuthFailed &e)
 	{
 		_pLoginPanel->loginError(e.message);
 	}
-}
-
-void UILoginMsgListener::onEvent(DataBaseOpenMessage &e)
-{
-	if (e.getCanceled())
-	{
-		return;
-	}
-//	if (nullptr != _pLoginPanel)
-//	{
-//		debug_log("--------------正在获取组织架构--------------");
-//		_pLoginPanel->onGotLoginstauts("正在获取组织架构");
-//	}
 }
 
 //

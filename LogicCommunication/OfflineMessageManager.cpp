@@ -7,7 +7,7 @@
 #include "../interface/logic/IDatabasePlug.h"
 #include "Communication.h"
 #include "../QtUtil/Utils/Log.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include <time.h>
 #include <iostream>
 #include <vector>
@@ -15,31 +15,36 @@
 
 using namespace std;
 
-vector<string> split(const string &strtem, char a) {
+vector<string> split(const string &strtem, char a)
+{
     vector<string> strvec;
     string::size_type pos1, pos2;
     pos2 = strtem.find(a);
     pos1 = 0;
-    while (string::npos != pos2) {
+
+    while (string::npos != pos2)
+    {
         strvec.push_back(strtem.substr(pos1, pos2 - pos1));
         pos1 = pos2 + 1;
         pos2 = strtem.find(a, pos1);
     }
+
     strvec.push_back(strtem.substr(pos1));
     return strvec;
 }
 
 OfflineMessageManager::OfflineMessageManager(Communication *comm)
-        : _pComm(comm) {
+    : _pComm(comm)
+{
 }
 
-bool OfflineMessageManager::updateChatOfflineMessage() {
+bool OfflineMessageManager::updateChatOfflineMessage()
+{
     int pageCount = 500;
     int retryCount = 3;
     bool complete = false;
     std::string errMsg;
     QInt64 timeStamp = getTimeStamp(QTalk::Enum::TwoPersonChat);
-
     int index = 0;
 
     while (true)
@@ -48,25 +53,33 @@ bool OfflineMessageManager::updateChatOfflineMessage() {
         std::vector<QTalk::Entity::ImSessionInfo> sessionList;
         getOfflineChatMessageJson(timeStamp, pageCount, complete, errMsg, msgList, sessionList);
 
-        if (complete) {
-            if (!msgList.empty()) {
+        if (complete)
+        {
+            if (!msgList.empty())
+            {
                 LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
-
                 QTalk::Entity::ImMessageInfo lastMsgInfo = msgList.back();
                 timeStamp = lastMsgInfo.LastUpdateTime;
                 retryCount = 3;
-            } else {
+            }
+            else
+            {
                 // 获取消息完成
                 break;
             }
-        } else {
+        }
+        else
+        {
             // 获取消息失败重试
-            if (retryCount < 0) {
-                error_log("拉取历史消息失败");
+            if (retryCount < 0)
+            {
+                error_log("pull history failed and retry failed");
                 break;
-            } else {
+            }
+            else
+            {
                 retryCount--;
-                warn_log("拉取历史消息失败 开始倒数第{0}次重试", retryCount);
+                warn_log("pull chat history failed: retry {0} times", retryCount);
             }
         }
 
@@ -83,9 +96,7 @@ bool OfflineMessageManager::updateChatOfflineMessage() {
 
 void OfflineMessageManager::updateChatMasks()
 {
-
     using namespace QTalk;
-
     QInt64 timeStamp = getTimeStamp(QTalk::Enum::TwoPersonChat);
     //
     std::ostringstream url;
@@ -96,116 +107,114 @@ void OfflineMessageManager::updateChatMasks()
         << "&u=" << PLAT.getSelfUserId()
         << "&k=" << PLAT.getServerAuthKey()
         << "&d=" << PLAT.getSelfDomain();
-
     std::string strUrl = url.str();
-
-
-    cJSON *jsonObject = cJSON_CreateObject();
-    cJSON_AddNumberToObject(jsonObject, "time", timeStamp);
-    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().data());
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-    
-//            {
-//                "ret": true,
-//                        "errcode": 0,
-//                        "errmsg": null,
-//                        "data": [
-//                {
-//                    "readflag": 1,
-//                            "msgid": "qtalk-corp-service-63b13c45-bd54-4e94-a348-a4964a83eeb2"
-//                }
-//                ]
-//            }
+    nJson obj;
+    obj["time"] = timeStamp;
+    obj["domain"] = PLAT.getSelfDomain();
+    std::string postData = obj.dump();
     bool _ret = false;
     std::map<std::string, int> readFlags;
-    auto callBack = [&_ret, &readFlags](int code, const std::string &responseData) {
-
+    auto callBack = [&_ret, &readFlags](int code, const std::string & responseData)
+    {
         info_log("{0}  {1}", code, responseData);
-        if (code == 200) {
-            cJSON *resData = cJSON_Parse(responseData.c_str());
 
-            if (resData == nullptr) {
-                error_log("json paring error"); return;
+        if (code == 200)
+        {
+            nJson obj = Json::parse(responseData);
+
+            if (obj == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
+
             //
-            cJSON_bool ret = QTalk::JSON::cJSON_SafeGetBoolValue(resData, "ret");
+            bool ret = Json::get<bool >(obj, "ret");
+
             if(ret)
             {
-                cJSON* data = cJSON_GetObjectItem(resData, "data");
+                nJson data = Json::get<nJson >(obj, "data");
 
-                //
-                cJSON* tempMsg = nullptr;
-                cJSON_ArrayForEach(tempMsg, data){
-                    if(tempMsg)
-                    {
-                        auto flag = JSON::cJSON_SafeGetIntValue(tempMsg, "readflag");
-                        std::string msgId = JSON::cJSON_SafeGetStringValue(tempMsg, "msgid");
-                        readFlags[msgId] = flag;
-                    }
+                for( auto &tempMsg : data)
+                {
+                    auto flag = Json::get<int >(tempMsg, "readflag");
+                    std::string msgId = Json::get<std::string >(tempMsg, "msgid");
+                    readFlags[msgId] = flag;
                 }
             }
+
             //
             _ret = true;
-            cJSON_Delete(resData);
         }
         else
         {
-
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
         info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
+
         //
-        if(_ret) {
+        if(_ret)
+        {
             // 更新阅读状态
             LogicManager::instance()->getDatabase()->updateMessageReadFlags(readFlags);
             info_log("-- got user message and read flag -> update timestamp");
             // 更新时间戳
             LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_TWOPERSONCHAT,
-                                                                  std::to_string(0));
+                    std::to_string(0));
         }
     }
 }
 
 
-bool OfflineMessageManager::updateGroupOfflineMessage() {
-
+bool OfflineMessageManager::updateGroupOfflineMessage()
+{
     int pageCount = 500;
     int retryCount = 3;
     bool complete = false;
     std::string errMsg;
     QInt64 timeStamp = getTimeStamp(QTalk::Enum::GroupChat);
-
     int index = 0;
 
-    while (true) {
+    while (true)
+    {
         std::vector<QTalk::Entity::ImMessageInfo> msgList;
         std::vector<QTalk::Entity::ImSessionInfo> sessionList;
         getOfflineGroupMessageJson(timeStamp, pageCount, complete, errMsg, msgList, sessionList);
-        if (complete) {
-            if (!msgList.empty()) {
+
+        if (complete)
+        {
+            if (!msgList.empty())
+            {
                 LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
                 QTalk::Entity::ImMessageInfo lastMsgInfo = msgList.back();
                 timeStamp = lastMsgInfo.LastUpdateTime;
                 retryCount = 3;
-            } else {
+            }
+            else
+            {
                 // 获取消息完成
                 break;
             }
-        } else {
+        }
+        else
+        {
             // 获取消息失败重试
-            if (retryCount < 0) {
-                error_log("拉取历史消息失败");
+            if (retryCount < 0)
+            {
+                error_log("pull history failed and retry failed");
                 break;
-            } else {
+            }
+            else
+            {
                 retryCount--;
-                warn_log("拉取历史消息失败 开始倒数第{0}次重试", retryCount);
+                warn_log("pull group history failed: retry {0} times", retryCount);
             }
         }
 
@@ -215,48 +224,61 @@ bool OfflineMessageManager::updateGroupOfflineMessage() {
             CommMsgManager::sendLoginProcessMessage(msg);
         }
     }
+
     // 成功才更新时间戳
-    if(retryCount >= 0) {
+    if(retryCount >= 0)
+    {
         info_log("-- got group message -> update timestamp");
         LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_GROUPCHAT,
-                                                              std::to_string(0));
+                std::to_string(0));
     }
 
     return retryCount >= 0;
 }
 
-bool OfflineMessageManager::updateNoticeOfflineMessage() {
-
+bool OfflineMessageManager::updateNoticeOfflineMessage()
+{
     int pageCount = 500;
     int retryCount = 3;
     bool complete = false;
     std::string errMsg;
     QInt64 timeStamp = getTimeStamp(QTalk::Enum::System);
-
     int index = 0;
-    while (true) {
+
+    while (true)
+    {
         std::vector<QTalk::Entity::ImMessageInfo> msgList;
         std::vector<QTalk::Entity::ImSessionInfo> sessionList;
         getOfflineNoticeMessageJson(timeStamp, pageCount, complete, errMsg, msgList, sessionList);
-        if (complete) {
-            if (!msgList.empty()) {
+
+        if (complete)
+        {
+            if (!msgList.empty())
+            {
                 LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
                 //LogicManager::instance()->GetDatabase()->bulkInsertSessionInfo(sessionList);
                 QTalk::Entity::ImMessageInfo lastMsgInfo = msgList.back();
                 timeStamp = lastMsgInfo.LastUpdateTime;
                 retryCount = 3;
-            } else {
+            }
+            else
+            {
                 // 获取消息完成
                 break;
             }
-        } else {
+        }
+        else
+        {
             // 获取消息失败重试
-            if (retryCount < 0) {
-                error_log("拉取历史消息失败");
+            if (retryCount < 0)
+            {
+                error_log("pull history failed and retry failed");
                 break;
-            } else {
+            }
+            else
+            {
                 retryCount--;
-                warn_log("拉取历史消息失败 开始倒数第{0}次重试", retryCount);
+                warn_log("pull system history failed: retry {0} times", retryCount);
             }
         }
 
@@ -266,26 +288,31 @@ bool OfflineMessageManager::updateNoticeOfflineMessage() {
             CommMsgManager::sendLoginProcessMessage(msg);
         }
     }
+
     // 成功才更新时间戳
-    if(retryCount >= 0) {
+    if(retryCount >= 0)
+    {
         info_log("-- got system message -> update timestamp");
         LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_SYSTEM, std::to_string(0));
     }
+
     return retryCount >= 0;
 }
 
 /**
-  * @函数名   
-  * @功能描述 
+  * @函数名
+  * @功能描述
   * @参数
   * @author   cc
   * @date     2018/10/26
   */
-QInt64 OfflineMessageManager::getTimeStamp(QTalk::Enum::ChatType chatType) {
+QInt64 OfflineMessageManager::getTimeStamp(QTalk::Enum::ChatType chatType)
+{
     QInt64 timeStamp = 0;
-
     std::string subKey;
-    switch (chatType) {
+
+    switch (chatType)
+    {
         case QTalk::Enum::TwoPersonChat:
         case QTalk::Enum::Consult:
         case QTalk::Enum::ConsultServer:
@@ -293,212 +320,219 @@ QInt64 OfflineMessageManager::getTimeStamp(QTalk::Enum::ChatType chatType) {
         case QTalk::Enum::Collection:
             subKey = DEM_TWOPERSONCHAT;
             break;
+
         case QTalk::Enum::GroupChat:
             subKey = DEM_GROUPCHAT;
             break;
+
         case QTalk::Enum::System:
             subKey = DEM_SYSTEM;
             break;
+
         default:
             break;
     }
 
     std::string strTime;
-    if (LogicManager::instance()->getDatabase()->getConfig(DEM_MESSAGE_MAXTIMESTAMP, subKey, strTime)) {
-        timeStamp = atoll(strTime.c_str());
-    }
+
+    if (LogicManager::instance()->getDatabase()->getConfig(DEM_MESSAGE_MAXTIMESTAMP, subKey, strTime))
+        timeStamp = atoll(strTime.data());
+
     debug_log("getconfig time {0}", timeStamp);
+
 //    if (timeStamp <= 0) {
 //        timeStamp = LogicManager::instance()->GetDatabase()->getMaxTimeStampByChatType(chatType);
 //    }
 //    debug_log("getMaxTimeStampByChatType time{0}", timeStamp);
-    if (timeStamp <= 0) {
+    if (timeStamp <= 0)
+    {
         time_t now = time(0);
         timeStamp = (now - PLAT.getServerDiffTime() - 3600 * 48) * 1000;
     }
-    debug_log("get now time{0}", timeStamp);
 
+    debug_log("get now time{0}", timeStamp);
     return timeStamp;
 }
 
-void OfflineMessageManager::updateGroupMasks() {
-    try {
+void OfflineMessageManager::updateGroupMasks()
+{
+    try
+    {
         std::map<std::string, QInt64> readMarkList;
         getGroupReadMark(readMarkList);
-
         bool ret = LogicManager::instance()->getDatabase()->updateReadMask(readMarkList);
-        if (ret) {
+
+        if (ret)
+        {
             //登录后阅读指针更新成功将时间至0
             LogicManager::instance()->getDatabase()->saveLoginBeforeGroupReadMarkTime("0");
         }
     }
-    catch (std::exception &e) {
+    catch (std::exception &e)
+    {
         error_log("updateGroupMasks exception {0}", e.what());
     }
 }
 
-std::string OfflineMessageManager::safeGetJsonStringValue(const cJSON *cjson, const char *const key) {
-    cJSON *item = cJSON_GetObjectItem(cjson, key);
-    if (item) {
-        return item->valuestring;
-    }
-    return "";
-}
-
-int OfflineMessageManager::safeGetJsonIntValue(const cJSON *cjson, const char *const key) {
-    cJSON *item = cJSON_GetObjectItem(cjson, key);
-    if (item) {
-        return item->valueint;
-    }
-    return -1;
-}
-
-QInt64 OfflineMessageManager::safeGetJsonLongValue(const cJSON *cjson, const char *const key) {
-    cJSON *item = cJSON_GetObjectItem(cjson, key);
-    if (item) {
-        return item->valuedouble;
-    }
-    return -1;
-}
-
-
 void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, int count, bool &complete,
-                                                      std::string &errMsg,
-                                                      std::vector<QTalk::Entity::ImMessageInfo> &outMsgList,
-                                                      std::vector<QTalk::Entity::ImSessionInfo> &outSessionList) {
-
+        std::string &errMsg,
+        std::vector<QTalk::Entity::ImMessageInfo> &outMsgList,
+        std::vector<QTalk::Entity::ImSessionInfo> &outSessionList)
+{
     debug_log("开始获取单人消息");
-
     std::string httpHost = NavigationManager::instance().getJavaHost();
     std::string method = "/qtapi/gethistory.qunar";
     std::string params = "server=" + PLAT.getSelfDomain()
                          + "&c=qtalk&u=" + PLAT.getSelfUserId()
                          + "&p=" + PLAT.getPlatformStr()
                          + "&v=" + PLAT.getClientVersion();
-
     std::string selfJid = PLAT.getSelfUserId();
     std::string url = httpHost + method + "?" + params;
-    cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
-    cJSON_AddItemToObject(jsonObject, "user", user);
-    cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "domain", domain);
-    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "host", host);
-    cJSON *time = cJSON_CreateNumber(chatTimestamp);
-    cJSON_AddItemToObject(jsonObject, "time", time);
-    cJSON *num = cJSON_CreateNumber(count);
-    cJSON_AddItemToObject(jsonObject, "num", num);
-    cJSON *f = cJSON_CreateString("t");
-    cJSON_AddItemToObject(jsonObject, "f", f);
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
+    nJson obj;
+    obj["user"] = PLAT.getSelfUserId();
+    obj["domain"] = PLAT.getSelfDomain();
+    obj["host"] = PLAT.getSelfDomain();
+    obj["time"] = chatTimestamp;
+    obj["num"] = count;
+    obj["f"] = "t";
+    std::string postData = obj.dump();
     //
-    auto callback = [this, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
-            (int code, std::string responeseData) {
-        info_log("{0}  {1}", code, responeseData);
+    auto callback = [ selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
+                    (int code, const std::string & responseData)
+    {
+        info_log("{0}  {1}", code, responseData);
         std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
-        if (code == 200) {
 
-            cJSON *data = cJSON_Parse(responeseData.c_str());
+        if (code == 200)
+        {
+            nJson obj = Json::parse(responseData);
 
-            if (data == nullptr) {
-                error_log("json paring error"); return;
+            if (obj == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(data, "ret")->valueint;
-            if (ret) {
+            int ret = Json::get<bool >(obj, "ret");
 
-                cJSON *msgList = cJSON_GetObjectItem(data, "data");
-                int size = cJSON_GetArraySize(msgList);
+            if (ret)
+            {
+                nJson msgList = Json::get<nJson >(obj, "data");
                 complete = true;
-                for (int index = 0; index < size; index++) {
-                    cJSON *item = cJSON_GetArrayItem(msgList, index);
-                    std::string from = safeGetJsonStringValue(item, "from");
-                    std::string fromDomain = safeGetJsonStringValue(item, "from_host");
+                
+                if(!msgList.is_array())
+                {
+                    complete = false;
+                    return;
+                }
+                
+                for (auto &item : msgList)
+                {
+                    std::string from = Json::get<std::string>(item, "from");
+                    std::string fromDomain = Json::get<std::string>(item, "from_host");
                     std::string fromJid = from + "@" + fromDomain;
-                    std::string to = safeGetJsonStringValue(item, "to");
-                    std::string toDomain = safeGetJsonStringValue(item, "to_host");
+                    std::string to = Json::get<std::string>(item, "to");
+                    std::string toDomain = Json::get<std::string>(item, "to_host");
                     std::string toJid = to + "@" + toDomain;
-                    int readFlag = safeGetJsonIntValue(item, "read_flag");
+                    int readFlag = Json::get<int>(item, "read_flag");
                     std::string xmppId;
                     std::string realJid;
                     int chatType = QTalk::Enum::TwoPersonChat;
-                    if (cJSON_HasObjectItem(item, "body") && cJSON_HasObjectItem(item, "message")) {
-                        cJSON *message = cJSON_GetObjectItem(item, "message");
-                        cJSON *body = cJSON_GetObjectItem(item, "body");
 
-                        std::string type = safeGetJsonStringValue(message, "type");
-                        std::string msgId = safeGetJsonStringValue(body, "id");
-                        if (msgId.empty()) {
+                    if (item.contains("body") && item.contains("message"))
+                    {
+                        nJson message = Json::get<nJson >(item, "message");
+                        nJson body    = Json::get<nJson >(item, "body");
+                        std::string type = Json::get<std::string>(message, "type");
+                        std::string msgId = Json::get<std::string>(body, "id");
+
+                        if (msgId.empty())
                             continue;
-                        }
-                        std::string chatId = safeGetJsonStringValue(message, "qchatid");
-                        if (chatId.empty()) {
-                            chatId = safeGetJsonStringValue(message, "qchatid");
-                        }
-                        if (chatId.empty()) {
+
+                        std::string chatId = Json::get<std::string>(message, "qchatid");
+
+                        if (chatId.empty())
+                            chatId = Json::get<std::string>(message, "qchatid");
+
+                        if (chatId.empty())
                             chatId = "4";
-                        }
+
                         bool isConsult = false;
-                        QInt64 msec_times = atoll(safeGetJsonStringValue(message, "msec_times").c_str());
-                        std::string msg = safeGetJsonStringValue(body, "content");
-                        std::string channelInfo = safeGetJsonStringValue(message, "channelid");
-                        int platform = safeGetJsonIntValue(body, "maType");
-                        int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
-                        std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
-                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
-                        //之前的老逻辑 去掉
-//                        if (type == "note") {
-//                            msgType = -11;
-//                        } else
-                        if (type == "consult") {
+                        QInt64 msec_times = atoll(Json::get<std::string>(message, "msec_times").data());
+                        std::string msg = Json::get<std::string>(body, "content");
+                        std::string channelInfo = Json::get<std::string>(message, "channelid");
+                        int platform = atoi(Json::get<std::string>(body, "maType").data());
+                        int msgType = atoi(Json::get<std::string>(body, "msgType").data());
+                        std::string extendInfo = Json::get<std::string>(body, "extendInfo");
+                        std::string backupinfo = Json::get<std::string>(body, "backupinfo");
+
+                        if (type == "consult")
                             isConsult = true;
-                        } else if (type != "chat" && type != "revoke" && type != "subscription") {
+                        else if (type != "chat" && type != "revoke" && type != "subscription")
                             continue;
-                        }
-                        if (type == "subscription") {
+
+                        if (type == "subscription")
                             chatType = QTalk::Enum::Robot;
-                        }
+
                         int direction = 0;
-                        if (fromJid == (selfJid + "@" + fromDomain)) {
-                            if (isConsult) {
+
+                        if (fromJid == (selfJid + "@" + fromDomain))
+                        {
+                            if (isConsult)
+                            {
                                 xmppId = toJid;
-                                if (chatId == "4") {
+
+                                if (chatId == "4")
+                                {
                                     realJid = toJid;
                                     chatType = QTalk::Enum::Consult;
-                                } else {
-                                    std::string realTo = safeGetJsonStringValue(message, "realto");
+                                }
+                                else
+                                {
+                                    std::string realTo = Json::get<std::string>(message, "realto");
                                     realJid = split(realTo, '/').front();
                                     chatType = QTalk::Enum::ConsultServer;
                                 }
-                            } else {
+                            }
+                            else
+                            {
                                 xmppId = toJid;
                                 realJid = toJid;
                             }
+
                             direction = 1;
-                            if (msgType == 1003 || msgType == 1004 || msgType == 1002 || msgType == 1001) {
+
+                            if (msgType == 1003 || msgType == 1004 || msgType == 1002 || msgType == 1001)
                                 continue;
-                            }
-                        } else {
+                        }
+                        else
+                        {
                             direction = 0;
-                            if (isConsult) {
+
+                            if (isConsult)
+                            {
                                 xmppId = fromJid;
-                                if (chatId == "4") {
-                                    std::string realfrom = safeGetJsonStringValue(message, "realfrom");
+
+                                if (chatId == "4")
+                                {
+                                    std::string realfrom = Json::get<std::string>(message, "realfrom");
                                     realJid = split(realfrom, '/').front();
                                     chatType = QTalk::Enum::ConsultServer;
-                                } else {
+                                }
+                                else
+                                {
                                     realJid = fromJid;
                                     chatType = QTalk::Enum::Consult;
                                 }
-                            } else {
+                            }
+                            else
+                            {
                                 xmppId = fromJid;
                                 realJid = fromJid;
                             }
-                            if (msgType == 1004 || msgType == 1003 || msgType == 1002 || msgType == 1001) {
+
+                            if (msgType == 1004 || msgType == 1003 || msgType == 1002 || msgType == 1001)
                                 continue;
-                            }
                         }
 
                         QTalk::Entity::ImMessageInfo msgInfo;
@@ -518,19 +552,22 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
                         msgInfo.ReadedTag = readFlag;
                         msgInfo.LastUpdateTime = msec_times;
                         outMsgList.push_back(msgInfo);
-
                         std::string sessionKey = xmppId + "-" + realJid;
                         auto iter = sessionMap.find(sessionKey);
 
-                        if (sessionMap.end() != iter) {
+                        if (sessionMap.end() != iter)
+                        {
                             QTalk::Entity::ImSessionInfo sessionInfo = iter->second;
-                            if (msec_times > sessionInfo.LastUpdateTime) {
+
+                            if (msec_times > sessionInfo.LastUpdateTime)
+                            {
                                 sessionInfo.LastMessageId = msgId;
                                 sessionInfo.LastUpdateTime = msec_times;
                                 sessionMap[sessionKey] = sessionInfo;
                             }
-
-                        } else {
+                        }
+                        else
+                        {
                             QTalk::Entity::ImSessionInfo sessionInfo;
                             sessionInfo.XmppId = xmppId;
                             sessionInfo.RealJid = realJid;
@@ -540,30 +577,37 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
                             sessionInfo.LastUpdateTime = msec_times;
                             sessionInfo.MessageState = 0;
                             sessionMap.insert(
-                                    map<std::string, QTalk::Entity::ImSessionInfo>::value_type(sessionKey,
-                                                                                               sessionInfo));
+                                map<std::string, QTalk::Entity::ImSessionInfo>::value_type(sessionKey,
+                                        sessionInfo));
 //                        outSessionList->push_back(sessionInfo);
                         }
                     }
                 }
+
                 //组装会话列表
                 auto iter = sessionMap.begin();
-                for (; iter != sessionMap.end(); ++iter) {
+
+                for (; iter != sessionMap.end(); ++iter)
+                {
                     QTalk::Entity::ImSessionInfo sessionInfo = iter->second;
                     outSessionList.push_back(sessionInfo);
                 }
-            } else {
-                complete = false;
-                errMsg = cJSON_GetObjectItem(data, "errmsg")->valuestring;
             }
-            cJSON_Delete(data);
-        } else {
+            else
+            {
+                complete = false;
+                errMsg = Json::get<std::string>(obj, "errmsg");
+            }
+        }
+        else
+        {
             complete = false;
             errMsg = "请求失败";
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(url, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
@@ -572,68 +616,68 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
     }
 }
 
-void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &readMarkList) {
-
+void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &readMarkList)
+{
     std::string httpHost = NavigationManager::instance().getJavaHost();
     std::string method = "/qtapi/get_muc_readmark1.qunar";
     std::string params = "server=" + PLAT.getSelfDomain()
                          + "&c=qtalk&u=" + PLAT.getSelfUserId()
                          + "&p=" + PLAT.getPlatformStr()
                          + "&v=" + PLAT.getClientVersion();
-
     std::string timeStamp = LogicManager::instance()->getDatabase()->getLoginBeforeGroupReadMarkTime();
     timeStamp = std::to_string(std::strtoll(timeStamp.data(), nullptr, 0));
     //
     std::string selfJid = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
     std::string url = httpHost + method + "?" + params;
-    cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
-    cJSON_AddItemToObject(jsonObject, "user", user);
-    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "host", host);
-    cJSON *time = cJSON_CreateString(timeStamp.c_str());
-    cJSON_AddItemToObject(jsonObject, "time", time);
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
+    nJson  obj;
+    obj["user"] = PLAT.getSelfUserId();
+    obj["host"] = PLAT.getSelfDomain();
+    obj["time"] = timeStamp;
+    std::string postData = obj.dump();
     std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
-
-
-    auto callback = [this, url, &readMarkList](int code, const string& responseData) {
+    auto callback = [ url, &readMarkList](int code, const string & responseData)
+    {
         info_log("{0}  {1}", code, responseData);
-        if (code == 200) {
-            cJSON *requestData = cJSON_Parse(responseData.c_str());
 
-            if (requestData == nullptr) {
-                error_log("json paring error"); return;
+        if (code == 200)
+        {
+            nJson obj = Json::parse(responseData);
+
+            if (obj == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(requestData, "ret")->valueint;
-            if (ret) {
-                cJSON *data = cJSON_GetObjectItem(requestData, "data");
-                int size = cJSON_GetArraySize(data);
+            bool ret = Json::get<bool >(obj, "ret");
+
+            if (ret)
+            {
+                nJson data = Json::get<nJson >(obj, "data");
                 std::map<std::string, QInt64> readMark;
-                for (int index = 0; index < size; index++) {
-                    cJSON *item = cJSON_GetArrayItem(data, index);
-                    std::string mucName = safeGetJsonStringValue(item, "muc_name");
-                    std::string domain = safeGetJsonStringValue(item, "domain");
-                    QInt64 date = atoll(safeGetJsonStringValue(item, "date").c_str());
+
+                for (auto &item : data)
+                {
+                    std::string mucName = Json::get<std::string>(item, "muc_name");
+                    std::string domain = Json::get<std::string>(item, "domain");
+                    QInt64 date = atoll(Json::get<std::string>(item, "date").data());
                     std::string groupId = mucName + "@" + domain;
                     readMarkList.insert(std::map<std::string, QInt64>::value_type(groupId, date));
                 }
-            } else {
+            }
+            else
+            {
                 std::ostringstream os("error code is :");
                 os << ret
                    << ", url is :"
                    << url;
                 error_log(os.str());
-//                throw std::logic_error(os.str());
             }
-
-            cJSON_Delete(requestData);
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(url, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
@@ -643,10 +687,12 @@ void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &read
 }
 
 void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, int count, bool &complete,
-                                                       std::string &errMsg,
-                                                       std::vector<QTalk::Entity::ImMessageInfo> &outMsgList,
-                                                       std::vector<QTalk::Entity::ImSessionInfo> &outSessionList) {
-    try {
+        std::string &errMsg,
+        std::vector<QTalk::Entity::ImMessageInfo> &outMsgList,
+        std::vector<QTalk::Entity::ImSessionInfo> &outSessionList)
+{
+    try
+    {
         std::string httpHost = NavigationManager::instance().getJavaHost();
         std::string method = "/qtapi/getmuchistory.qunar";
         std::string params = "server=" + PLAT.getSelfDomain()
@@ -654,74 +700,76 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
                              //                       + "&k=" + Platform::GetPlatform()->getServerAuthKey()
                              + "&p=" + PLAT.getPlatformStr()
                              + "&v=" + PLAT.getClientVersion();
-
         std::string selfJid = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
-
         std::string httpUrl = httpHost + method + "?" + params;
-        cJSON *jsonObject = cJSON_CreateObject();
-        cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
-        cJSON_AddItemToObject(jsonObject, "user", user);
-        cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-        cJSON_AddItemToObject(jsonObject, "domain", domain);
-        cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-        cJSON_AddItemToObject(jsonObject, "host", host);
-        cJSON *time = cJSON_CreateNumber(chatTimestamp);
-        cJSON_AddItemToObject(jsonObject, "time", time);
-        cJSON *num = cJSON_CreateNumber(count);
-        cJSON_AddItemToObject(jsonObject, "num", num);
-        cJSON *f = cJSON_CreateString("t");
-        cJSON_AddItemToObject(jsonObject, "f", f);
-        std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-        cJSON_Delete(jsonObject);
-
-        auto callback = [this, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
-                (int code, const string& responseData) {
+        nJson obj;
+        obj["user"] = PLAT.getSelfUserId();
+        obj["domain"] = PLAT.getSelfDomain();
+        obj["host"] = PLAT.getSelfDomain();
+        obj["time"] = chatTimestamp;
+        obj["num"] = count;
+        obj["f"] = "t";
+        std::string postData = obj.dump();
+        auto callback = [ selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
+                        (int code, const string & responseData)
+        {
             info_log("{0}  {1}", code, responseData);
             std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
-            if (code == 200) {
 
-                cJSON *data = cJSON_Parse(responseData.c_str());
+            if (code == 200)
+            {
+                nJson obj = Json::parse(responseData);
 
-                if (data == nullptr) {
-                    error_log("json paring error"); return;
+                if (obj == nullptr)
+                {
+                    error_log("json paring error");
+                    return;
                 }
 
-                int ret = cJSON_GetObjectItem(data, "ret")->valueint;
-                if (ret) {
+                bool ret = Json::get<bool >(obj, "ret");
+
+                if (ret)
+                {
                     complete = true;
-                    cJSON *msgList = cJSON_GetObjectItem(data, "data");
-                    int size = cJSON_GetArraySize(msgList);
-                    for (int index = 0; index < size; index++) {
-                        cJSON *item = cJSON_GetArrayItem(msgList, index);
-                        std::string nickName = safeGetJsonStringValue(item, "nick");
+                    nJson msgList = Json::get<nJson >(obj, "data");
+
+                    for (auto &item : msgList)
+                    {
+                        std::string nickName = Json::get<std::string>(item, "nick");
                         int chatType = QTalk::Enum::GroupChat;
-                        cJSON *message = cJSON_GetObjectItem(item, "message");
-                        std::string xmppId = safeGetJsonStringValue(message, "to");
-                        if (xmppId.empty()) {
+                        nJson message = Json::get<nJson >(item, "message");
+                        std::string xmppId = Json::get<std::string>(message, "to");
+
+                        if (xmppId.empty())
                             continue;
-                        }
 
                         const std::string &realJid = xmppId;
-                        if (cJSON_HasObjectItem(item, "body")) {
-                            cJSON *body = cJSON_GetObjectItem(item, "body");
-                            std::string msgId = safeGetJsonStringValue(body, "id");
-                            if (msgId.empty()) {
+
+                        if (item.contains("body"))
+                        {
+                            nJson body = Json::get<nJson >(item, "body");
+                            std::string msgId = Json::get<std::string>(body, "id");
+
+                            if (msgId.empty())
                                 continue;
-                            }
-                            QInt64 msec_times = atoll(safeGetJsonStringValue(message, "msec_times").c_str());
-                            std::string msg = safeGetJsonStringValue(body, "content");
-                            int platform = safeGetJsonIntValue(body, "maType");
-//                    int msgType = safeGetJsonIntValue(body,"msgType");
-                            int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
-                            std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
-                            std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
-                            std::string realFrom = safeGetJsonStringValue(message, "sendjid");
+
+                            QInt64 msec_times = atoll(Json::get<std::string>(message, "msec_times").data());
+                            std::string msg = Json::get<std::string>(body, "content");
+                            int platform = atoi(Json::get<std::string>(body, "maType").data());
+                            int msgType = atoi(Json::get<std::string>(body, "msgType").data());
+                            std::string extendInfo = Json::get<std::string>(body, "extendInfo");
+                            std::string backupinfo = Json::get<std::string>(body, "backupinfo");
+                            std::string realFrom = Json::get<std::string>(message, "sendjid");
                             int direction = 0;
                             int readState = 0;
-                            if (realFrom == selfJid) {
+
+                            if (realFrom == selfJid)
+                            {
                                 direction = 1;
                                 readState = 1;//已发送
-                            } else {
+                            }
+                            else
+                            {
                                 direction = 0;
                                 readState = 0;//未读
                             }
@@ -743,18 +791,23 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
                             msgInfo.LastUpdateTime = msec_times;
                             msgInfo.BackupInfo = backupinfo;
                             outMsgList.push_back(msgInfo);
-
                             std::string sessionKey = xmppId + "-" + realJid;
                             auto iter = sessionMap.find(
-                                    sessionKey);
-                            if (sessionMap.end() != iter) {
+                                            sessionKey);
+
+                            if (sessionMap.end() != iter)
+                            {
                                 QTalk::Entity::ImSessionInfo sessionInfo = iter->second;
-                                if (msec_times > sessionInfo.LastUpdateTime) {
+
+                                if (msec_times > sessionInfo.LastUpdateTime)
+                                {
                                     sessionInfo.LastMessageId = msgId;
                                     sessionInfo.LastUpdateTime = msec_times;
                                     sessionMap[sessionKey] = sessionInfo;
                                 }
-                            } else {
+                            }
+                            else
+                            {
                                 QTalk::Entity::ImSessionInfo sessionInfo;
                                 sessionInfo.XmppId = xmppId;
                                 sessionInfo.RealJid = realJid;
@@ -764,52 +817,57 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
                                 sessionInfo.LastUpdateTime = msec_times;
                                 sessionInfo.MessageState = 0;
                                 sessionMap.insert(map<std::string, QTalk::Entity::ImSessionInfo>::value_type(sessionKey,
-                                                                                                             sessionInfo));
+                                                  sessionInfo));
 //                        outSessionList->push_back(sessionInfo);
                             }
                         }
                     }
+
                     //组装会话列表
                     auto iter = sessionMap.begin();
-                    for (; iter != sessionMap.end(); ++iter) {
+
+                    for (; iter != sessionMap.end(); ++iter)
+                    {
                         QTalk::Entity::ImSessionInfo sessionInfo = iter->second;
                         outSessionList.push_back(sessionInfo);
                     }
-                } else {
+                }
+                else
+                {
                     complete = false;
-                    errMsg = cJSON_GetObjectItem(data, "errmsg")->valuestring;
+                    errMsg = Json::get<nJson >(obj, "errmsg");
                     error_log(errMsg);
                     return;
                 }
-
-                cJSON_Delete(data);
-            } else {
+            }
+            else
+            {
                 complete = false;
                 errMsg = "请求失败";
             }
-
         };
 
-        if (_pComm) {
+        if (_pComm)
+        {
             QTalk::HttpRequest req(httpUrl, QTalk::RequestMethod::POST);
             req.header["Content-Type"] = "application/json;";
             req.body = postData;
             info_log("{0} \n {1}", httpUrl, postData);
             _pComm->addHttpRequest(req, callback);
         }
-
-    } catch (std::exception &e) {
+    }
+    catch (std::exception &e)
+    {
         std::string what = e.what();
-
         warn_log(what);
     }
 }
 
 void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestamp, int count, bool &complete,
-                                                        std::string &errMsg,
-                                                        std::vector<QTalk::Entity::ImMessageInfo> &outMsgList,
-                                                        std::vector<QTalk::Entity::ImSessionInfo> &outSessionList) {
-
+        std::string &errMsg,
+        std::vector<QTalk::Entity::ImMessageInfo> &outMsgList,
+        std::vector<QTalk::Entity::ImSessionInfo> &outSessionList)
+{
     std::string httpHost = NavigationManager::instance().getJavaHost();
     std::string method = "/qtapi/get_system_history.qunar";
     std::string params = "server=" + PLAT.getSelfDomain()
@@ -817,65 +875,65 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
                          //                       + "&k=" + Platform::GetPlatform()->getServerAuthKey()
                          + "&p=" + PLAT.getPlatformStr()
                          + "&v=" + PLAT.getClientVersion();
-
     std::string selfJid = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
     std::string url = httpHost + method + "?" + params;
-    cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
-    cJSON_AddItemToObject(jsonObject, "user", user);
-    cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "domain", domain);
-    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "host", host);
-    cJSON *time = cJSON_CreateNumber(noticeTimestamp);
-    cJSON_AddItemToObject(jsonObject, "time", time);
-    cJSON *num = cJSON_CreateNumber(count);
-    cJSON_AddItemToObject(jsonObject, "num", num);
-    cJSON *f = cJSON_CreateString("t");
-    cJSON_AddItemToObject(jsonObject, "f", f);
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-
-    auto callback = [this, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
-            (int code, string responseData) {
+    nJson obj;
+    obj["user"] = PLAT.getSelfUserId();
+    obj["domain"] = PLAT.getSelfDomain();
+    obj["host"] = PLAT.getSelfDomain();
+    obj["time"] = noticeTimestamp;
+    obj["num"] = count;
+    obj["f"] = "t";
+    std::string postData = obj.dump();
+    auto callback = [ selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
+                    (int code, string responseData)
+    {
         info_log("{0}  {1}", code, responseData);
         std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
-        if (code == 200) {
-            cJSON *data = cJSON_Parse(responseData.c_str());
 
-            if (data == nullptr) {
-                error_log("json paring error"); return;
+        if (code == 200)
+        {
+            nJson data = Json::parse(responseData);
+
+            if (data == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(data, "ret")->valueint;
-            if (ret) {
-                complete = true;
-                cJSON *msgList = cJSON_GetObjectItem(data, "data");
-//            std::cout << "msgList json" << cJSON_Print(msgList) << std::endl;
-                int size = cJSON_GetArraySize(msgList);
-                for (int index = 0; index < size; index++) {
-                    cJSON *item = cJSON_GetArrayItem(msgList, index);
-                    std::string nickName = safeGetJsonStringValue(item, "nick");
-                    int chatType = QTalk::Enum::System;
-                    cJSON *message = cJSON_GetObjectItem(item, "message");
-                    std::string xmppId = "SystemMessage@" + PLAT.getSelfDomain();
-                    std::string type = safeGetJsonStringValue(message, "type");
-                    const std::string &realJid = xmppId;
-                    if (cJSON_HasObjectItem(item, "body")) {
-                        cJSON *body = cJSON_GetObjectItem(item, "body");
-                        std::string msgId = safeGetJsonStringValue(body, "id");
-                        if (msgId.empty()) {
-                            continue;
-                        }
-                        QInt64 msec_times = atoll(safeGetJsonStringValue(message, "msec_times").c_str());
-                        std::string msg = safeGetJsonStringValue(body, "content");
-                        int platform = safeGetJsonIntValue(body, "maType");
-//                    int msgType = safeGetJsonIntValue(body,"msgType");
-                        int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
-                        std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
-                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
-                        std::string realFrom = safeGetJsonStringValue(message, "sendjid");
+            bool ret = Json::get<bool >(data, "ret");
 
+            if (ret)
+            {
+                complete = true;
+                nJson msgList = Json::get<nJson >(data, "data");
+
+//            std::cout << "msgList json" << cJSON_Print(msgList) << std::endl;
+                for (auto &item : msgList)
+                {
+                    std::string nickName = Json::get<std::string>(item, "nick");
+                    int chatType = QTalk::Enum::System;
+                    nJson message = Json::get<nJson >(item, "message");
+                    std::string xmppId = "SystemMessage@" + PLAT.getSelfDomain();
+                    std::string type = Json::get<std::string>(message, "type");
+                    const std::string &realJid = xmppId;
+
+                    if (item.contains("body"))
+                    {
+                        nJson body = Json::get<nJson >(item, "body");
+                        std::string msgId = Json::get<std::string>(body, "id");
+
+                        if (msgId.empty())
+                            continue;
+
+                        QInt64 msec_times = atoll(Json::get<std::string>(message, "msec_times").data());
+                        std::string msg = Json::get<std::string>(body, "content");
+                        int platform = atoi(Json::get<std::string>(body, "maType").data());
+//                    int msgType = Json::get<int>(body,"msgType");
+                        int msgType = atoi(Json::get<std::string>(body, "msgType").data());
+                        std::string extendInfo = Json::get<std::string>(body, "extendInfo");
+                        std::string backupinfo = Json::get<std::string>(body, "backupinfo");
+                        std::string realFrom = Json::get<std::string>(message, "sendjid");
                         QTalk::Entity::ImMessageInfo msgInfo;
                         msgInfo.MsgId = msgId;
                         msgInfo.XmppId = xmppId;
@@ -893,14 +951,17 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
                         msgInfo.ReadedTag = 0;
                         msgInfo.LastUpdateTime = msec_times;
                         outMsgList.push_back(msgInfo);
-
                         std::string sessionKey = xmppId + "-" + realJid;
                         auto iter = sessionMap.find(sessionKey);
-                        if (sessionMap.end() != iter) {
+
+                        if (sessionMap.end() != iter)
+                        {
                             QTalk::Entity::ImSessionInfo sessionInfo = iter->second;
                             sessionInfo.LastMessageId = msgId;
                             sessionInfo.LastUpdateTime = msec_times;
-                        } else {
+                        }
+                        else
+                        {
                             QTalk::Entity::ImSessionInfo sessionInfo;
                             sessionInfo.XmppId = xmppId;
                             sessionInfo.RealJid = realJid;
@@ -910,26 +971,28 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
                             sessionInfo.LastUpdateTime = msec_times;
                             sessionInfo.MessageState = 0;
                             sessionMap.insert(
-                                    map<std::string, QTalk::Entity::ImSessionInfo>::value_type(sessionKey,
-                                                                                               sessionInfo));
+                                map<std::string, QTalk::Entity::ImSessionInfo>::value_type(sessionKey,
+                                        sessionInfo));
                             outSessionList.push_back(sessionInfo);
                         }
-
                     }
                 }
-            } else {
-                complete = false;
-                errMsg = cJSON_GetObjectItem(data, "errmsg")->valuestring;
             }
-
-            cJSON_Delete(data);
-        } else {
+            else
+            {
+                complete = false;
+                errMsg = Json::get<std::string >(data, "errmsg");
+            }
+        }
+        else
+        {
             complete = false;
             errMsg = "请求失败";
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(url, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
@@ -939,14 +1002,15 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
 }
 
 /**
-  * @函数名   
-  * @功能描述 
+  * @函数名
+  * @功能描述
   * @参数
   * @author   cc
   * @date     2018/12/13
   */
 VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const std::string &userId,
-        const std::string& direction, bool saveDb) {
+        const std::string &direction, bool saveDb)
+{
     //
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
@@ -956,126 +1020,149 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
         << "&u=" << PLAT.getSelfUserId()
         << "&k=" << PLAT.getServerAuthKey()
         << "&d=" << PLAT.getSelfDomain();
-
     std::string strUrl = url.str();
-
     QTalk::Entity::JID jid(userId);
-    cJSON *jsonObject = cJSON_CreateObject();
-
-    cJSON_AddStringToObject(jsonObject, "from", PLAT.getSelfUserId().c_str());
-    cJSON_AddStringToObject(jsonObject, "fhost", PLAT.getSelfDomain().c_str());
-    cJSON_AddStringToObject(jsonObject, "to", jid.username().c_str());
-    cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
-    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
-    cJSON_AddNumberToObject(jsonObject, "time", time);
-    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().c_str());
-    cJSON_AddNumberToObject(jsonObject, "num", 20);
-    cJSON_AddStringToObject(jsonObject, "f", "t");
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-
+    nJson obj;
+    obj["from"] = PLAT.getSelfUserId();
+    obj["fhost"] = PLAT.getSelfDomain();
+    obj["to"] = jid.username();
+    obj["thost"] = jid.domainname();
+    obj["direction"] = direction.data();
+    obj["time"] = time;
+    obj["domain"] = PLAT.getSelfDomain();
+    obj["num"] = 20;
+    obj["f"] = "t";
+    std::string postData = obj.dump();
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
-        if (code == 200) {
-            cJSON *resData = cJSON_Parse(responseData.c_str());
+    auto callBack = [ userId, &msgList](int code, const std::string & responseData)
+    {
+        if (code == 200)
+        {
+            nJson resData = Json::parse(responseData);
 
-            if (resData == nullptr) {
-                error_log("json paring error"); return;
+            if (resData == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(resData, "ret")->valueint;
-            if (ret) {
+            bool ret = Json::get<bool >(resData, "ret");
+
+            if (ret)
+            {
                 std::string selfJid = PLAT.getSelfUserId();
+                nJson data = Json::get<nJson >(resData, "data");
 
-                cJSON *data = cJSON_GetObjectItem(resData, "data");
-                int size = cJSON_GetArraySize(data);
-
-                for (int index = 0; index < size; index++) {
-                    cJSON *item = cJSON_GetArrayItem(data, index);
-                    std::string from = safeGetJsonStringValue(item, "from");
-                    std::string fromDomain = safeGetJsonStringValue(item, "from_host");
+                for (auto &item : data)
+                {
+                    std::string from = Json::get<std::string>(item, "from");
+                    std::string fromDomain = Json::get<std::string>(item, "from_host");
                     std::string fromJid = from + "@" + fromDomain;
-                    std::string to = safeGetJsonStringValue(item, "to");
-                    std::string toDomain = safeGetJsonStringValue(item, "to_host");
+                    std::string to = Json::get<std::string>(item, "to");
+                    std::string toDomain = Json::get<std::string>(item, "to_host");
                     std::string toJid = to + "@" + toDomain;
-                    int readFlag = safeGetJsonIntValue(item, "read_flag");
+                    int readFlag = Json::get<int>(item, "read_flag");
                     std::string xmppId;
                     std::string realJid;
                     QUInt8 chatType = QTalk::Enum::TwoPersonChat;
-                    if (cJSON_HasObjectItem(item, "body") && cJSON_HasObjectItem(item, "message")) {
-                        cJSON *message = cJSON_GetObjectItem(item, "message");
-                        cJSON *body = cJSON_GetObjectItem(item, "body");
 
-                        std::string type = safeGetJsonStringValue(message, "type");
-                        std::string msgId = safeGetJsonStringValue(body, "id");
+                    if (item.contains("body") && item.contains("message"))
+                    {
+                        nJson message = Json::get<nJson >(item, "message");
+                        nJson body = Json::get<nJson >(item, "body");
+                        std::string type = Json::get<std::string>(message, "type");
+                        std::string msgId = Json::get<std::string>(body, "id");
+
                         //
                         if (msgId.empty()) continue;
 
-                        std::string chatId = safeGetJsonStringValue(message, "qchatid");
-                        if (chatId.empty()) {
-                            chatId = safeGetJsonStringValue(body, "qchatid");
-                        }
-                        if (chatId.empty()) {
+                        std::string chatId = Json::get<std::string>(message, "qchatid");
+
+                        if (chatId.empty())
+                            chatId = Json::get<std::string>(body, "qchatid");
+
+                        if (chatId.empty())
                             chatId = "4";
-                        }
+
                         bool isConsult = false;
-                        QInt64 msec_times = atoll(safeGetJsonStringValue(message, "msec_times").c_str());
-                        std::string msg = safeGetJsonStringValue(body, "content");
-                        std::string channelInfo = safeGetJsonStringValue(message, "channelid");
-                        int platform = safeGetJsonIntValue(body, "maType");
-                        int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
-                        std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
-                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
-                        if (type == "note") {
+                        QInt64 msec_times = atoll(Json::get<std::string>(message, "msec_times").data());
+                        std::string msg = Json::get<std::string>(body, "content");
+                        std::string channelInfo = Json::get<std::string>(message, "channelid");
+                        int platform = atoi(Json::get<std::string>(body, "maType").data());
+                        int msgType = atoi(Json::get<std::string>(body, "msgType").data());
+                        std::string extendInfo = Json::get<std::string>(body, "extendInfo");
+                        std::string backupinfo = Json::get<std::string>(body, "backupinfo");
+
+                        if (type == "note")
                             msgType = -11;
-                        } else if (type == "consult") {
+                        else if (type == "consult")
                             isConsult = true;
-                        } else if (type != "chat" && type != "revoke" && type != "subscription") {
+                        else if (type != "chat" && type != "revoke" && type != "subscription")
                             continue;
-                        }
-                        if (type == "subscription") {
+
+                        if (type == "subscription")
                             chatType = QTalk::Enum::Robot;
-                        }
+
                         int direction = 0;
-                        if (fromJid == (selfJid + "@" + fromDomain)) {
-                            if (isConsult) {
+
+                        if (fromJid == (selfJid + "@" + fromDomain))
+                        {
+                            if (isConsult)
+                            {
                                 xmppId = toJid;
-                                if (chatId == "4") {
+
+                                if (chatId == "4")
+                                {
                                     realJid = toJid;
                                     chatType = QTalk::Enum::Consult;
-                                } else {
-                                    std::string realTo = safeGetJsonStringValue(message, "realto");
+                                }
+                                else
+                                {
+                                    std::string realTo = Json::get<std::string>(message, "realto");
                                     realJid = split(realTo, '/').front();
                                     chatType = QTalk::Enum::ConsultServer;
                                 }
-                            } else {
+                            }
+                            else
+                            {
                                 xmppId = toJid;
                                 realJid = toJid;
                             }
+
                             direction = 1;
-                            if (msgType == 1003 || msgType == 1004 || msgType == 1002 || msgType == 1001) {
+
+                            if (msgType == 1003 || msgType == 1004 || msgType == 1002 || msgType == 1001)
                                 continue;
-                            }
-                        } else {
+                        }
+                        else
+                        {
                             direction = 0;
-                            if (isConsult) {
+
+                            if (isConsult)
+                            {
                                 xmppId = fromJid;
-                                if (chatId == "4") {
-                                    std::string realfrom = safeGetJsonStringValue(message, "realfrom");
+
+                                if (chatId == "4")
+                                {
+                                    std::string realfrom = Json::get<std::string>(message, "realfrom");
                                     realJid = split(realfrom, '/').front();
                                     chatType = QTalk::Enum::ConsultServer;
-                                } else {
+                                }
+                                else
+                                {
                                     realJid = fromJid;
                                     chatType = QTalk::Enum::Consult;
                                 }
-                            } else {
+                            }
+                            else
+                            {
                                 xmppId = fromJid;
                                 realJid = fromJid;
                             }
-                            if (msgType == 1004 || msgType == 1003 || msgType == 1002 || msgType == 1001) {
+
+                            if (msgType == 1004 || msgType == 1003 || msgType == 1002 || msgType == 1001)
                                 continue;
-                            }
                         }
 
                         QTalk::Entity::ImMessageInfo msgInfo;
@@ -1098,19 +1185,19 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
                     }
                 }
             }
-            cJSON_Delete(resData);
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
         info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (saveDb && !msgList.empty()) {
+
+        if (saveDb && !msgList.empty())
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
-        }
     }
 
     return msgList;
@@ -1123,11 +1210,12 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
  * @param realJid
  */
 VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time, const std::string &userId,
-                                                    const std::string &realJid, const std::string& direction,
-                                                    bool saveDb) {
-    if(realJid.empty()){
+        const std::string &realJid, const std::string &direction,
+        bool saveDb)
+{
+    if(realJid.empty())
         return VectorMessage();
-    }
+
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/getconsultmsgs.qunar"
@@ -1136,104 +1224,119 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
         << "&u=" << PLAT.getSelfUserId()
         << "&k=" << PLAT.getServerAuthKey()
         << "&d=" << PLAT.getSelfDomain();
-
     std::string strUrl = url.str();
-
     QTalk::Entity::JID jid(userId);
     QTalk::Entity::JID relId(realJid);
-    cJSON *jsonObject = cJSON_CreateObject();
-
-    cJSON_AddStringToObject(jsonObject, "from", PLAT.getSelfUserId().c_str());
-    cJSON_AddStringToObject(jsonObject, "fhost", PLAT.getSelfDomain().c_str());
-    cJSON_AddStringToObject(jsonObject, "to", relId.username().c_str());
-    cJSON_AddStringToObject(jsonObject, "virtual", jid.username().c_str());
-    cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
-    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
-    cJSON_AddNumberToObject(jsonObject, "time", time);
-    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().c_str());
-    cJSON_AddNumberToObject(jsonObject, "num", 20);
-    cJSON_AddStringToObject(jsonObject, "f", "t");
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-
+    nJson obj;
+    obj["from"] = PLAT.getSelfUserId();
+    obj["fhost"] = PLAT.getSelfDomain();
+    obj["to"] = relId.username();
+    obj["virtual"] = jid.username();
+    obj["thost"] = jid.domainname();
+    obj["direction"] = direction.data();
+    obj["time"] = time;
+    obj["domain"] = PLAT.getSelfDomain();
+    obj["num"] = 20;
+    obj["f"] = "t";
+    std::string postData = obj.dump();
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
-        if (code == 200) {
-            cJSON *resData = cJSON_Parse(responseData.c_str());
+    auto callBack = [ userId, &msgList](int code, const std::string & responseData)
+    {
+        if (code == 200)
+        {
+            nJson resData = Json::parse(responseData);
 
-            if (resData == nullptr) {
-                error_log("json paring error"); return;
+            if (resData == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(resData, "ret")->valueint;
-            if (ret) {
+            bool ret = Json::get<bool >(resData, "ret");
+
+            if (ret)
+            {
                 std::string selfJid = PLAT.getSelfUserId();
+                nJson data = Json::get<nJson >(resData, "data");
 
-                cJSON *data = cJSON_GetObjectItem(resData, "data");
-                int size = cJSON_GetArraySize(data);
-
-                for (int index = 0; index < size; index++) {
-                    cJSON *item = cJSON_GetArrayItem(data, index);
-                    std::string from = safeGetJsonStringValue(item, "from");
-                    std::string fromDomain = safeGetJsonStringValue(item, "from_host");
+                for (auto &item : data)
+                {
+                    std::string from = Json::get<std::string>(item, "from");
+                    std::string fromDomain = Json::get<std::string>(item, "from_host");
                     std::string fromJid = from + "@" + fromDomain;
-                    std::string to = safeGetJsonStringValue(item, "to");
-                    std::string toDomain = safeGetJsonStringValue(item, "to_host");
+                    std::string to = Json::get<std::string>(item, "to");
+                    std::string toDomain = Json::get<std::string>(item, "to_host");
                     std::string toJid = to + "@" + toDomain;
-                    int readFlag = safeGetJsonIntValue(item, "read_flag");
+                    int readFlag = Json::get<int>(item, "read_flag");
                     std::string xmppId;
                     std::string realJid;
                     QUInt8 chatType = QTalk::Enum::TwoPersonChat;
-                    if (cJSON_HasObjectItem(item, "body") && cJSON_HasObjectItem(item, "message")) {
-                        cJSON *message = cJSON_GetObjectItem(item, "message");
-                        cJSON *body = cJSON_GetObjectItem(item, "body");
 
-                        std::string type = safeGetJsonStringValue(message, "type");
-                        std::string msgId = safeGetJsonStringValue(body, "id");
+                    if (item.contains("body") && item.contains("message"))
+                    {
+                        nJson message = Json::get<nJson >(item, "message");
+                        nJson body = Json::get<nJson >(item, "body");
+                        std::string type = Json::get<std::string>(message, "type");
+                        std::string msgId = Json::get<std::string>(body, "id");
+
                         //
                         if (msgId.empty()) continue;
 
-                        std::string chatId = safeGetJsonStringValue(message, "qchatid");
-                        if (chatId.empty()) {
-                            chatId = safeGetJsonStringValue(body, "qchatid");
-                        }
-                        QInt64 msec_times = atoll(safeGetJsonStringValue(message, "msec_times").c_str());
-                        std::string msg = safeGetJsonStringValue(body, "content");
-                        std::string channelInfo = safeGetJsonStringValue(message, "channelid");
-                        int platform = safeGetJsonIntValue(body, "maType");
-                        int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
-                        std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
-                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
+                        std::string chatId = Json::get<std::string>(message, "qchatid");
+
+                        if (chatId.empty())
+                            chatId = Json::get<std::string>(body, "qchatid");
+
+                        QInt64 msec_times = atoll(Json::get<std::string>(message, "msec_times").data());
+                        std::string msg = Json::get<std::string>(body, "content");
+                        std::string channelInfo = Json::get<std::string>(message, "channelid");
+                        int platform = atoi(Json::get<std::string>(body, "maType").data());
+                        int msgType = atoi(Json::get<std::string>(body, "msgType").data());
+                        std::string extendInfo = Json::get<std::string>(body, "extendInfo");
+                        std::string backupinfo = Json::get<std::string>(body, "backupinfo");
                         int direction = 0;
-                        if (fromJid == (selfJid + "@" + fromDomain)) {
+
+                        if (fromJid == (selfJid + "@" + fromDomain))
+                        {
                             xmppId = toJid;
-                            if (chatId == "4") {
+
+                            if (chatId == "4")
+                            {
                                 realJid = toJid;
                                 chatType = QTalk::Enum::Consult;
-                            } else {
-                                std::string realTo = safeGetJsonStringValue(message, "realto");
+                            }
+                            else
+                            {
+                                std::string realTo = Json::get<std::string>(message, "realto");
                                 realJid = split(realTo, '/').front();
                                 chatType = QTalk::Enum::ConsultServer;
                             }
+
                             direction = 1;
-                            if (msgType == 1003 || msgType == 1004 || msgType == 1002 || msgType == 1001) {
+
+                            if (msgType == 1003 || msgType == 1004 || msgType == 1002 || msgType == 1001)
                                 continue;
-                            }
-                        } else {
+                        }
+                        else
+                        {
                             direction = 0;
                             xmppId = fromJid;
-                            if (chatId == "4") {
-                                std::string realfrom = safeGetJsonStringValue(message, "realfrom");
+
+                            if (chatId == "4")
+                            {
+                                std::string realfrom = Json::get<std::string>(message, "realfrom");
                                 realJid = split(realfrom, '/').front();
                                 chatType = QTalk::Enum::ConsultServer;
-                            } else {
+                            }
+                            else
+                            {
                                 realJid = fromJid;
                                 chatType = QTalk::Enum::Consult;
                             }
-                            if (msgType == 1004 || msgType == 1003 || msgType == 1002 || msgType == 1001) {
+
+                            if (msgType == 1004 || msgType == 1003 || msgType == 1002 || msgType == 1001)
                                 continue;
-                            }
                         }
 
                         QTalk::Entity::ImMessageInfo msgInfo;
@@ -1256,35 +1359,36 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
                     }
                 }
             }
-            cJSON_Delete(resData);
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
         info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (saveDb && !msgList.empty()) {
+
+        if (saveDb && !msgList.empty())
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
-        }
     }
+
     return msgList;
 }
 
 /**
-  * @函数名   
-  * @功能描述 
+  * @函数名
+  * @功能描述
   * @参数
   * @author   cc
   * @date     2018/12/13
   */
 VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
         const std::string &userId,
-        const std::string& direction,
-        bool saveDb) {
-
+        const std::string &direction,
+        bool saveDb)
+{
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/getmucmsgs.qunar"
@@ -1293,67 +1397,76 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
         << "&u=" << PLAT.getSelfUserId()
         << "&k=" << PLAT.getServerAuthKey()
         << "&d=" << PLAT.getSelfDomain();
-
     std::string strUrl = url.str();
-
     QTalk::Entity::JID jid(userId);
-    cJSON *jsonObject = cJSON_CreateObject();
-
-    cJSON_AddStringToObject(jsonObject, "muc", jid.username().c_str());
-    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
-    cJSON_AddNumberToObject(jsonObject, "num", 20);
-    cJSON_AddNumberToObject(jsonObject, "time", time);
-    cJSON_AddStringToObject(jsonObject, "domain", jid.domainname().c_str());
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
+    nJson obj;
+    obj["muc"] = jid.username();
+    obj["direction"] = direction.data();
+    obj["num"] = 20;
+    obj["time"] = time;
+    obj["domain"] = jid.domainname();
+    std::string postData = obj.dump();
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
-        if (code == 200) {
+    auto callBack = [strUrl, postData, userId, &msgList](int code, const std::string & responseData)
+    {
+        info_log("{0} \n {1} \n{2}", strUrl, postData, responseData);
 
-            cJSON *resdata = cJSON_Parse(responseData.c_str());
+        if (code == 200)
+        {
+            nJson resdata = Json::parse(responseData);
 
-            if (resdata == nullptr) {
-                error_log("json paring error"); return;
+            if (resdata == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(resdata, "ret")->valueint;
-            if (ret) {
-                std::string selfJid = PLAT.getSelfXmppId();
+            int ret = Json::get<nJson >(resdata, "ret");
 
-                cJSON *data = cJSON_GetObjectItem(resdata, "data");
-                int size = cJSON_GetArraySize(data);
-                for (int index = 0; index < size; index++) {
-                    cJSON *item = cJSON_GetArrayItem(data, index);
-                    std::string nickName = safeGetJsonStringValue(item, "nick");
+            if (ret)
+            {
+                std::string selfJid = PLAT.getSelfXmppId();
+                nJson data = Json::get<nJson >(resdata, "data");
+
+                for (auto &item : data)
+                {
+                    std::string nickName = Json::get<std::string>(item, "nick");
                     int chatType = QTalk::Enum::GroupChat;
-                    cJSON *message = cJSON_GetObjectItem(item, "message");
-                    std::string xmppId = safeGetJsonStringValue(message, "to");
-                    if (xmppId.empty()) {
+                    nJson message = Json::get<nJson >(item, "message");
+                    std::string xmppId = Json::get<std::string>(message, "to");
+
+                    if (xmppId.empty())
                         continue;
-                    }
 
                     const std::string &realJid = xmppId;
-                    if (cJSON_HasObjectItem(item, "body")) {
-                        cJSON *body = cJSON_GetObjectItem(item, "body");
-                        std::string msgId = safeGetJsonStringValue(body, "id");
-                        if (msgId.empty()) {
+
+                    if (item.contains("body"))
+                    {
+                        nJson body = Json::get<nJson >(item, "body");
+                        std::string msgId = Json::get<std::string>(body, "id");
+
+                        if (msgId.empty())
                             continue;
-                        }
-                        QInt64 msec_times = atoll(safeGetJsonStringValue(message, "msec_times").c_str());
-                        std::string msg = safeGetJsonStringValue(body, "content");
-                        int platform = safeGetJsonIntValue(body, "maType");
-                        //                    int msgType = safeGetJsonIntValue(body,"msgType");
-                        int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
-                        std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
-                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
-                        std::string realFrom = safeGetJsonStringValue(message, "sendjid");
+
+                        QInt64 msec_times = atoll(Json::get<std::string>(message, "msec_times").data());
+                        std::string msg = Json::get<std::string>(body, "content");
+                        int platform = atoi(Json::get<std::string>(body, "maType").data());
+                        //                    int msgType = Json::get<int>(body,"msgType");
+                        int msgType = atoi(Json::get<std::string>(body, "msgType").data());
+                        std::string extendInfo = Json::get<std::string>(body, "extendInfo");
+                        std::string backupinfo = Json::get<std::string>(body, "backupinfo");
+                        std::string realFrom = Json::get<std::string>(message, "sendjid");
                         int direction = 0;
                         int readState = 0;
-                        if (realFrom == selfJid) {
+
+                        if (realFrom == selfJid)
+                        {
                             direction = 1;
                             readState = 1;//已发送
-                        } else {
+                        }
+                        else
+                        {
                             direction = 0;
                             readState = 3;//未读
                         }
@@ -1375,39 +1488,36 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
                         msgInfo.ReadedTag = readState;
                         msgInfo.LastUpdateTime = msec_times;
                         msgList.push_back(msgInfo);
-
                     }
                 }
-
             }
-            cJSON_Delete(resdata);
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (saveDb && !msgList.empty()) {
+
+        if (saveDb && !msgList.empty())
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
-        }
     }
 
     return msgList;
 }
 
 /**
-  * @函数名   
-  * @功能描述 
+  * @函数名
+  * @功能描述
   * @参数
   * @author   cc
   * @date     2018/12/13
   */
 VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const std::string &userId,
-        const std::string& direction, bool saveDb) {
-
+        const std::string &direction, bool saveDb)
+{
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/get_system_msgs.qunar"
@@ -1416,61 +1526,63 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
         << "&u=" << PLAT.getSelfUserId()
         << "&k=" << PLAT.getServerAuthKey()
         << "&d=" << PLAT.getSelfDomain();
-
     std::string strUrl = url.str();
-
     QTalk::Entity::JID jid(userId);
-    cJSON *jsonObject = cJSON_CreateObject();
-
-    cJSON_AddStringToObject(jsonObject, "from", PLAT.getSelfUserId().c_str());
-    cJSON_AddStringToObject(jsonObject, "fhost", PLAT.getSelfDomain().c_str());
-    cJSON_AddStringToObject(jsonObject, "to", jid.username().c_str());
-    cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
-    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
-    cJSON_AddNumberToObject(jsonObject, "time", time);
-    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().c_str());
-    cJSON_AddNumberToObject(jsonObject, "num", 20);
-    cJSON_AddStringToObject(jsonObject, "f", "t");
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-
+    nJson obj;
+    obj["from"] = PLAT.getSelfUserId();
+    obj["fhost"] = PLAT.getSelfDomain();
+    obj["to"] = jid.username();
+    obj["thost"] = jid.domainname();
+    obj["direction"] = direction.data();
+    obj["time"] = time;
+    obj["domain"] = PLAT.getSelfDomain();
+    obj["num"] = 20;
+    obj["f"] = "t";
+    std::string postData = obj.dump();
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
-        if (code == 200) {
-            cJSON *resData = cJSON_Parse(responseData.c_str());
+    auto callBack = [ userId, &msgList](int code, const std::string & responseData)
+    {
+        if (code == 200)
+        {
+            nJson resData = Json::parse(responseData);
 
-            if (resData == nullptr) {
-                error_log("json paring error"); return;
+            if (resData == nullptr)
+            {
+                error_log("json paring error");
+                return;
             }
 
-            int ret = cJSON_GetObjectItem(resData, "ret")->valueint;
-            if (ret) {
+            int ret = Json::get<nJson >(resData, "ret");
+
+            if (ret)
+            {
                 std::string selfJid = PLAT.getSelfUserId();
+                nJson data = Json::get<nJson >(resData, "data");
 
-                cJSON *data = cJSON_GetObjectItem(resData, "data");
-                int size = cJSON_GetArraySize(data);
-                for (int index = 0; index < size; index++) {
-                    cJSON *item = cJSON_GetArrayItem(data, index);
+                for (auto &item : data)
+                {
                     int chatType = QTalk::Enum::System;
-                    cJSON *message = cJSON_GetObjectItem(item, "message");
+                    nJson message = Json::get<nJson >(item, "message");
                     std::string xmppId = userId;
-                    std::string type = safeGetJsonStringValue(message, "type");
+                    std::string type = Json::get<std::string>(message, "type");
                     const std::string &realJid = xmppId;
-                    if (cJSON_HasObjectItem(item, "body")) {
-                        cJSON *body = cJSON_GetObjectItem(item, "body");
-                        std::string msgId = safeGetJsonStringValue(body, "id");
-                        if (msgId.empty()) {
-                            continue;
-                        }
-                        QInt64 msec_times = atoll(safeGetJsonStringValue(message, "msec_times").c_str());
-                        std::string msg = safeGetJsonStringValue(body, "content");
-                        int platform = safeGetJsonIntValue(body, "maType");
-                        int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
-                        std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
-                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
-                        std::string realFrom = safeGetJsonStringValue(message, "sendjid");
 
+                    if (item.contains("body"))
+                    {
+                        nJson body = Json::get<nJson >(item, "body");
+                        std::string msgId = Json::get<std::string>(body, "id");
+
+                        if (msgId.empty())
+                            continue;
+
+                        QInt64 msec_times = atoll(Json::get<std::string>(message, "msec_times").data());
+                        std::string msg = Json::get<std::string>(body, "content");
+                        int platform = atoi(Json::get<std::string>(body, "maType").data());
+                        int msgType = atoi(Json::get<std::string>(body, "msgType").data());
+                        std::string extendInfo = Json::get<std::string>(body, "extendInfo");
+                        std::string backupinfo = Json::get<std::string>(body, "backupinfo");
+                        std::string realFrom = Json::get<std::string>(message, "sendjid");
                         QTalk::Entity::ImMessageInfo msgInfo;
                         msgInfo.MsgId = msgId;
                         msgInfo.XmppId = xmppId;
@@ -1491,20 +1603,19 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
                     }
                 }
             }
-
-            cJSON_Delete(resData);
         }
     };
 
-    if (_pComm) {
+    if (_pComm)
+    {
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
         info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (saveDb && !msgList.empty()) {
+
+        if (saveDb && !msgList.empty())
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
-        }
     }
 
     return msgList;

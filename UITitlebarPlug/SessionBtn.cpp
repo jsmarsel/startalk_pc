@@ -74,7 +74,7 @@ void SessionBtn::paintEvent(QPaintEvent *e) {
         QFontMetricsF f(font);
         int unWidth = qMax((int)f.width(QString::number(_unreadCount)) + 8, 20);
         QRect unreadRect(rect.x() + 14, rect.y(), unWidth, 14);
-        painter.drawRoundRect(unreadRect, 80, 80);
+        painter.drawRoundedRect(unreadRect, 80, 80, Qt::RelativeSize);
         //
         QPen textpen(Qt::white);
         painter.setFont(font);

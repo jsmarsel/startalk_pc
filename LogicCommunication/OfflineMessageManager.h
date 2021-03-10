@@ -6,7 +6,6 @@
 #include <vector>
 #include "../include/CommonDefine.h"
 #include "../include/im_enum.h"
-#include "../QtUtil/lib/cjson/cJSON.h"
 #include "../entity/IM_Session.h"
 #include "../entity/im_message.h"
 #include "../include/CommonStrcut.h"
@@ -43,11 +42,6 @@ public:
 	        const std::string &realJid, const std::string& direction = "0", bool saveDb = true);
 
 private:
-    //
-    std::string safeGetJsonStringValue(const cJSON *cjson, const char *key);
-    int safeGetJsonIntValue(const cJSON *cjson, const char *key);
-    QInt64 safeGetJsonLongValue(const cJSON *cjson, const char *key);
-
     /**
      * @brief getOfflineChatMessageJson 获取单人离线消息
      * @param chatTimestamp 单人会话记录的最新一条时间

@@ -12,8 +12,8 @@ AtMessageTip::AtMessageTip(ChatMainWgt *chatMainWgt)
     : QFrame(chatMainWgt), _pChatMainWgt(chatMainWgt)
 {
     this->setObjectName("AtMessageTip");
-    _pNameLabel = new QLabel;
-    _pAtLabel = new QLabel;
+    _pNameLabel = new QLabel(this);
+    _pAtLabel = new QLabel(this);
     _pNameLabel->setObjectName("AtMessageTipNameLabel");
     _pAtLabel->setObjectName("AtMessageTipAtLabel");
     auto * layout = new QHBoxLayout(this);

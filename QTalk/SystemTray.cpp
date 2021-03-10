@@ -24,13 +24,7 @@ SystemTray::SystemTray(MainWindow* mainWnd)
 {
     _pSysTrayIcon = new QSystemTrayIcon(this);
 
-#if defined(_STARTALK)
     _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/StarTalk.png"));
-#elif defined(_QCHAT)
-    _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/Qchat.png"));
-#else
-    _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/QTalk.png"));
-#endif
 
     _pSysTrayIcon->show();
     //
@@ -56,9 +50,10 @@ SystemTray::SystemTray(MainWindow* mainWnd)
 #ifndef Q_OS_MAC
     _pSysTrayIcon->setContextMenu(pSysTrayMenu);
 #endif
+#ifndef Q_OS_MAC
     _timer = new QTimer;
     _timer->setInterval(500);
-
+#endif
     //
     connect(_pSysTrayIcon, &QSystemTrayIcon::activated, this, &SystemTray::activeTray);
     connect(_popWnd, &SystemTrayPopWnd::sgQuit, _pMainWindow, &MainWindow::systemQuit, Qt::QueuedConnection);
@@ -67,18 +62,20 @@ SystemTray::SystemTray(MainWindow* mainWnd)
     connect(_popWnd, &SystemTrayPopWnd::sgFeedback, this, &SystemTray::onSendLog);
     connect(_popWnd, &SystemTrayPopWnd::sgCancelAlert, this, &SystemTray::stopTimer);
     connect(_popWnd, &SystemTrayPopWnd::sgStartTimer, [this](){
+#ifndef Q_OS_MAC
         if(!_timer->isActive())
         {
             _timerCount = 0;
             _timer->start();
         }
+#endif
         if(AppSetting::instance().getStrongWarnFlag())
             QApplication::alert(_pMainWindow);
     });
     connect(this, &SystemTray::sgShowUnreadMessage, _popWnd, &SystemTrayPopWnd::onNewMessage);
-
+#ifndef Q_OS_MAC
     connect(_timer, &QTimer::timeout, this, &SystemTray::onTimer);
-
+#endif
 	connect(sysQuitAct, &QAction::triggered, _pMainWindow, &MainWindow::systemQuit, Qt::QueuedConnection);
 	connect(sendLog, &QAction::triggered, this, &SystemTray::onSendLog);
 	connect(showWmdAct, &QAction::triggered, [this]()
@@ -167,19 +164,9 @@ void SystemTray::onTimer() {
 	
     if(_timerCount % 2 == 0)
     {
-#if defined(_STARTALK)
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/StarTalk.png"));
-#else
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/QTalk.png"));
-#endif
     } else {
-#if defined(_STARTALK)
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/starTalkTip.png"));
-#elif defined(_QCHAT)
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/Qchat.png"));
-#else
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/redPoint.png"));
-#endif
+        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/transparent.png"));
     }
 }
 
@@ -191,23 +178,18 @@ void SystemTray::stopTimer() {
         _popWnd->setVisible(false);
         _pMainWindow->wakeUpWindow();
     }
-
+#ifndef Q_OS_MAC
     if(_timer->isActive())
     {
         _timer->stop();
-#if defined(_STARTALK)
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/StarTalk.png"));
-#elif defined(_QCHAT)
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/Qchat.png"));
-#else
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/QTalk.png"));
-#endif
     }
+#endif
 }
 
 void SystemTray::onWndActived()
 {
-//    stopTimer();
+    stopTimer();
 }
 
 /**

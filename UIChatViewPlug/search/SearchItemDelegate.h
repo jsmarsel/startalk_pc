@@ -75,9 +75,7 @@ private:
 
 class FileMessageDelegate : public QStyledItemDelegate
 {
-public:
-    explicit FileMessageDelegate(QWidget * parent = nullptr);
-    ~FileMessageDelegate() override ;
+    using QStyledItemDelegate::QStyledItemDelegate;
 
 protected:
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;

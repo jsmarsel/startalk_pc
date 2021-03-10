@@ -12,7 +12,7 @@
 #include <QClipboard>
 #include <QDesktopServices>
 
-QtMessageBox::QtMessageBox(QWidget* parent, int type, const QString& message, const QString& subMessage, int buttons)
+    QtMessageBox::QtMessageBox(QWidget* parent, int type, const QString& message, const QString& subMessage, int buttons)
     : UShadowDialog(parent, true), _retButton(EM_BUTTON_INVALID)
 {
     setFixedWidth(380);

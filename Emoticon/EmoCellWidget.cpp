@@ -13,7 +13,7 @@ EmoCellWidget::EmoCellWidget(QString emoPath, QString pkgId, QString shortCut, Q
 	setAlignment(Qt::AlignCenter | Qt::AlignHCenter);
     QFileInfo fileInfo(_imagePath);
     if(fileInfo.exists()) {
-        QPixmap img = QTalk::qimage::loadImage(_imagePath, true);
+        QPixmap img = QTalk::qimage::loadImage(_imagePath, false);
         _width = qMin((int)img.height(), (int)img.width());
         _width = qMin(45, _width);
     }

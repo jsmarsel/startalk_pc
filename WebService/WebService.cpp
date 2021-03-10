@@ -197,8 +197,7 @@ void WebService::loadUrl(const QUrl &url, bool showUrl, const MapCookie& cookies
 void WebService::loadUrl(const QUrl &url, const std::string &domain, bool showUrl, const MapCookie &cookies) {
     if (nullptr == _service)
     {
-        static WebService webService;
-        _service = &webService;
+        _service = new WebService;
     }
 
     if(nullptr != _service)
@@ -345,4 +344,11 @@ bool WebService::event(QEvent *e)
         _webView->startReq(req);
     }
     return QDialog::event(e);
+}
+
+
+void WebService::releaseService() {
+    if (_service) {
+        delete _service;
+    }
 }

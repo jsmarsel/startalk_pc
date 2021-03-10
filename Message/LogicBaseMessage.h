@@ -9,6 +9,7 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <functional>
 #include "../EventBus/Event.hpp"
 
 // 收到群成员

@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QStandardItemModel>
 #include <QPen>
+#include <QPainterPath>
 #include "../Platform/Platform.h"
 #include "../UICom/qimage/qimage.h"
 #include "../Platform/dbPlatForm.h"
@@ -32,8 +33,8 @@ using namespace QTalk;
   * @author cc
   * @date 2018.9.27
   */
-QString GenerateTimeText(const QInt64 &time) {
-
+QString GenerateTimeText(const QInt64 &time)
+{
     if(0 == time)
         return "";
 
@@ -41,21 +42,23 @@ QString GenerateTimeText(const QInt64 &time) {
     QDateTime msgTime = QDateTime::fromMSecsSinceEpoch(time);
     int curYear = curTime.date().year();
     int msgYear = msgTime.date().year();
+
     if (curYear > msgYear)
         return msgTime.date().toString("yyyy-MM-dd");
 
     QInt64 curDays = curTime.date().toJulianDay();
     QInt64 msgDays = msgTime.date().toJulianDay();
-    if (curDays - msgDays > 10 * 24) {
+
+    if (curDays - msgDays > 10 * 24)
         return "";
-    }
+
     QString t = curDays > msgDays ? msgTime.date().toString("MM-dd") : msgTime.time().toString("hh:mm");
     std::string tt = t.toStdString();
     return t;
 }
 
-bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const {
-
+bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const
+{
     if (!source_left.isValid() || !source_right.isValid())
         return false;
 
@@ -63,27 +66,69 @@ bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelInde
     bool rightTop = source_right.data(ITEM_DATATYPE_ISTOP).toBool();
     bool leftQ = source_left.data(ITEM_DATATYPE_QQQ).toBool();
     bool rightQ = source_right.data(ITEM_DATATYPE_QQQ).toBool();
-
     bool ret = false;
+
     if(leftTop != rightTop)
         ret = leftTop > rightTop;
     else if(leftQ != rightQ)
         ret = leftQ > rightQ;
     else
         ret = source_left.data(ITEM_DATATYPE_LASTTIME).toLongLong() > source_right.data(ITEM_DATATYPE_LASTTIME).toLongLong();
+
     return ret;
 }
 
-//
-SessionitemDelegate::SessionitemDelegate(QWidget* parent)
-    :QStyledItemDelegate(parent), _pParentWgt(parent)
+bool SessionSortModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
 {
+    QModelIndex index = sourceModel()->index(source_row, 0, source_parent);
+    int role = filterRole();
+    bool res = EM_SELECT_ALL == role;
+//    auto userId = index.data(ITEM_DATATYPE_USERID).toString();
+//    auto name = index.data(ITEM_DATATYPE_USERNAME).toString();
+
+//    if(!res)
+//    {
+//        auto userId = index.data(ITEM_DATATYPE_USERID).toString();
+//        auto selectId = this->property("CURRENT_ID").toString();
+//        res = userId == selectId;
+//    }
+
+    if (!res)
+    {
+        switch (role)
+        {
+            case EM_SELECT_TOP:
+                {
+                    res = index.data(ITEM_DATATYPE_ISTOP).toBool();
+                    break;
+                }
+
+            case EM_SELECT_UNREAD:
+            case EM_SELECT_UNNOTICE:
+                {
+                    int unreadCnt = index.data(ITEM_DATATYPE_UNREADCOUNT).toInt();
+                    bool unNotice = index.data(ITEM_DATATYPE_UNNOTICE).toBool();
+
+                    if(role == EM_SELECT_UNREAD)
+                        res = !unNotice && unreadCnt > 0;
+                    else
+                        res = unNotice;
+
+                    break;
+                }
+
+            default:
+                break;
+        }
+    }
+
+    return res;
 }
 
+//
 QSize SessionitemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    const QSize& size = QStyledItemDelegate::sizeHint(option, index);
-
+    const QSize &size = QStyledItemDelegate::sizeHint(option, index);
     return {size.width(), 66};
 }
 
@@ -91,23 +136,28 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 {
     if(!index.isValid())
         return;
+
     painter->save();
+    bool select = false;
+    {
+        auto userId = index.data(ITEM_DATATYPE_USERID).toString();
+        auto selectId = this->property("CURRENT_ID").toString();
+        select = userId == selectId;
+    }
     painter->setRenderHint(QPainter::TextAntialiasing);       //
     bool isTop = index.data(ITEM_DATATYPE_ISTOP).toBool();
     bool unNotice = index.data(ITEM_DATATYPE_UNNOTICE).toBool();
     // 背景色
     QRect rect = option.rect;
-    bool select = option.state & QStyle::State_Selected;
+
     if (select)
-    {
         painter->fillRect(rect, StyleDefine::instance().getNavSelectColor());
-    }
     else
     {
         painter->fillRect(rect, isTop ? StyleDefine::instance().getNavTopColor() :
-                                StyleDefine::instance().getNavNormalColor());
-
+                          StyleDefine::instance().getNavNormalColor());
     }
+
     if(isTop)
     {
         QPainterPath path;
@@ -122,39 +172,23 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     QString content = index.data(ITEM_DATATYPE_MESSAGECONTENT).toString();
     qint64 time = index.data(ITEM_DATATYPE_LASTTIME).toLongLong();
     QString strTime = GenerateTimeText(time);
-    QString realJid = index.data(ITEM_DATATYPE_REALJID).toString();
     QString draft = index.data(ITEM_DATATYPE_DRAFT).toString();
     bool q = index.data(ITEM_DATATYPE_QQQ).toBool();
-
     int chattype = index.data(ITEM_DATATYPE_CHATTYPE).toInt();
-    if(chattype == QTalk::Enum::ConsultServer && !realJid.isNull()){//自己是客服 需要拼接显示name
-        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo  =
-                DB_PLAT.getUserInfo(realJid.toStdString());
-        if(userInfo != nullptr){
-            strName = QString("咨询: %1").arg(QTalk::getUserName(userInfo).data());
-        } else{
-            std::string remark = DB_PLAT.getMaskName(realJid.toStdString());
-            if(remark.empty()){
-                strName = QString("咨询: %1").arg(realJid.section("@", 0, 0));
-            } else{
-                strName = QString("咨询: %1").arg(remark.data());
-            }
-        }
-    }
     //
     strName.replace("\n", " ");
     strName = strName.trimmed().replace(QRegExp("\\s{1,}"), " ");
-
     bool isOnline = index.data(ITEM_DATATYPE_ISONLINE).toBool();
     int dpi = QTalk::qimage::dpi();
     int unreadCount = index.data(ITEM_DATATYPE_UNREADCOUNT).toInt();;
     QString strUnreadCount = QString::number(unreadCount);
+
     if(unreadCount > 99) strUnreadCount = "99+";
+
     //
     int atCount = index.data(ITEM_DATATYPE_ATCOUNT).toInt();
     int fontLevel = AppSetting::instance().getFontLevel();
     //
-
     QTalk::setPainterFont(painter, fontLevel, 14);
     QFontMetricsF nameF(painter->font());
     double maxNameWidth = rect.width() - 80 - nameF.width(strTime);
@@ -163,51 +197,49 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     painter->save();
     // 名称
     painter->setPen(QPen(select ? StyleDefine::instance().getNavNameSelectFontColor() : StyleDefine::instance().getNavNameFontColor()));
-    QRectF textRect(rect.x() + 70, rect.y(), (int)maxNameWidth, rect.height()/2);
+    QRectF textRect(rect.x() + 70, rect.y(), (int)maxNameWidth, rect.height() / 2);
     painter->drawText(textRect, Qt::AlignBottom, strName);
     //
     qreal atMsgWidth = 0;
+
     // 消息免打扰
     if(unNotice)
     {
-        painter->setRenderHints(QPainter::Antialiasing,true);
+        painter->setRenderHints(QPainter::Antialiasing, true);
         QPixmap pixmap = QTalk::qimage::loadImage(":/UINavigationPlug/image1/noNotice.png", true, true,
-                                                             HEAD_WIDTH * dpi);
-        QRect unNoticeRect(rect.right() - 35, rect.y() + rect.height()/2 + 6, 16, 16);
+                         HEAD_WIDTH * dpi);
+        QRect unNoticeRect(rect.right() - 35, rect.y() + rect.height() / 2 + 6, 16, 16);
         painter->drawPixmap(unNoticeRect, pixmap);
 
         if(unreadCount > 0)
-        {
             content = QString("[%1条] %2").arg(unreadCount).arg(content);
-        }
     }
 
     // 最近消息内容
     QTalk::setPainterFont(painter, fontLevel, 12);
     QFontMetricsF contentF(painter->font());
-    if(!draft.isEmpty()) {
 
+    if(!draft.isEmpty())
+    {
         painter->setPen(QPen(StyleDefine::instance().getNavAtFontColor()));
         qreal draftTipWidth = contentF.width(DRAFT_TIP) + 1;
         QRectF tipRect(rect.x() + 65, rect.y() + rect.height() / 2 + 7, draftTipWidth, contentF.height() + 5);
         painter->drawText(tipRect, Qt::AlignTop, DRAFT_TIP);
-
         painter->setPen(QPen(StyleDefine::instance().getNavContentFontColor()));
         qreal contentWidth = rect.width() - 80 - draftTipWidth - 20;
         content = contentF.elidedText(content, Qt::ElideRight, contentWidth);
-        QRectF contentRect(rect.x() + 65 + draftTipWidth, rect.y() + rect.height()/2 + 7,
-                           contentWidth + 5 , contentF.height() + 5);
+        QRectF contentRect(rect.x() + 65 + draftTipWidth, rect.y() + rect.height() / 2 + 7,
+                           contentWidth + 5, contentF.height() + 5);
         painter->drawText(contentRect, Qt::AlignTop, QString("%1").arg(draft));
     }
-    else {
-        if(q) {
+    else
+    {
+        if(q)
             painter->fillRect(rect.x(), rect.y(), 6, rect.height(), QColor(255, 0, 0, 150));
-        }
 
         if (unreadCount > 0 && atCount > 0)
         {
             QString strAtCount = (bool) (atCount & 0xF0) ? AT_TEXT_SELF : AT_TEXT_ALL;
-
             atMsgWidth = contentF.width(strAtCount) + 2;
             painter->setPen(QPen(StyleDefine::instance().getNavAtFontColor()));
             QRectF atRect(rect.x() + 65, rect.y() + rect.height() / 2 + 7, atMsgWidth, contentF.height() + 5);
@@ -217,8 +249,8 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         painter->setPen(QPen(select ? StyleDefine::instance().getNavContentSelectFontColor() : StyleDefine::instance().getNavContentFontColor()));
         qreal contentWidth = rect.width() - 80 - atMsgWidth - 20;
         content = contentF.elidedText(content, Qt::ElideRight, contentWidth);
-        QRectF contentRect(rect.x() + 70 + atMsgWidth, rect.y() + rect.height()/2 + 7,
-                           contentWidth + 5 , contentF.height() + 5);
+        QRectF contentRect(rect.x() + 70 + atMsgWidth, rect.y() + rect.height() / 2 + 7,
+                           contentWidth + 5, contentF.height() + 5);
         painter->drawText(contentRect, Qt::AlignTop, content);
     }
 
@@ -226,18 +258,19 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     painter->setPen(QPen(select ? StyleDefine::instance().getNavTimeSelectFontColor() : StyleDefine::instance().getNavTimeFontColor()));
     QTalk::setPainterFont(painter, fontLevel, 11);
     painter->drawText(QRect(rect.x() + 65, rect.y() + 20, rect.width() - 70, rect.height())
-            , Qt::AlignRight, strTime);
+                      , Qt::AlignRight, strTime);
     // 头像
-    painter->setRenderHints(QPainter::Antialiasing,true);
+    painter->setRenderHints(QPainter::Antialiasing, true);
     QPixmap pixmap;
     QFileInfo headFileInfo(headPath);
-    if(headFileInfo.exists() && headFileInfo.suffix().toLower() == "gif") {
+
+    if(headFileInfo.exists() && headFileInfo.suffix().toLower() == "gif")
+    {
         headPath = QTalk::qimage::getGifImagePathNoMark(headPath);
         pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
     }
-    else {
+    else
         pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
-    }
 
     if(pixmap.isNull())
     {
@@ -257,12 +290,13 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
             headPath = ":/QTalk/image1/headPortrait.png";
 #endif
         }
+
         pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
     }
+
     if(!isOnline)
-    {
         pixmap = QTalk::qimage::generateGreyPixmap(pixmap);
-    }
+
     {
         QPainterPath path;
         QRect headRect(rect.x() + 20, rect.y() + 12, HEAD_WIDTH, HEAD_WIDTH);
@@ -274,12 +308,13 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         int w = pixmap.width() / dpi;
         int h = pixmap.height() / dpi;
         painter->drawPixmap((HEAD_WIDTH - w) / 2 + headRect.x(),
-                (HEAD_WIDTH - h) / 2 + headRect.y(), w, h, pixmap);
+                            (HEAD_WIDTH - h) / 2 + headRect.y(), w, h, pixmap);
         //
         painter->fillPath(path, QTalk::StyleDefine::instance().getHeadPhotoMaskColor());
     }
     painter->restore();
     painter->save();
+
     // 未读消息提示
     if(unreadCount > 0)
     {
@@ -290,18 +325,19 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
         if(unNotice)
         {
-            QRect unreadRect(rect.right() - 17, rect.y() + rect.height()/2 + 10, 8, 8);
+            QRect unreadRect(rect.right() - 17, rect.y() + rect.height() / 2 + 10, 8, 8);
             painter->drawRoundRect(unreadRect, 99, 99);
         }
         else
         {
-            QRect unreadRect(rect.right() - 32, rect.y() + rect.height()/2 + 6, 20, 13);
+            QRect unreadRect(rect.right() - 32, rect.y() + rect.height() / 2 + 6, 20, 13);
             painter->drawRoundRect(unreadRect, 80, 90);
             painter->setPen(QPen(StyleDefine::instance().getNavUnReadFontColor()));
             QTalk::setPainterFont(painter, fontLevel, 10);
             painter->drawText(unreadRect,  Qt::AlignCenter, strUnreadCount);
         }
     }
+
     //
     painter->restore();
 }

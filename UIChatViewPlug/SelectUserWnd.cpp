@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QEvent>
+#include <QPainterPath>
 #include "../include/Line.h"
 #include "ChatViewMainPanel.h"
 #include "../Platform/Platform.h"
@@ -112,7 +113,7 @@ SelectUserWndDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     if(!QFile(headPath).isOpen())
     {
         int dpi = QTalk::qimage::dpi();
-        QPixmap pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
+        QPixmap pixmap = QTalk::qimage::loadImage(headPath, false, true, HEAD_WIDTH * dpi);
         QPainterPath path;
         QRect headRect(rect.x() + 13, rect.y() + 8, HEAD_WIDTH, HEAD_WIDTH);
         path.addEllipse(headRect);
@@ -207,6 +208,9 @@ void SelectUserWnd::initUi()
     ContactsBtn->setCheckable(true);
     groupChatBtn->setCheckable(true);
     recentBtn->setChecked(true);
+    ContactsBtn->setFocusPolicy(Qt::NoFocus);
+    groupChatBtn->setFocusPolicy(Qt::NoFocus);
+    recentBtn->setFocusPolicy(Qt::NoFocus);
     _pBtnGroup = new QButtonGroup(this);
     _pBtnGroup->addButton(recentBtn, 0);
     _pBtnGroup->addButton(ContactsBtn, 1);
@@ -248,7 +252,7 @@ void SelectUserWnd::initUi()
     lay->setSpacing(0);
     lay->addWidget(titleFrm, 0);
     lay->addWidget(searchFrm, 0);
-    lay->addWidget(new Line(), 0);
+    lay->addWidget(new Line(this), 0);
     lay->addWidget(btnFrm, 0);
     lay->addWidget(bodyFrm, 1);
     lay->addWidget(bottomFrm, 0);

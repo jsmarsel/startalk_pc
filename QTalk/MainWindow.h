@@ -11,16 +11,18 @@
 #include <QWidget>
 #include <QSystemTrayIcon>
 #include <QMutexLocker>
-#include "../CustomUi/UShadowWnd.h"
-#include "../QtUtil/lib/ini/ConfigLoader.h"
 #include "HotKey/qhotkey.h"
-#include "../include/CommonStrcut.h"
-#include "../include/STLazyQueue.h"
 #include "NoOperationThread.h"
 #include "LocalServer.h"
-#include "../UICom/UIEntity.h"
 #include <QStackedLayout>
+#include <QtQuick/QtQuick>
+#include "../CustomUi/UShadowWnd.h"
+#include "../QtUtil/lib/ini/ConfigLoader.h"
+#include "../include/CommonStrcut.h"
+#include "../include/STLazyQueue.h"
+#include "../UICom/UIEntity.h"
 #include "ProcessInfo.h"
+#include "qml/QmlView.h"
 
 #ifdef _MACOS
 #include <QMacNativeWidget>
@@ -58,7 +60,7 @@ public:
     void initSystemTray();
     //
     void checkUpdater();
-    void onCheckUpdater(bool hasUpdate, bool force);
+    void onCheckUpdater(bool hasUpdate, const QString& link, bool force);
     void onGetHistoryError();
     QWidget* getActiveWnd();
     //
@@ -71,7 +73,7 @@ public:
 
 Q_SIGNALS:
 	void LoginSuccess(bool);
-	void sgCheckUpdate(bool, bool);
+	void sgCheckUpdate(bool, const QString&, bool);
 	void systemQuitSignal();
 	void appDeactivated();
 	void systemShortCut();
@@ -81,6 +83,7 @@ Q_SIGNALS:
 	void sgRestartWithMessage(const QString&);
     void sgJumtoSession(const StSessionInfo&);
     void sgSystemQuit();
+    void sgShowUpdateClientLabel(bool);
 
 public slots:
 	void InitLogin(bool, const QString& loginMsg);
@@ -103,10 +106,13 @@ private slots:
     void onUserSendMessage();
     void restartWithMessage(const QString& msg);
     void onScreenRemoved(QScreen *screen);
-
-#ifdef _MACOS
+//    void onUpdateClient();
+#ifdef Q_OS_MAC
     void onShowMinWnd();
 #endif
+    void onHourTimer();
+    void onShowCheckUpdateWnd();
+
     // QWidget interface
 protected:
 	void closeEvent(QCloseEvent *e) override;
@@ -118,6 +124,8 @@ protected:
 
 private:
     void init();
+    // qml
+    void initQml();
     void initPanels();
     void initLayouts();
     void initTitleBar();
@@ -155,7 +163,6 @@ private:
 	IUIAddressBookPlug *_pAddressBookPlug{};
 	IUIOAManagerPlug *_pOAManagerPlug{};
     QFrame * _mainFrm{};
-    QFrame * _mainBottomFrm{};
     QWidget  *_titleBar{};
     QWidget  *_navigationPanel{};
     QWidget  *_chatViewPanel{};
@@ -215,5 +222,8 @@ private:
 
 private:
     ProcessInfo* _prcessInfo{};
+
+private:
+    QmlView* _pView;
 };
 #endif // MAINWINDOW_H

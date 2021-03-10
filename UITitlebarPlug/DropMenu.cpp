@@ -20,7 +20,14 @@ DropMenu::DropMenu(QWidget *parent)
     initUi();
 }
 
-DropMenu::~DropMenu() = default;
+DropMenu::~DropMenu() {
+    delete _pUserCardLabel ;
+    delete _pSettingLabel ;
+    delete _pLogoutLabel ;
+    delete _pSysQuitLabel ;
+    delete _pUpdateClient ;
+    delete _pAboutLabel ;
+}
 
 void DropMenu::initUi()
 {
@@ -71,6 +78,7 @@ void DropMenu::initUi()
     _pSettingLabel = new ActionLabel(tr("系统设置"));
     _pLogoutLabel = new ActionLabel(tr("退出登录"));
     _pSysQuitLabel = new ActionLabel(tr("系统退出"));
+    _pUpdateClient = new ActionLabel(tr("检查更新"));
     _pAboutLabel = new ActionLabel(tr("关于"));
 
     auto* mainFrm = new QFrame(this);
@@ -79,13 +87,19 @@ void DropMenu::initUi()
     lay->setSpacing(2);
     lay->setContentsMargins(0, 10, 0, 10);
     lay->addLayout(topLay);
-    lay->addWidget(new Line);
+    lay->addWidget(new Line(this));
     lay->addWidget(_pUserCardLabel);
     lay->addWidget(_pSettingLabel);
-    lay->addWidget(new Line);
+    lay->addWidget(new Line(this));
+#ifdef Q_OS_LINUX
+    _pUpdateClient->setVisible(false);
+#else
+    lay->addWidget(_pUpdateClient);
+    lay->addWidget(new Line(this));
+#endif
     lay->addWidget(_pLogoutLabel);
     lay->addWidget(_pSysQuitLabel);
-    lay->addWidget(new Line);
+    lay->addWidget(new Line(this));
     lay->addWidget(_pAboutLabel);
     //
     auto* mainLay = new QVBoxLayout(_pCenternWgt);
@@ -115,6 +129,9 @@ void DropMenu::initUi()
     connect(actOnline, &QAction::triggered, this, &DropMenu::switchUserStatus);
     connect(actBusy, &QAction::triggered, this, &DropMenu::switchUserStatus);
     connect(actAway, &QAction::triggered, this, &DropMenu::switchUserStatus);
+    //
+    connect(_pUpdateClient, &ActionLabel::clicked, this, &DropMenu::sgDoUpdateClient);
+    connect(_pUpdateClient, &ActionLabel::clicked, [this](){setVisible(false);});
 }
 
 void DropMenu::restartApp() {
@@ -157,5 +174,11 @@ void DropMenu::onSwitchUserStatusRet(const QString& status)
             comboBox->setText(act->text());
             break;
         }
+    }
+}
+
+void DropMenu::setTipVisible(bool visible) {
+    if(_pUpdateClient) {
+        _pUpdateClient->setTip(visible);
     }
 }

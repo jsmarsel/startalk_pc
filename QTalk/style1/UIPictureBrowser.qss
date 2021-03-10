@@ -113,6 +113,14 @@ QToolButton#One2OneBtn:disabled {
 QToolButton#RotateBtn:disabled {
     border-image: url(":/PictureBrowser/image1/rotate_disable.png");
 }
-ToolButton#SaveAsBtn:disabled {
+QToolButton#SaveAsBtn:disabled {
     border-image: url(":/PictureBrowser/image1/saveAs_disable.png");
+}
+
+QToolButton#DingBtn {
+    border-image: url(":/PictureBrowser/image1/ding_normal.svg");
+}
+
+QToolButton#DingBtn:checked {
+    border-image: url(":/PictureBrowser/image1/ding.svg");
 }

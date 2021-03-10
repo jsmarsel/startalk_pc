@@ -10,8 +10,6 @@ find_package(Qt5Xml)
 
 #
 set(SOURCE_FILES
-        Config/configobject.h
-        Config/configobject.cpp
         qconfig/qconfig.cpp
         qconfig/qconfig.h
         uicom_global.h

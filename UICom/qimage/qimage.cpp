@@ -11,6 +11,7 @@
 #include <QImageReader>
 #include <QBuffer>
 #include <QDebug>
+#include <QPainterPath>
 #include "../../QtUtil/Utils/utils.h"
 #include "../../QtUtil/Utils/Log.h"
 

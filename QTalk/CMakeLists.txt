@@ -6,10 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5 COMPONENTS Core REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5Network)
-find_package(Qt5Concurrent)
+find_package(Qt5 COMPONENTS Core Widgets Gui Qml Quick QuickWidgets Network Concurrent QuickControls2 REQUIRED)
 include_directories(../breakpad)
 
 if (APPLE)
@@ -18,7 +15,7 @@ if (APPLE)
             HotKey/qhotkey_mac.cpp
             MacApp.h
             MacApp.mm)
-    link_libraries(/System/Library/Frameworks/Carbon.framework/Carbon)
+    link_libraries("-framework Carbon")
     link_libraries("-framework AppKit")
     link_libraries("-framework AVFoundation")
 
@@ -71,7 +68,12 @@ set(SOURCE_FILES
         SystemTrayPopWnd.cpp 
         SystemTrayPopWnd.h
         ProcessInfo.h
-        ProcessInfo.cpp)
+        ProcessInfo.cpp
+        qml/qml.qrc
+        qml/QmlView.cpp
+        qml/QmlView.h
+        qml/PkgDownload.cpp
+        qml/PkgDownload.h)
 
 set(EXECUTABLE_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")
@@ -87,38 +89,30 @@ IF (WIN32)
     SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:windows")
     SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:windows")
 ENDIF (WIN32)
-#添加链接库
-if (WIN32)
+
     target_link_libraries(${PROJECT_NAME}
             Qt5::Core
             Qt5::Widgets
             Qt5::Network
             Qt5::Concurrent
-            CustomUi
-            QtUtil
-            EventBus
-            libcurl
-            Platform
-            LogicManager
-            SUICom
-            quazip
-            breakpad
-            )
-else ()
-    target_link_libraries(${PROJECT_NAME}
-            Qt5::Core
-            Qt5::Widgets
-            Qt5::Network
-            Qt5::Concurrent
+            Qt5::Qml
+            Qt5::Quick
+            Qt5::QuickWidgets
+            Qt5::QuickControls2
             CustomUi
             QtUtil
             EventBus
             Platform
             LogicManager
             SUICom
-            pthread
             quazip
             breakpad)
+
+#添加链接库
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} libcurl)
+else ()
+    target_link_libraries(${PROJECT_NAME} pthread)
 endif ()
 
 

@@ -55,6 +55,13 @@ namespace QTalk {
             setProcessCallback(const std::string& key,
                     std::function<void(StProcessParam)> fun) = 0;
 
+            /**
+             * @param speed 下载速度 单位kb
+             */
+            virtual void setDownloadSpeed(int speed) = 0;
+
+            virtual void enableProxy() = 0;
+
         protected:
             std::string _originUrl;
         };

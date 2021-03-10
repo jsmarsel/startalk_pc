@@ -133,7 +133,7 @@ void GroupCard::initUi()
     bodyLay->addWidget(new QLabel(tr("群ID")), 1, 0, Qt::AlignTop);
     bodyLay->addWidget(_pGroupIdEdit, 1, 1, 1, 3);
     // line
-    bodyLay->addWidget(new Line, 2, 0, 1, 4);
+    bodyLay->addWidget(new Line(this), 2, 0, 1, 4);
     // row 3
     _modGroupTopic = new ModButton(this);
     bodyLay->addWidget(new QLabel(tr("群公告")), 3, 0);
@@ -144,17 +144,17 @@ void GroupCard::initUi()
 	_pGroupTopicEdit->setObjectName("GroupTopicEdit");
     bodyLay->addWidget(_pGroupTopicEdit, 4, 0, 1, 4);
     // row 5
-    bodyLay->addWidget(new Line, 5, 0, 1, 4);
+    bodyLay->addWidget(new Line(this), 5, 0, 1, 4);
     // row 6
     QLabel *memberLabel = new QLabel(tr("群成员"));
-    _pGroupMemberLabel = new QLabel;
+    _pGroupMemberLabel = new QLabel(this);
     LinkButton* showMemberBtn = new LinkButton(tr("查看"));
     bodyLay->addWidget(memberLabel, 6, 0);
     bodyLay->addWidget(_pGroupMemberLabel, 6, 1);
     bodyLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding), 6, 2);
     bodyLay->addWidget(showMemberBtn, 6, 3);
     // row 7
-    bodyLay->addWidget(new Line, 7, 0, 1, 4);
+    bodyLay->addWidget(new Line(this), 7, 0, 1, 4);
     // row 8
     _modGroupJJ = new ModButton(this);
     bodyLay->addWidget(new QLabel(tr("群简介")), 8, 0);
@@ -271,18 +271,7 @@ void GroupCard::initUi()
         }
     });
 
-    connect(_pDestroyGroupBtn, &QPushButton::clicked, [this](){
-        int ret = QtMessageBox::warning(this, tr("警告"), tr("群即将被销毁, 是否继续?"), QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
-        if(ret == QtMessageBox::EM_BUTTON_YES)
-        {
-            if(_pCardManager)
-            {
-                _pCardManager->destroyGroup(_strGroupId);
-                _moded = false;
-                this->close();
-            }
-        }
-    });
+    connect(_pDestroyGroupBtn, &QPushButton::clicked, this, &GroupCard::onDestroyGroupGroupCard);
     connect(_pSendMailBtn, &QPushButton::clicked, this, &GroupCard::onSendMail);
 }
 
@@ -521,4 +510,18 @@ void GroupCard::onSendMail() {
         QDesktopServices::openUrl(QUrl(mailUrl));
     }
     this->close();
+}
+
+
+void GroupCard::onDestroyGroupGroupCard() {
+	int ret = QtMessageBox::warning(this, tr("警告"), tr("群即将被销毁, 是否继续?"), QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
+	if(ret == QtMessageBox::EM_BUTTON_YES)
+	{
+		if(_pCardManager)
+		{
+			_pCardManager->destroyGroup(_strGroupId);
+			_moded = false;
+			this->close();
+		}
+	}
 }

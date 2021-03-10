@@ -46,23 +46,15 @@ void AboutWnd::initUi()
     //
     QFrame* mainFrm = new QFrame(this);
 
-#if defined(_STARTALK)
     mainFrm->setObjectName("AboutMainFrm");
     this->setStyleSheet("background:url(:/title/image1/aboutStarTalk.png);");
-#elif defined(_QCHAT)
-    mainFrm->setObjectName("AboutMainFrm");
-    this->setStyleSheet("background:url(:/title/image1/aboutQchat.png);");
-#else
-    mainFrm->setObjectName("AboutMainFrm");
-    mainFrm->setStyleSheet("background:url(:/title/image1/aboutQtalk.png);");
-#endif
     auto * mainLay = new QVBoxLayout(mainFrm);
     mainLay->setContentsMargins(0, 0, 0, 20);
     //
     std::string version = PLAT.getGlobalVersion();
     std::string build = PLAT.get_build_date_time();
     _pVersionLabel = new QLabel(QString("Version: (%1)").arg(version.data()), this);
-    _pCopyrightLabel = new QLabel(" Copyright ©2017 Qunar.com", this);
+    _pCopyrightLabel = new QLabel(" Copyright ©2021 StarTalk.com", this);
     _pBuildDateTimeLabel = new QLabel(QString("build At: %1").arg(build.data()), this);
     _pVersionLabel->setObjectName("AboutVersionLabel");
     _pBuildDateTimeLabel->setObjectName("AboutVersionLabel");
@@ -78,7 +70,7 @@ void AboutWnd::initUi()
     auto* lay = new QVBoxLayout(_pCenternWgt);
     lay->setMargin(0);
     lay->addWidget(mainFrm);
-
+	_pCopyrightLabel->setVisible(false);
     connect(closeBtn, &QToolButton::clicked, [this](){this->setVisible(false);});
 }
 

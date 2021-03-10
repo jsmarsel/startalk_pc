@@ -99,7 +99,8 @@ static CURL *innerInit(const char *url, long timeout, std::ostringstream *readBu
     curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 0L);
 	// 301跳转
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-
+    //
+    curl_easy_setopt(curl, CURLOPT_NOPROXY, "*");
     return curl;
 }
 
@@ -276,3 +277,16 @@ void QTalk::QtHttpRequest::setProcessCallback(const std::string& key,
     }
 }
 
+void QtHttpRequest::setDownloadSpeed(int speed) {
+    CURL *curl = _httpCore;
+
+    if (curl != nullptr) {
+        curl_easy_setopt (curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t) speed * 1024);
+    }
+}
+
+
+void QtHttpRequest::enableProxy() {
+    CURL *curl = _httpCore;
+    curl_easy_setopt(curl, CURLOPT_NOPROXY, "");
+}

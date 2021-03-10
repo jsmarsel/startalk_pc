@@ -37,6 +37,29 @@
 #include <QFontDatabase>
 #include <QDebug>
 #include <QSettings>
+#include <QPainter>
+#include <QFontMetrics>
+
+void ComboBoxDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+//    QStyledItemDelegate::paint(painter, option, index);
+
+    painter->save();
+    painter->setRenderHint(QPainter::TextAntialiasing);
+
+    QRect rect = option.rect;
+
+    auto text = index.data(Qt::DisplayRole).toString();
+    painter->setFont(QFont(text));
+    painter->drawText(rect, tr("%1( 中国 China 0123 )").arg(text));
+    painter->restore();
+    painter->drawLine(rect.x(), rect.y(), rect.width(), rect.y());
+}
+
+QSize ComboBoxDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const  {
+    auto text = index.data(Qt::DisplayRole).toString();
+    QFontMetrics fm((QFont(text)));
+    return {200, fm.height() + 8};
+}
 
 SystemSettingWnd::SystemSettingWnd(QWidget *parent)
         : UShadowDialog(parent, true){
@@ -196,15 +219,6 @@ void SystemSettingWnd::initSetting(int type)
             initFeedback(vlayout);
             break;
         }
-#ifdef _QCHAT
-        case EM_SETTING_SEAT:
-        {
-            text = tr("服务状态");
-            objName = "seatInfoLbl";
-            initSeat(vlayout);
-            break;
-        }
-#endif
         default:
             return;
     }
@@ -413,11 +427,11 @@ void SystemSettingWnd::initSession(QVBoxLayout* vlayout) {
     sendMessageLabel->setFixedWidth(100);
     //
     auto *showMood = new SettingCheckBox(tr("群会话显示签名"), AppSetting::instance().getShowMoodFlag(), this);
-    auto *autoDeleteSession = new SettingCheckBox(tr("切换会话时自动销毁旧会话"), AppSetting::instance().getAutoDeleteSession(), this);
+//    auto *autoDeleteSession = new SettingCheckBox(tr("切换会话时自动销毁旧会话"), AppSetting::instance().getAutoDeleteSession(), this);
     //
     vlayout->addLayout(sendMessageLay);
     vlayout->addWidget(showMood);
-    vlayout->addWidget(autoDeleteSession);
+//    vlayout->addWidget(autoDeleteSession);
     showMood->setVisible(false);
     vlayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
     vlayout->addWidget(new Line(Qt::Horizontal, this));
@@ -435,11 +449,11 @@ void SystemSettingWnd::initSession(QVBoxLayout* vlayout) {
         bool isOk = state==Qt::Checked;
         AppSetting::instance().setShowMoodFlag(isOk);
     });
-
-    connect(autoDeleteSession, &QCheckBox::stateChanged,[](int state){
-        bool isOk = state==Qt::Checked;
-        AppSetting::instance().setAutoDeleteSession(isOk);
-    });
+//
+//    connect(autoDeleteSession, &QCheckBox::stateChanged,[](int state){
+//        bool isOk = state==Qt::Checked;
+//        AppSetting::instance().setAutoDeleteSession(isOk);
+//    });
 }
 
 /**
@@ -844,6 +858,7 @@ void SystemSettingWnd::initFontSetting(QVBoxLayout* vlayout) {
     auto* fontLabel = new QLabel(tr("字体选择"), this);
     auto* fontCombox = new NoSlidingHandoverComboBox(this);
     fontCombox->addItems(families);
+//    fontCombox->setItemDelegate(new ComboBoxDelegate);
     //
     std::string sysFont = AppSetting::instance().getFont();
     if(sysFont.empty())
@@ -960,7 +975,7 @@ void SystemSettingWnd::initOtherSetting(QVBoxLayout* vlayout) {
     auto *showSendMessageWnd = new SettingCheckBox(tr("显示发送按钮"), AppSetting::instance().getShowSendMessageBtnFlag(), this);
     vlayout->addWidget(showSendMessageWnd);
 
-    auto *testChannel = new SettingCheckBox(tr("内测通道"), AppSetting::instance().getTestchannel() - 1, this);
+    auto *testChannel = new SettingCheckBox(tr("加入内测"), AppSetting::instance().getTestchannel() - 1, this);
     vlayout->addWidget(testChannel);
 
 //    auto *logLevel = new SettingCheckBox(tr("记录INFO日志"), false, this);
@@ -1073,17 +1088,9 @@ void SystemSettingWnd::initVersionInfo(QVBoxLayout* vlayout) {
         std::string build_time = PLAT.get_build_date_time();
         build_time_label->setText(QString("build at: %1").arg(build_time.data()));
 
-        auto *checkUpdateBtn = new QPushButton(tr("检查更新"));
-        checkUpdateBtn->setFixedSize(80,30);
-        checkUpdateBtn->setObjectName("SettingBtn");
-        versionLay->addWidget(checkUpdateBtn);
-
-        versionLay->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding));
-        checkUpdateBtn->setVisible(false);
-        connect(checkUpdateBtn, &QPushButton::clicked, this, &SystemSettingWnd::sgCheckUpdate);
     }
 
-    QLabel *repairLbl = new QLabel(tr("便捷维护:"), this);
+    auto *repairLbl = new QLabel(tr("便捷维护:"), this);
     vlayout->addWidget(repairLbl);
 
     { // 便捷维护
@@ -1157,54 +1164,6 @@ void SystemSettingWnd::initFeedback(QVBoxLayout* vlayout) {
 
 
     vlayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Fixed, QSizePolicy::Expanding));
-}
-
-void SystemSettingWnd::initSeat(QVBoxLayout *vlayout) {
-//    QFrame *seatFrame = new QFrame(this);
-//    vlayout->addWidget(seatFrame);
-//
-//    auto *vSeatLay = new QVBoxLayout(seatFrame);
-//    vSeatLay->setMargin(0);
-
-    std::string seats = PLAT.getSeats();
-    if(!seats.empty()){
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(seats.data());
-        if (!jsonDocument.isNull()){
-            QJsonObject jsonObject = jsonDocument.object();
-            QJsonArray datas = jsonObject.value("data").toArray();
-            for(int i = 0;i<datas.size();i++){
-                QJsonObject seat = datas.at(i).toObject();
-
-                auto* title = new QLabel(this);
-                title->setText(tr("店铺名：") + seat.value("sname").toString());
-
-                vlayout->addWidget(title);
-
-                int sid = seat.value("sid").toInt() * 10;
-
-                auto* group = new QButtonGroup(vlayout);
-                auto* radioButton1 = new SettingCheckBox(tr("标准模式 (在线时才接收咨询，默认)"));
-                auto* radioButton2 = new SettingCheckBox(tr("超人模式 (不在线也接受咨询)"));
-                auto* radioButton3 = new SettingCheckBox(tr("勿扰模式 (在线也不接收咨询)"));
-                group->addButton(radioButton1,sid + 0);
-                group->addButton(radioButton2,sid + 4);
-                group->addButton(radioButton3,sid + 1);
-                vlayout->addWidget(radioButton1);
-                vlayout->addWidget(radioButton2);
-                vlayout->addWidget(radioButton3);
-
-                int st = seat.value("st").toInt(0);
-                if(st == 4){
-                    radioButton2->setChecked(true);
-                } else if(st == 1){
-                    radioButton3->setChecked(true);
-                } else{
-                    radioButton1->setChecked(true);
-                }
-                connect(group, SIGNAL(buttonToggled(int,bool)), this, SLOT(operatingModeButtonsToggled(int,bool)));
-            }
-        }
-    }
 }
 
 void SystemSettingWnd::operatingModeButtonsToggled(int id, bool status)
